@@ -18,6 +18,13 @@ contract ACLManager is AccessControl, IACLManager {
   bytes32 public constant override FLASH_BORROWER_ROLE = keccak256('FLASH_BORROWER');
   bytes32 public constant override BRIDGE_ROLE = keccak256('BRIDGE');
   bytes32 public constant override ASSET_LISTING_ADMIN_ROLE = keccak256('ASSET_LISTING_ADMIN');
+  bytes32 public constant POOL_USER = keccak256('PERMISSIONED_POOL_USER');
+  bytes32 public constant POOL_USER_TREASURY = keccak256('POOL_USER_TREASURY');
+  bytes32 public constant POOL_USER_BOND = keccak256('POOL_USER_BOND');
+  bytes32 public constant LIQUIDATOR_ADMIN = keccak256('LIQUIDATOR_ADMIN');
+  bytes32 public constant LIQUIDATOR_TREASURY = keccak256('LIQUIDATOR_TREASURY');
+  bytes32 public constant LIQUIDATOR_BOND = keccak256('LIQUIDATOR_BOND');
+  bytes32 public constant LIQUIDATOR = keccak256('LIQUIDATOR_PERMISSIONED');
 
   IPoolAddressesProvider public immutable ADDRESSES_PROVIDER;
 
@@ -129,5 +136,110 @@ contract ACLManager is AccessControl, IACLManager {
   /// @inheritdoc IACLManager
   function isAssetListingAdmin(address admin) external view override returns (bool) {
     return hasRole(ASSET_LISTING_ADMIN_ROLE, admin);
+  }
+
+  /// @inheritdoc IACLManager
+  function addPoolUser(address admin) external override {
+    grantRole(POOL_USER, admin);
+  }
+
+  /// @inheritdoc IACLManager
+  function removePoolUser(address admin) external override {
+    revokeRole(POOL_USER, admin);
+  }
+
+  /// @inheritdoc IACLManager
+  function isPoolUser(address admin) external view override returns (bool) {
+    return hasRole(POOL_USER, admin);
+  }
+
+  /// @inheritdoc IACLManager
+  function addTreasuryPoolUser(address admin) external override {
+    grantRole(POOL_USER_TREASURY, admin);
+  }
+
+  /// @inheritdoc IACLManager
+  function removeTreasuryPoolUser(address admin) external override {
+    revokeRole(POOL_USER_TREASURY, admin);
+  }
+
+  /// @inheritdoc IACLManager
+  function isTreasuryPoolUser(address admin) external view override returns (bool) {
+    return hasRole(POOL_USER_TREASURY, admin);
+  }
+
+  /// @inheritdoc IACLManager
+  function addBondPoolUser(address admin) external override {
+    grantRole(POOL_USER_BOND, admin);
+  }
+
+  /// @inheritdoc IACLManager
+  function removeBondPoolUser(address admin) external override {
+    revokeRole(POOL_USER_BOND, admin);
+  }
+
+  /// @inheritdoc IACLManager
+  function isBondPoolUser(address admin) external view override returns (bool) {
+    return hasRole(POOL_USER_BOND, admin);
+  }
+
+  /// @inheritdoc IACLManager
+  function addLiquidatorAdmin(address admin) external override {
+    grantRole(LIQUIDATOR_ADMIN, admin);
+  }
+
+  /// @inheritdoc IACLManager
+  function removeLiquidatorAdmin(address admin) external override {
+    revokeRole(LIQUIDATOR_ADMIN, admin);
+  }
+
+  /// @inheritdoc IACLManager
+  function isLiquidatorAdmin(address admin) external view override returns (bool) {
+    return hasRole(LIQUIDATOR_ADMIN, admin);
+  }
+
+  /// @inheritdoc IACLManager
+  function addLiquidator(address admin) external override {
+    grantRole(LIQUIDATOR, admin);
+  }
+
+  /// @inheritdoc IACLManager
+  function removeLiquidator(address admin) external override {
+    revokeRole(LIQUIDATOR, admin);
+  }
+
+  /// @inheritdoc IACLManager
+  function isLiquidator(address admin) external view override returns (bool) {
+    return hasRole(LIQUIDATOR, admin);
+  }
+
+  /// @inheritdoc IACLManager
+  function addBondLiquidator(address admin) external override {
+    grantRole(LIQUIDATOR_BOND, admin);
+  }
+
+  /// @inheritdoc IACLManager
+  function removeBondLiquidator(address admin) external override {
+    revokeRole(LIQUIDATOR_BOND, admin);
+  }
+
+  /// @inheritdoc IACLManager
+  function isBondLiquidator(address admin) external view override returns (bool) {
+    return hasRole(LIQUIDATOR_BOND, admin);
+  }
+
+  /// @inheritdoc IACLManager
+  function addTreasuryLiquidator(address admin) external override {
+    grantRole(LIQUIDATOR_TREASURY, admin);
+  }
+
+  /// @inheritdoc IACLManager
+  function removeTreasuryLiquidator(address admin) external override {
+    revokeRole(LIQUIDATOR_TREASURY, admin);
+  }
+
+  /// @inheritdoc IACLManager
+  function isTreasuryLiquidator(address admin) external view override returns (bool) {
+    return hasRole(LIQUIDATOR_TREASURY, admin);
   }
 }

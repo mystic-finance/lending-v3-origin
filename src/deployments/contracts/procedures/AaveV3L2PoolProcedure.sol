@@ -2,6 +2,10 @@
 pragma solidity ^0.8.0;
 
 import {L2PoolInstance} from 'aave-v3-core/instances/L2PoolInstance.sol';
+import {BondPoolInstance} from 'aave-v3-core/instances/BondPoolInstance.sol';
+import {TreasuryPoolInstance} from 'aave-v3-core/instances/TreasuryPoolInstance.sol';
+import {PermissionedPoolInstance} from 'aave-v3-core/instances/PermissionedPoolInstance.sol';
+
 import {IPoolAddressesProvider} from 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
 import {AaveV3PoolConfigProcedure} from './AaveV3PoolConfigProcedure.sol';
 import {IPool} from 'aave-v3-core/contracts/interfaces/IPool.sol';
@@ -24,6 +28,30 @@ contract AaveV3L2PoolProcedure is AaveV3PoolConfigProcedure, IErrors {
     address l2Pool = address(new L2PoolInstance(IPoolAddressesProvider(poolAddressesProvider)));
 
     L2PoolInstance(l2Pool).initialize(IPoolAddressesProvider(poolAddressesProvider));
+
+    return l2Pool;
+  }
+
+   function _deployBondPoolImpl(address poolAddressesProvider) internal returns (address) {
+    address l2Pool = address(new BondPoolInstance(IPoolAddressesProvider(poolAddressesProvider)));
+
+    BondPoolInstance(l2Pool).initialize(IPoolAddressesProvider(poolAddressesProvider));
+
+    return l2Pool;
+  }
+
+   function _deployTreasuryPoolImpl(address poolAddressesProvider) internal returns (address) {
+    address l2Pool = address(new TreasuryPoolInstance(IPoolAddressesProvider(poolAddressesProvider)));
+
+    TreasuryPoolInstance(l2Pool).initialize(IPoolAddressesProvider(poolAddressesProvider));
+
+    return l2Pool;
+  }
+
+   function _deployPermissionedPoolImpl(address poolAddressesProvider) internal returns (address) {
+    address l2Pool = address(new PermissionedPoolInstance(IPoolAddressesProvider(poolAddressesProvider)));
+
+    PermissionedPoolInstance(l2Pool).initialize(IPoolAddressesProvider(poolAddressesProvider));
 
     return l2Pool;
   }

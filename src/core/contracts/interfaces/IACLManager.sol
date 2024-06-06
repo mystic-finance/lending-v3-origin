@@ -172,4 +172,137 @@ interface IACLManager {
    * @return True if the given address is AssetListingAdmin, false otherwise
    */
   function isAssetListingAdmin(address admin) external view returns (bool);
+
+   /**
+   * @notice Adds a new address as Pool User for permisionless pools
+   * @param admin The address of the new pool user
+   */
+  function addPoolUser(address admin) external;
+
+  /**
+   * @notice Removes an address as Pool User
+   * @param admin The address of the pool user to remove
+   */
+  function removePoolUser(address admin) external;
+
+  /**
+   * @notice Returns true if the address is Pool User, false otherwise
+   * @param admin The address to check
+   * @return True if the given address is Pool User, false otherwise
+   */
+  function isPoolUser(address admin) external view returns (bool);
+
+  /**
+   * @notice Adds a new address as Pool User for treasury pools
+   * @param admin The address of the new pool user
+   */
+  function addTreasuryPoolUser(address admin) external;
+
+  /**
+   * @notice Removes an address as Pool User For Treasury Pool
+   * @param admin The address of the pool user to remove
+   */
+  function removeTreasuryPoolUser(address admin) external;
+
+  /**
+   * @notice Returns true if the address is Treasury Pool User, false otherwise
+   * @param admin The address to check
+   * @return True if the given address is Pool User, false otherwise
+   */
+  function isTreasuryPoolUser(address admin) external view returns (bool);
+
+  /**
+   * @notice Adds a new address as Pool User for bond pools
+   * @param admin The address of the new pool user
+   */
+  function addBondPoolUser(address admin) external;
+
+  /**
+   * @notice Removes an address as Pool User For Bond Pool
+   * @param admin The address of the pool user to remove
+   */
+  function removeBondPoolUser(address admin) external;
+
+  /**
+   * @notice Returns true if the address is Bond Pool User, false otherwise
+   * @param admin The address to check
+   * @return True if the given address is Pool User, false otherwise
+   */
+  function isBondPoolUser(address admin) external view returns (bool);
+
+  /**
+   * @notice Adds a new address as a liquidator admin usually a partner
+   * @param admin The address of the new liquidator admin
+   */
+  function addLiquidatorAdmin(address admin) external;
+
+   /**
+   * @notice Removes an address as a liquidator admin usually a partner
+   * @param admin The address of the liquidator admin to remove
+   */
+  function removeLiquidatorAdmin(address admin) external;
+
+  /**
+   * @notice Returns true if the address is Liquidator admin, false otherwise
+   * @param admin The address to check
+   * @return True if the given address is LIquidator admin, false otherwise
+   */
+  function isLiquidatorAdmin(address admin) external view returns (bool) ;
+
+  /**
+   * @notice Adds a new address as a permissioned liquidator usually a partner
+   * @param admin The address of the new permissioned liquidator
+   */
+  function addLiquidator(address admin) external;
+
+  /**
+   * @notice Removes an address as a permissioned liquidator usually a partner
+   * @param admin The address of the permissioned liquidator to remove
+   */
+  function removeLiquidator(address admin) external;
+
+  /**
+   * @notice Returns true if the address is Permissioned Liquidator, false otherwise
+   * @param admin The address to check
+   * @return True if the given address is Permissioned Liquidator, false otherwise
+   */
+  function isLiquidator(address admin) external view returns (bool);
+
+  /**
+   * @notice Adds a new address as a permissioned bond liquidator usually a partner
+   * @param admin The address of the new permissioned liquidator
+   */
+  function addBondLiquidator(address admin) external;
+
+   /**
+   * @notice Removes an address as a permissioned bond liquidator usually a partner
+   * @param admin The address of the permissioned liquidator to remove
+   */
+  function removeBondLiquidator(address admin) external;
+
+  /**
+   * @notice Returns true if the address is Permissioned Bond Liquidator, false otherwise
+   * @param admin The address to check
+   * @return True if the given address is Permissioned Bond Liquidator, false otherwise
+   */
+  function isBondLiquidator(address admin) external view returns (bool);
+
+  /**
+   * @notice Adds a new address as a permissioned treasury liquidator usually a partner
+   * @param admin The address of the new permissioned liquidator
+   */
+  function addTreasuryLiquidator(address admin) external;
+
+   /**
+   * @notice Removes an address as a permissioned treasury liquidator usually a partner
+   * @param admin The address of the permissioned treasury liquidator to remove
+   */
+  function removeTreasuryLiquidator(address admin) external;
+
+  /**
+   * @notice Returns true if the address is Permissioned Treasury Liquidator, false otherwise
+   * @param admin The address to check
+   * @return True if the given address is Permissioned Liquidator, false otherwise
+   */
+  function isTreasuryLiquidator(address admin) external view returns (bool) ;
 }
