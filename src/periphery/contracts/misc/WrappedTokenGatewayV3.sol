@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {Ownable} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/Ownable.sol';
-import {IERC20} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
-import {GPv2SafeERC20} from 'aave-v3-core/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol';
-import {IWETH} from 'aave-v3-core/contracts/misc/interfaces/IWETH.sol';
-import {IPool} from 'aave-v3-core/contracts/interfaces/IPool.sol';
-import {IAToken} from 'aave-v3-core/contracts/interfaces/IAToken.sol';
-import {ReserveConfiguration} from 'aave-v3-core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
-import {UserConfiguration} from 'aave-v3-core/contracts/protocol/libraries/configuration/UserConfiguration.sol';
-import {DataTypes} from 'aave-v3-core/contracts/protocol/libraries/types/DataTypes.sol';
+import {Ownable} from 'src/core/contracts/dependencies/openzeppelin/contracts/Ownable.sol';
+import {IERC20} from 'src/core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {GPv2SafeERC20} from 'src/core/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol';
+import {IWETH} from 'src/core/contracts/misc/interfaces/IWETH.sol';
+import {IPool} from 'src/core/contracts/interfaces/IPool.sol';
+import {IAToken} from 'src/core/contracts/interfaces/IAToken.sol';
+import {ReserveConfiguration} from 'src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
+import {UserConfiguration} from 'src/core/contracts/protocol/libraries/configuration/UserConfiguration.sol';
+import {DataTypes} from 'src/core/contracts/protocol/libraries/types/DataTypes.sol';
 import {IWrappedTokenGatewayV3} from './interfaces/IWrappedTokenGatewayV3.sol';
 import {DataTypesHelper} from '../libraries/DataTypesHelper.sol';
 

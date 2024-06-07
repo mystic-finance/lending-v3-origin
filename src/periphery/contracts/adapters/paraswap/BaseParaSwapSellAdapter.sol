@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {SafeERC20} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/SafeERC20.sol';
-import {SafeMath} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/SafeMath.sol';
-import {PercentageMath} from 'aave-v3-core/contracts/protocol/libraries/math/PercentageMath.sol';
-import {IPoolAddressesProvider} from 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
-import {IERC20Detailed} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {SafeERC20} from 'src/core/contracts/dependencies/openzeppelin/contracts/SafeERC20.sol';
+import {SafeMath} from 'src/core/contracts/dependencies/openzeppelin/contracts/SafeMath.sol';
+import {PercentageMath} from 'src/core/contracts/protocol/libraries/math/PercentageMath.sol';
+import {IPoolAddressesProvider} from 'src/core/contracts/interfaces/IPoolAddressesProvider.sol';
+import {IERC20Detailed} from 'src/core/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
 import {IParaSwapAugustus} from './interfaces/IParaSwapAugustus.sol';
 import {IParaSwapAugustusRegistry} from './interfaces/IParaSwapAugustusRegistry.sol';
 import {BaseParaSwapAdapter} from './BaseParaSwapAdapter.sol';

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {DataTypes} from 'aave-v3-core/contracts/protocol/libraries/types/DataTypes.sol';
-import {IERC20Detailed} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
-import {IERC20} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
-import {IERC20WithPermit} from 'aave-v3-core/contracts/interfaces/IERC20WithPermit.sol';
-import {IPoolAddressesProvider} from 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
-import {SafeERC20} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/SafeERC20.sol';
-import {SafeMath} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/SafeMath.sol';
+import {DataTypes} from 'src/core/contracts/protocol/libraries/types/DataTypes.sol';
+import {IERC20Detailed} from 'src/core/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {IERC20} from 'src/core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC20WithPermit} from 'src/core/contracts/interfaces/IERC20WithPermit.sol';
+import {IPoolAddressesProvider} from 'src/core/contracts/interfaces/IPoolAddressesProvider.sol';
+import {SafeERC20} from 'src/core/contracts/dependencies/openzeppelin/contracts/SafeERC20.sol';
+import {SafeMath} from 'src/core/contracts/dependencies/openzeppelin/contracts/SafeMath.sol';
 import {BaseParaSwapBuyAdapter} from './BaseParaSwapBuyAdapter.sol';
 import {IParaSwapAugustusRegistry} from './interfaces/IParaSwapAugustusRegistry.sol';
 import {IParaSwapAugustus} from './interfaces/IParaSwapAugustus.sol';

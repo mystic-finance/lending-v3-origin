@@ -152,7 +152,7 @@ contract KYCPortal is Ownable {
     Liquidator[] memory arr,
     Liquidator calldata liquidator,
     address _addressProvider
-  ) internal returns (uint) {
+  ) internal pure returns (uint) {
     uint index = 0;
 
     for (uint i = 0; i < arr.length - 1; i++) {

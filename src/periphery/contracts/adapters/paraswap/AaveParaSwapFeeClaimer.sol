@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import {IFeeClaimer} from './interfaces/IFeeClaimer.sol';
-import {IERC20} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC20} from 'src/core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 
 /**
  * @title AaveParaSwapFeeClaimer
