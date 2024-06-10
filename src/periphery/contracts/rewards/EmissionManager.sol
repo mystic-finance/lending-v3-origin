@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {Ownable} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/Ownable.sol';
+import {Ownable} from 'src/core/contracts/dependencies/openzeppelin/contracts/Ownable.sol';
 import {IEACAggregatorProxy} from '../misc/interfaces/IEACAggregatorProxy.sol';
 import {IEmissionManager} from './interfaces/IEmissionManager.sol';
 import {ITransferStrategyBase} from './interfaces/ITransferStrategyBase.sol';

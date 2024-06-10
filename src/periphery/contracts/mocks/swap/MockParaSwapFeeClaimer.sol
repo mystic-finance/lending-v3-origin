@@ -3,8 +3,8 @@ pragma solidity ^0.8.10;
 
 import {IFeeClaimer} from '../../adapters/paraswap/interfaces/IFeeClaimer.sol';
 import {MockParaSwapTokenTransferProxy} from './MockParaSwapTokenTransferProxy.sol';
-import {IERC20} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
-import {MintableERC20} from 'aave-v3-core/contracts/mocks/tokens/MintableERC20.sol';
+import {IERC20} from 'src/core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {MintableERC20} from 'src/core/contracts/mocks/tokens/MintableERC20.sol';
 
 contract MockParaSwapFeeClaimer is IFeeClaimer {
   MockParaSwapTokenTransferProxy immutable TOKEN_TRANSFER_PROXY;

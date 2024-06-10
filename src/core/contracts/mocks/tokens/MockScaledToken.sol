@@ -1,7 +1,7 @@
 pragma solidity ^0.8.0;
 
-import 'aave-v3-core/contracts/protocol/tokenization/base/ScaledBalanceTokenBase.sol';
-import 'aave-v3-core/contracts/protocol/libraries/math/WadRayMath.sol';
+import 'src/core/contracts/protocol/tokenization/base/ScaledBalanceTokenBase.sol';
+import 'src/core/contracts/protocol/libraries/math/WadRayMath.sol';
 
 contract MockScaledToken is ScaledBalanceTokenBase {
   using WadRayMath for uint256;

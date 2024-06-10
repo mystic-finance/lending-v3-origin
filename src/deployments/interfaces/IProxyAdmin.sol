@@ -8,8 +8,8 @@
 
 pragma solidity ^0.8.0;
 
-import 'solidity-utils/contracts/transparent-proxy/TransparentUpgradeableProxy.sol';
-import 'solidity-utils/contracts/transparent-proxy/interfaces/IOwnable.sol';
+import 'lib/solidity-utils/src/contracts/transparent-proxy/TransparentUpgradeableProxy.sol';
+import 'lib/solidity-utils/src/contracts/transparent-proxy/interfaces/IOwnable.sol';
 
 /**
  * @dev This is an auxiliary contract meant to be assigned as the admin of a {TransparentUpgradeableProxy}. For an

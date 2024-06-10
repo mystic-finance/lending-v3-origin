@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {Address} from 'solidity-utils/contracts/oz-common/Address.sol';
+import {Address} from 'lib/solidity-utils/src/contracts/oz-common/Address.sol';
 import {WadRayMath} from '../../../core/contracts/protocol/libraries/math/WadRayMath.sol';
 import {IAaveV3ConfigEngine as IEngine} from './IAaveV3ConfigEngine.sol';
 import {EngineFlags} from './EngineFlags.sol';

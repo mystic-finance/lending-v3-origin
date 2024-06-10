@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import 'forge-std/StdJson.sol';
-import 'forge-std/Vm.sol';
+import 'lib/forge-std/src/StdJson.sol';
+import 'lib/forge-std/src/Vm.sol';
 import '../../interfaces/IMarketReportTypes.sol';
 import {IMetadataReporter} from '../../interfaces/IMetadataReporter.sol';
 
@@ -69,6 +69,8 @@ contract MetadataReporter is IMetadataReporter {
       report.paraSwapWithdrawSwapAdapter
     );
     vm.serializeAddress(jsonReport, 'aaveParaSwapFeeClaimer', report.aaveParaSwapFeeClaimer);
+    // vm.serializeAddress(jsonReport, 'arcTimelock', report.timelock);
+    // vm.serializeAddress(jsonReport, 'arcKycPortal', report.kycPortal);
     string memory output = vm.serializeAddress(
       jsonReport,
       'paraSwapRepayAdapter',

@@ -3,8 +3,8 @@ pragma solidity ^0.8.10;
 
 import {ITransferStrategyBase} from '../rewards/interfaces/ITransferStrategyBase.sol';
 import {TransferStrategyBase} from '../rewards/transfer-strategies/TransferStrategyBase.sol';
-import {GPv2SafeERC20} from 'aave-v3-core/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol';
-import {IERC20} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {GPv2SafeERC20} from 'src/core/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol';
+import {IERC20} from 'src/core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 
 /**
  * @title MockBadTransferStrategy

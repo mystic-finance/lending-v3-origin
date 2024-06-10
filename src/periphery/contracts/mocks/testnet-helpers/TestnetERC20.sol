@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {Ownable} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/Ownable.sol';
-import {ERC20} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/ERC20.sol';
-import {IERC20WithPermit} from 'aave-v3-core/contracts/interfaces/IERC20WithPermit.sol';
+import {Ownable} from 'src/core/contracts/dependencies/openzeppelin/contracts/Ownable.sol';
+import {ERC20} from 'src/core/contracts/dependencies/openzeppelin/contracts/ERC20.sol';
+import {IERC20WithPermit} from 'src/core/contracts/interfaces/IERC20WithPermit.sol';
 
 /**
  * @title TestnetERC20

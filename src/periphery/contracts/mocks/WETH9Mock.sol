@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {WETH9} from 'aave-v3-core/contracts/dependencies/weth/WETH9.sol';
-import {Ownable} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/Ownable.sol';
+import {WETH9} from 'src/core/contracts/dependencies/weth/WETH9.sol';
+import {Ownable} from 'src/core/contracts/dependencies/openzeppelin/contracts/Ownable.sol';
 
 contract WETH9Mock is WETH9, Ownable {
   constructor(string memory mockName, string memory mockSymbol, address owner) {

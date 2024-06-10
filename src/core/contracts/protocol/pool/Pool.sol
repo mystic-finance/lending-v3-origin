@@ -399,35 +399,34 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
     bytes calldata params,
     uint16 referralCode
   ) public virtual override {
-
     require(false, Errors.FLASHLOAN_DISABLED);
-    // DataTypes.FlashloanParams memory flashParams = DataTypes.FlashloanParams({
-    //   receiverAddress: receiverAddress,
-    //   assets: assets,
-    //   amounts: amounts,
-    //   interestRateModes: interestRateModes,
-    //   onBehalfOf: onBehalfOf,
-    //   params: params,
-    //   referralCode: referralCode,
-    //   flashLoanPremiumToProtocol: _flashLoanPremiumToProtocol,
-    //   flashLoanPremiumTotal: _flashLoanPremiumTotal,
-    //   maxStableRateBorrowSizePercent: _maxStableRateBorrowSizePercent,
-    //   reservesCount: _reservesCount,
-    //   addressesProvider: address(ADDRESSES_PROVIDER),
-    //   pool: address(this),
-    //   userEModeCategory: _usersEModeCategory[onBehalfOf],
-    //   isAuthorizedFlashBorrower: IACLManager(ADDRESSES_PROVIDER.getACLManager()).isFlashBorrower(
-    //     msg.sender
-    //   )
-    // });
+    DataTypes.FlashloanParams memory flashParams = DataTypes.FlashloanParams({
+      receiverAddress: receiverAddress,
+      assets: assets,
+      amounts: amounts,
+      interestRateModes: interestRateModes,
+      onBehalfOf: onBehalfOf,
+      params: params,
+      referralCode: referralCode,
+      flashLoanPremiumToProtocol: _flashLoanPremiumToProtocol,
+      flashLoanPremiumTotal: _flashLoanPremiumTotal,
+      maxStableRateBorrowSizePercent: _maxStableRateBorrowSizePercent,
+      reservesCount: _reservesCount,
+      addressesProvider: address(ADDRESSES_PROVIDER),
+      pool: address(this),
+      userEModeCategory: _usersEModeCategory[onBehalfOf],
+      isAuthorizedFlashBorrower: IACLManager(ADDRESSES_PROVIDER.getACLManager()).isFlashBorrower(
+        msg.sender
+      )
+    });
 
-    // FlashLoanLogic.executeFlashLoan(
-    //   _reserves,
-    //   _reservesList,
-    //   _eModeCategories,
-    //   _usersConfig[onBehalfOf],
-    //   flashParams
-    // );
+    FlashLoanLogic.executeFlashLoan(
+      _reserves,
+      _reservesList,
+      _eModeCategories,
+      _usersConfig[onBehalfOf],
+      flashParams
+    );
   }
 
   /// @inheritdoc IPool
@@ -439,16 +438,16 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
     uint16 referralCode
   ) public virtual override {
     require(false, Errors.FLASHLOAN_DISABLED);
-    // DataTypes.FlashloanSimpleParams memory flashParams = DataTypes.FlashloanSimpleParams({
-    //   receiverAddress: receiverAddress,
-    //   asset: asset,
-    //   amount: amount,
-    //   params: params,
-    //   referralCode: referralCode,
-    //   flashLoanPremiumToProtocol: _flashLoanPremiumToProtocol,
-    //   flashLoanPremiumTotal: _flashLoanPremiumTotal
-    // });
-    // FlashLoanLogic.executeFlashLoanSimple(_reserves[asset], flashParams);
+    DataTypes.FlashloanSimpleParams memory flashParams = DataTypes.FlashloanSimpleParams({
+      receiverAddress: receiverAddress,
+      asset: asset,
+      amount: amount,
+      params: params,
+      referralCode: referralCode,
+      flashLoanPremiumToProtocol: _flashLoanPremiumToProtocol,
+      flashLoanPremiumTotal: _flashLoanPremiumTotal
+    });
+    FlashLoanLogic.executeFlashLoanSimple(_reserves[asset], flashParams);
   }
 
   /// @inheritdoc IPool
@@ -800,7 +799,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
     uint256 amount,
     address onBehalfOf,
     uint16 referralCode
-  ) external virtual override  {
+  ) external virtual override {
     SupplyLogic.executeSupply(
       _reserves,
       _reservesList,

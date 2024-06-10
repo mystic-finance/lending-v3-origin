@@ -1,28 +1,29 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-import 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
-import 'aave-v3-core/contracts/interfaces/IPoolAddressesProviderRegistry.sol';
-import 'aave-v3-core/contracts/interfaces/IPool.sol';
-import 'aave-v3-core/contracts/interfaces/IPoolConfigurator.sol';
-import 'aave-v3-core/contracts/interfaces/IAaveOracle.sol';
-import 'aave-v3-core/contracts/interfaces/IAToken.sol';
-import 'aave-v3-core/contracts/interfaces/IVariableDebtToken.sol';
-import 'aave-v3-core/contracts/interfaces/IStableDebtToken.sol';
-import 'aave-v3-core/contracts/interfaces/IACLManager.sol';
-import 'aave-v3-core/contracts/interfaces/IDefaultInterestRateStrategyV2.sol';
-import 'aave-v3-core/contracts/misc/AaveProtocolDataProvider.sol';
-import 'aave-v3-periphery/contracts/misc/UiPoolDataProviderV3.sol';
-import 'aave-v3-periphery/contracts/misc/UiIncentiveDataProviderV3.sol';
-import 'aave-v3-periphery/contracts/rewards/interfaces/IEmissionManager.sol';
-import 'aave-v3-periphery/contracts/rewards/interfaces/IRewardsController.sol';
-import 'aave-v3-periphery/contracts/misc/WalletBalanceProvider.sol';
-import 'aave-v3-periphery/contracts/adapters/paraswap/ParaSwapLiquiditySwapAdapter.sol';
-import 'aave-v3-periphery/contracts/adapters/paraswap/ParaSwapRepayAdapter.sol';
-import 'aave-v3-periphery/contracts/adapters/paraswap/ParaSwapWithdrawSwapAdapter.sol';
-import 'aave-v3-periphery/contracts/misc/interfaces/IWrappedTokenGatewayV3.sol';
-import 'aave-v3-core/contracts/misc/L2Encoder.sol';
-import {ICollector} from 'aave-v3-periphery/contracts/treasury/ICollector.sol';
-import {ProxyAdmin} from 'solidity-utils/contracts/transparent-proxy/ProxyAdmin.sol';
+import 'src/core/contracts/interfaces/IPoolAddressesProvider.sol';
+import 'src/core/contracts/interfaces/IPoolAddressesProviderRegistry.sol';
+import 'src/core/contracts/interfaces/IPool.sol';
+import 'src/core/contracts/interfaces/IPoolConfigurator.sol';
+import 'src/core/contracts/interfaces/IAaveOracle.sol';
+import 'src/core/contracts/interfaces/IAToken.sol';
+import 'src/core/contracts/interfaces/IVariableDebtToken.sol';
+import 'src/core/contracts/interfaces/IStableDebtToken.sol';
+import 'src/core/contracts/interfaces/IACLManager.sol';
+import 'src/core/contracts/interfaces/IDefaultInterestRateStrategyV2.sol';
+import 'src/core/contracts/misc/AaveProtocolDataProvider.sol';
+import 'src/periphery/contracts/misc/UiPoolDataProviderV3.sol';
+import 'src/periphery/contracts/misc/UiIncentiveDataProviderV3.sol';
+import 'src/periphery/contracts/rewards/interfaces/IEmissionManager.sol';
+import 'src/periphery/contracts/rewards/interfaces/IRewardsController.sol';
+import 'src/periphery/contracts/misc/WalletBalanceProvider.sol';
+import 'src/periphery/contracts/adapters/paraswap/ParaSwapLiquiditySwapAdapter.sol';
+import 'src/periphery/contracts/adapters/paraswap/ParaSwapRepayAdapter.sol';
+import 'src/periphery/contracts/adapters/paraswap/ParaSwapWithdrawSwapAdapter.sol';
+import 'src/periphery/contracts/misc/interfaces/IWrappedTokenGatewayV3.sol';
+import 'src/core/contracts/misc/L2Encoder.sol';
+import {IAaveV3ConfigEngine} from 'src/periphery/contracts/v3-config-engine/IAaveV3ConfigEngine.sol';
+import {ICollector} from 'src/periphery/contracts/treasury/ICollector.sol';
+import {ProxyAdmin} from 'lib/solidity-utils/src/contracts/transparent-proxy/ProxyAdmin.sol';
 
 struct ContractsReport {
   IPoolAddressesProviderRegistry poolAddressesProviderRegistry;
@@ -83,6 +84,9 @@ struct MarketReport {
   address emissionManager;
   address rewardsControllerImplementation;
   address rewardsControllerProxy;
+  address kycPortal;
+  address timelock;
+  address engine;
 }
 
 struct LibrariesReport {
@@ -115,6 +119,22 @@ struct MarketConfig {
   address proxyAdmin;
   uint128 flashLoanPremiumTotal;
   uint128 flashLoanPremiumToProtocol;
+  uint8 poolType;
+}
+
+struct SubMarketConfig {
+  address timelock;
+  address kycPortal;
+  address underlyingAsset;
+  address debtAsset;
+}
+
+struct ListingConfig {
+  IAaveV3ConfigEngine.Listing[] listingCollateral;
+  IAaveV3ConfigEngine.Listing[] listingBorrow;
+  IAaveV3ConfigEngine.CollateralUpdate collateralUpdate;
+  IAaveV3ConfigEngine.BorrowUpdate borrowUpdate;
+  IAaveV3ConfigEngine.PoolContext poolContext;
 }
 
 struct DeployFlags {
@@ -124,6 +144,13 @@ struct DeployFlags {
 struct PoolReport {
   address poolImplementation;
   address poolConfiguratorImplementation;
+  address kycPortal;
+  address timelock;
+}
+
+struct PartnerReport {
+  address kycPortal;
+  address timelock;
 }
 
 struct InitialReport {

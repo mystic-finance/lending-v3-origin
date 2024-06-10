@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {Ownable} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/Ownable.sol';
+import {Ownable} from 'src/core/contracts/dependencies/openzeppelin/contracts/Ownable.sol';
 import {TestnetERC20} from './TestnetERC20.sol';
 import {IFaucet} from './IFaucet.sol';
 

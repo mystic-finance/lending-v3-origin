@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {ProxyAdmin} from 'solidity-utils/contracts/transparent-proxy/ProxyAdmin.sol';
-import {TransparentUpgradeableProxy} from 'solidity-utils/contracts/transparent-proxy/TransparentUpgradeableProxy.sol';
-import {IOwnable} from 'solidity-utils/contracts/transparent-proxy/interfaces/IOwnable.sol';
+import {ProxyAdmin} from 'lib/solidity-utils/src/contracts/transparent-proxy/ProxyAdmin.sol';
+import {TransparentUpgradeableProxy} from 'lib/solidity-utils/src/contracts/transparent-proxy/TransparentUpgradeableProxy.sol';
+import {IOwnable} from 'lib/solidity-utils/src/contracts/transparent-proxy/interfaces/IOwnable.sol';
 import {Collector} from '../../../periphery/contracts/treasury/Collector.sol';
 import '../../interfaces/IMarketReportTypes.sol';
 

@@ -2,14 +2,14 @@
 pragma solidity ^0.8.0;
 
 import '../../interfaces/IMarketReportTypes.sol';
-import {IOwnable} from 'solidity-utils/contracts/transparent-proxy/interfaces/IOwnable.sol';
-import {ACLManager} from 'aave-v3-core/contracts/protocol/configuration/ACLManager.sol';
-import {IPoolConfigurator} from 'aave-v3-core/contracts/interfaces/IPoolConfigurator.sol';
-import {IPoolAddressesProvider} from 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
-import {PoolAddressesProvider} from 'aave-v3-core/contracts/protocol/configuration/PoolAddressesProvider.sol';
-import {PoolAddressesProviderRegistry} from 'aave-v3-core/contracts/protocol/configuration/PoolAddressesProviderRegistry.sol';
-import {IEmissionManager} from 'aave-v3-periphery/contracts/rewards/interfaces/IEmissionManager.sol';
-import {IRewardsController} from 'aave-v3-periphery/contracts/rewards/interfaces/IRewardsController.sol';
+import {IOwnable} from 'lib/solidity-utils/src/contracts/transparent-proxy/interfaces/IOwnable.sol';
+import {ACLManager} from 'src/core/contracts/protocol/configuration/ACLManager.sol';
+import {IPoolConfigurator} from 'src/core/contracts/interfaces/IPoolConfigurator.sol';
+import {IPoolAddressesProvider} from 'src/core/contracts/interfaces/IPoolAddressesProvider.sol';
+import {PoolAddressesProvider} from 'src/core/contracts/protocol/configuration/PoolAddressesProvider.sol';
+import {PoolAddressesProviderRegistry} from 'src/core/contracts/protocol/configuration/PoolAddressesProviderRegistry.sol';
+import {IEmissionManager} from 'src/periphery/contracts/rewards/interfaces/IEmissionManager.sol';
+import {IRewardsController} from 'src/periphery/contracts/rewards/interfaces/IRewardsController.sol';
 
 contract AaveV3SetupProcedure {
   function _initialDeployment(
@@ -57,13 +57,15 @@ contract AaveV3SetupProcedure {
       initialReport.poolAddressesProvider,
       report.poolConfiguratorProxy,
       config.flashLoanPremiumTotal,
-      config.flashLoanPremiumToProtocol
+      config.flashLoanPremiumToProtocol,
+      address(0)
+      // config.kycPortal
     );
 
     _transferMarketOwnership(roles, initialReport);
 
     return report;
-  }
+  } // 5-1-1
 
   function _deployPoolAddressesProviderRegistry(
     address marketOwner,
@@ -123,7 +125,8 @@ contract AaveV3SetupProcedure {
     address poolAddressesProvider,
     address poolConfiguratorProxy,
     uint128 flashLoanPremiumTotal,
-    uint128 flashLoanPremiumToProtocol
+    uint128 flashLoanPremiumToProtocol,
+    address kycPortal
   ) internal returns (address) {
     IPoolAddressesProvider provider = IPoolAddressesProvider(poolAddressesProvider);
 
@@ -134,7 +137,9 @@ contract AaveV3SetupProcedure {
     address aclManager = address(manager);
 
     // Setup roles
-    provider.setACLAdmin(roles.poolAdmin);
+    if (kycPortal != address(0)) {
+      provider.setACLAdmin(kycPortal); //(roles.poolAdmin);
+    }
 
     provider.setACLManager(address(manager));
 

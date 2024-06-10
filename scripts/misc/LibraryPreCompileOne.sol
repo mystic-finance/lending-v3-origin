@@ -71,16 +71,16 @@ contract LibraryPreCompileOne is FfiUtils, Script, DeployUtils {
     return
       string(
         abi.encodePacked(
-          'aave-v3-core/contracts/protocol/libraries/logic/BorrowLogic.sol:BorrowLogic:',
+          'src/core/contracts/protocol/libraries/logic/BorrowLogic.sol:BorrowLogic:',
           vm.toString(report.borrowLogic),
           ',',
-          'aave-v3-core/contracts/protocol/libraries/logic/BridgeLogic.sol:BridgeLogic:',
+          'src/core/contracts/protocol/libraries/logic/BridgeLogic.sol:BridgeLogic:',
           vm.toString(report.bridgeLogic),
           ',',
-          'aave-v3-core/contracts/protocol/libraries/logic/ConfiguratorLogic.sol:ConfiguratorLogic:',
+          'src/core/contracts/protocol/libraries/logic/ConfiguratorLogic.sol:ConfiguratorLogic:',
           vm.toString(report.configuratorLogic),
           ',',
-          'aave-v3-core/contracts/protocol/libraries/logic/EModeLogic.sol:EModeLogic:',
+          'src/core/contracts/protocol/libraries/logic/EModeLogic.sol:EModeLogic:',
           vm.toString(report.eModeLogic)
         )
       );

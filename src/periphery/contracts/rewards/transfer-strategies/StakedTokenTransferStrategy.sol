@@ -5,8 +5,8 @@ import {IStakedToken} from '../interfaces/IStakedToken.sol';
 import {IStakedTokenTransferStrategy} from '../interfaces/IStakedTokenTransferStrategy.sol';
 import {ITransferStrategyBase} from '../interfaces/ITransferStrategyBase.sol';
 import {TransferStrategyBase} from './TransferStrategyBase.sol';
-import {GPv2SafeERC20} from 'aave-v3-core/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol';
-import {IERC20} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {GPv2SafeERC20} from 'src/core/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol';
+import {IERC20} from 'src/core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 
 /**
  * @title StakedTokenTransferStrategy

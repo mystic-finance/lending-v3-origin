@@ -36,7 +36,7 @@ bnb = "${RPC_BNB}"
 gnosis = "${RPC_GNOSIS}"
 base = "${RPC_BASE}"
 plume="${RPC_PLUME}"
-kinto_test="${RPC_KINTO_TEST}"
+arb_sepolia="${RPC_ARBITRUM_SEPOLIA}"
 
 [etherscan]
 mainnet={key="${ETHERSCAN_API_KEY_MAINNET}",chainId=1}
@@ -54,5 +54,6 @@ bnb={key="${ETHERSCAN_API_KEY_BNB}",chainId=56,url='https://api.bscscan.com/api'
 base={key="${ETHERSCAN_API_KEY_BASE}",chain=8453}
 gnosis={key="${ETHERSCAN_API_KEY_GNOSIS}",chainId=100}
 plume={key="${ETHERSCAN_API_KEY_SEPOLIA}",chainId=161221135,url='https://plume-testnet.explorer.caldera.xyz'}
+arb_sepolia={key="${ETHERSCAN_API_KEY_SEPOLIA}",chainId=421614,url='https://sepolia.arbiscan.com'}
 kinto_test={key="${ETHERSCAN_API_KEY_SEPOLIA}",chainId=42888,url='https://plume-testnet.explorer.caldera.xyz'}
 # See more config options https://github.com/gakonst/foundry/tree/master/config

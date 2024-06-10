@@ -3,7 +3,7 @@ pragma solidity ^0.8.18;
 
 import {EngineFlags} from '../EngineFlags.sol';
 import {DataTypes} from '../../../../core/contracts/protocol/libraries/types/DataTypes.sol';
-import {SafeCast} from 'solidity-utils/contracts/oz-common/SafeCast.sol';
+import {SafeCast} from 'lib/solidity-utils/src/contracts/oz-common/SafeCast.sol';
 import {PercentageMath} from '../../../../core/contracts/protocol/libraries/math/PercentageMath.sol';
 import {IAaveV3ConfigEngine as IEngine, IPoolConfigurator, IPool} from '../IAaveV3ConfigEngine.sol';
 

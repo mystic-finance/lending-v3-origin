@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: ISC
 pragma solidity ^0.8.0;
 
-import {IERC20} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC20} from 'src/core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 
 interface IFeeClaimer {
   /**

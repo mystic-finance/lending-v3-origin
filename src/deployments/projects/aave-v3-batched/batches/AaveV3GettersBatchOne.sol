@@ -15,7 +15,7 @@ contract AaveV3GettersBatchOne is AaveV3GettersProcedureOne {
       poolAddressesProvider,
       networkBaseTokenPriceInUsdProxyAggregator,
       marketReferenceCurrencyPriceInUsdProxyAggregator
-    );
+    ); // 2-1
   }
 
   function getGettersReportOne() external view returns (GettersReportBatchOne memory) {

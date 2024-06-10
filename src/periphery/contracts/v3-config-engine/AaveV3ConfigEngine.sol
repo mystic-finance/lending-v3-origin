@@ -8,7 +8,7 @@ import {RateEngine} from './libraries/RateEngine.sol';
 import {PriceFeedEngine} from './libraries/PriceFeedEngine.sol';
 import {EModeEngine} from './libraries/EModeEngine.sol';
 import {ListingEngine} from './libraries/ListingEngine.sol';
-import {Address} from 'solidity-utils/contracts/oz-common/Address.sol';
+import {Address} from 'lib/solidity-utils/src/contracts/oz-common/Address.sol';
 import './IAaveV3ConfigEngine.sol';
 
 /**

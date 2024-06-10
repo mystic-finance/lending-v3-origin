@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
-import {IERC20Metadata} from 'solidity-utils/contracts/oz-common/interfaces/IERC20Metadata.sol';
+import {IERC20Metadata} from 'lib/solidity-utils/src/contracts/oz-common/interfaces/IERC20Metadata.sol';
 import {IAaveV3ConfigEngine as IEngine, IPoolConfigurator, IPool, IDefaultInterestRateStrategyV2} from '../IAaveV3ConfigEngine.sol';
 import {PriceFeedEngine} from './PriceFeedEngine.sol';
 import {CapsEngine} from './CapsEngine.sol';
@@ -9,7 +9,7 @@ import {BorrowEngine} from './BorrowEngine.sol';
 import {CollateralEngine} from './CollateralEngine.sol';
 import {EModeEngine} from './EModeEngine.sol';
 import {ConfiguratorInputTypes} from '../../../../core/contracts/protocol/libraries/types/ConfiguratorInputTypes.sol';
-import {Address} from 'solidity-utils/contracts/oz-common/Address.sol';
+import {Address} from 'lib/solidity-utils/src/contracts/oz-common/Address.sol';
 import {SafeCast} from '../../../../core/contracts/dependencies/openzeppelin/contracts/SafeCast.sol';
 
 library ListingEngine {

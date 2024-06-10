@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import 'forge-std/StdJson.sol';
-import 'forge-std/Vm.sol';
+import 'lib/forge-std/src/StdJson.sol';
+import 'lib/forge-std/src/Vm.sol';
 import {IMetadataReporter} from '../../interfaces/IMetadataReporter.sol';
 import '../../interfaces/IMarketReportTypes.sol';
-import 'solidity-utils/contracts/transparent-proxy/TransparentProxyFactory.sol';
+import 'lib/solidity-utils/src/contracts/transparent-proxy/TransparentProxyFactory.sol';
 
 contract DeployUtils {
   using stdJson for string;

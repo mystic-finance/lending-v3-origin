@@ -17,18 +17,28 @@ abstract contract DeployAaveV3MarketBatchedBase is DeployUtils, MarketInput, Scr
   function run() external {
     Roles memory roles;
     MarketConfig memory config;
+    SubMarketConfig memory subConfig;
     DeployFlags memory flags;
     MarketReport memory report;
 
     console.log('Aave V3 Batch Deployment');
     console.log('sender', msg.sender);
 
-    (roles, config, flags, report) = _getMarketInput(msg.sender);
+    (roles, config, subConfig, flags, report) = _getMarketInput(msg.sender);
 
     _loadWarnings(config);
 
-    vm.startBroadcast();
-    report = AaveV3BatchOrchestration.deployAaveV3(msg.sender, roles, config, flags, report);
+    uint256 deployerPrivateKey = vm.envUint('PRIVATE_KEY');
+
+    vm.startBroadcast(deployerPrivateKey);
+    report = AaveV3BatchOrchestration.deployAaveV3(
+      msg.sender,
+      roles,
+      config,
+      subConfig,
+      flags,
+      report
+    );
     vm.stopBroadcast();
 
     // Write market deployment JSON report at /reports
