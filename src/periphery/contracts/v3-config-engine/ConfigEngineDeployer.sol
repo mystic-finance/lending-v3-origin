@@ -18,6 +18,48 @@ import {EModeEngine} from 'src/periphery/contracts/v3-config-engine/libraries/EM
 import {ListingEngine} from 'src/periphery/contracts/v3-config-engine/libraries/ListingEngine.sol';
 
 library ConfigEngineDeployer {
+  function deployEngine(MarketReport memory report, address factory) internal returns (address) {
+    IAaveV3ConfigEngine.EngineLibraries memory engineLibraries = IAaveV3ConfigEngine
+      .EngineLibraries({
+        listingEngine: Create2Utils._create2Deploy('v1', type(ListingEngine).creationCode, factory),
+        eModeEngine: Create2Utils._create2Deploy('v1', type(EModeEngine).creationCode, factory),
+        borrowEngine: Create2Utils._create2Deploy('v1', type(BorrowEngine).creationCode, factory),
+        collateralEngine: Create2Utils._create2Deploy(
+          'v1',
+          type(CollateralEngine).creationCode,
+          factory
+        ),
+        priceFeedEngine: Create2Utils._create2Deploy(
+          'v1',
+          type(PriceFeedEngine).creationCode,
+          factory
+        ),
+        rateEngine: Create2Utils._create2Deploy('v1', type(RateEngine).creationCode, factory),
+        capsEngine: Create2Utils._create2Deploy('v1', type(CapsEngine).creationCode, factory)
+      });
+
+    IAaveV3ConfigEngine.EngineConstants memory engineConstants = IAaveV3ConfigEngine
+      .EngineConstants({
+        pool: IPool(report.poolProxy),
+        poolConfigurator: IPoolConfigurator(report.poolConfiguratorProxy),
+        defaultInterestRateStrategy: report.defaultInterestRateStrategyV2,
+        oracle: IAaveOracle(report.aaveOracle),
+        rewardsController: report.rewardsControllerProxy,
+        collector: report.treasury
+      });
+
+    return
+      address(
+        new AaveV3ConfigEngine(
+          report.aToken,
+          report.variableDebtToken,
+          report.stableDebtToken,
+          engineConstants,
+          engineLibraries
+        )
+      );
+  }
+
   function deployEngine(MarketReport memory report) internal returns (address) {
     IAaveV3ConfigEngine.EngineLibraries memory engineLibraries = IAaveV3ConfigEngine
       .EngineLibraries({

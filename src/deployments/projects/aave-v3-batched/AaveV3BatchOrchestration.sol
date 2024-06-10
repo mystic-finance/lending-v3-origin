@@ -185,7 +185,7 @@ library AaveV3BatchOrchestration {
     The following are done here:
     1. Enginer deployment
     */
-    address engine = _deployEngine(report);
+    address engine = _deployEngine(report, subConfig);
 
     report.engine = engine;
 
@@ -355,8 +355,11 @@ library AaveV3BatchOrchestration {
     return tokensBatch.getTokensReport();
   }
 
-  function _deployEngine(MarketReport memory report) internal returns (address) {
-    address engine = ConfigEngineDeployer.deployEngine(report);
+  function _deployEngine(
+    MarketReport memory report,
+    SubMarketConfig memory subConfig
+  ) internal returns (address) {
+    address engine = ConfigEngineDeployer.deployEngine(report, subConfig.create2_factory);
     return engine;
   }
 

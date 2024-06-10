@@ -127,6 +127,7 @@ struct SubMarketConfig {
   address kycPortal;
   address underlyingAsset;
   address debtAsset;
+  address create2_factory;
 }
 
 struct ListingConfig {
