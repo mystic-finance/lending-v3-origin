@@ -102,7 +102,7 @@ Interfaces and other components required for integrations are explicitly MIT lic
 
 ## Addresses Reports (Plume Testnet chain)
 
-USDC/USDT MArket
+### USDC/USDT Market
 
 ```javascript
 
@@ -151,4 +151,46 @@ USDC/USDT MArket
   "USDT":"0xc0aA307598C610AbF556319d8cB685D21d460ce7" (example rwa token)
 }
 
+```
+
+### Interacting with the Pool
+
+##### Depositing Assets
+
+To deposit assets into the pool and start earning interest, users can utilize the `supply` function. For instance, to deposit USDC:
+
+```javascript
+const usdcAddress = "0xEa237441c92CAe6FC17Caaf9a7acB3f953be4bd1";
+const amount = ethers.utils.parseUnits("1000", "USDC"); // Depositing 1000 USDC
+await permissionedPool.supply(usdcAddress, amount, "0xYourAddressHere", 0);
+```
+
+##### Withdrawing Assets
+
+Users can withdraw their assets from the pool using the `withdraw` function. If you've deposited USDC and want to withdraw:
+
+```javascript
+const usdcAddress = "0xEa237441c92CAe6FC17Caaf9a7acB3f953be4bd1";
+const amount = ethers.utils.parseUnits("500", "USDC"); // Withdrawing 500 USDC
+await permissionedPool.withdraw(usdcAddress, amount, "0xYourAddressHere");
+```
+
+##### Borrowing Assets
+
+If you need liquidity and have sufficient collateral, you can borrow assets with the `borrow` function. For example, to borrow USDT:
+
+```javascript
+const usdtAddress = "0xc0aA307598C610AbF556319d8cB685D21d460ce7";
+const amount = ethers.utils.parseUnits("1000", "USDT"); // Borrowing 1000 USDT
+await permissionedPool.borrow(usdtAddress, amount, 2, "0xYourAddressHere");
+```
+
+##### Repaying Loans
+
+To repay borrowed assets, use the `repay` function. For example, repaying borrowed USDT:
+
+```javascript
+const usdtAddress = "0xc0aA307598C610AbF556319d8cB685D21d460ce7";
+const amount = ethers.utils.parseUnits("1050", "USDT"); // Repaying 1050 USDT
+await permissionedPool.repay(usdtAddress, amount, 2, "0xYourAddressHere");
 ```
