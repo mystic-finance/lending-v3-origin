@@ -26,7 +26,7 @@ contract DefaultMarketInput is MarketInput {
     roles.emergencyAdmin = deployer;
     roles.poolAdmin = deployer;
 
-    config.marketId = 'Aave V3 Mystic Plume USDC/Landshare Testnet Market';
+    config.marketId = 'Aave V3 Mystic Plume USDC/USDT Testnet Market';
     config.providerId = 8080;
     config.oracleDecimals = 8;
     config.flashLoanPremiumTotal = 0.0005e4;
@@ -53,13 +53,13 @@ contract DefaultMarketInput is MarketInput {
     address debtAsset,
     address collateralAsset
   ) internal view override returns (ListingConfig memory config) {
-    IAaveV3ConfigEngine.Listing[] memory listings = new IAaveV3ConfigEngine.Listing[](2);
+    IAaveV3ConfigEngine.Listing[] memory listings = new IAaveV3ConfigEngine.Listing[](3);
     IAaveV3ConfigEngine.Listing[] memory listingCollateral = new IAaveV3ConfigEngine.Listing[](1);
 
     listings[0] = IAaveV3ConfigEngine.Listing({ //borrow asset
       asset: debtAsset,
       assetSymbol: 'USDC',
-      priceFeed: 0xC3235610cd9930DCeF1728d2DCfC25a0D419232C,
+      priceFeed: 0x34d75eB977F06A53362900D3F09F7eDEe324aFe8,
       rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
         optimalUsageRatio: 80_00,
         baseVariableBorrowRate: 25, // 0.25%
@@ -68,14 +68,14 @@ contract DefaultMarketInput is MarketInput {
       }),
       enabledToBorrow: EngineFlags.ENABLED,
       flashloanable: EngineFlags.DISABLED,
-      stableRateModeEnabled: EngineFlags.DISABLED,
+      stableRateModeEnabled: EngineFlags.ENABLED,
       borrowableInIsolation: EngineFlags.DISABLED,
       withSiloedBorrowing: EngineFlags.DISABLED,
-      ltv: 90_00, // 70.5%
+      ltv: 80_00, // 70.5%
       liqThreshold: 0, // 76%
       liqBonus: 5_00, // 5%
       reserveFactor: 10_00, // 10%
-      supplyCap: 100_000_000, // 100k AAVE
+      supplyCap: 1_000_000_000, // 100k AAVE
       borrowCap: 100_000_000, // 60k AAVE
       debtCeiling: 10_000_000, // 100k USD
       liqProtocolFee: 10_00, // 10%
@@ -84,8 +84,8 @@ contract DefaultMarketInput is MarketInput {
 
     listings[1] = IAaveV3ConfigEngine.Listing({ //collateral
       asset: collateralAsset,
-      assetSymbol: 'LandShare',
-      priceFeed: 0xC3235610cd9930DCeF1728d2DCfC25a0D419232C,
+      assetSymbol: 'USDT',
+      priceFeed: 0x34d75eB977F06A53362900D3F09F7eDEe324aFe8,
       rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
         optimalUsageRatio: 80_00,
         baseVariableBorrowRate: 25, // 0.25%
@@ -108,17 +108,43 @@ contract DefaultMarketInput is MarketInput {
       eModeCategory: 0 // No category
     });
 
+    listings[2] = IAaveV3ConfigEngine.Listing({ //collateral & debt
+      asset: 0xd9d6507119Ec56ce22A89bEdAcd6B44D495BFf08,
+      assetSymbol: 'WETH',
+      priceFeed: 0x34d75eB977F06A53362900D3F09F7eDEe324aFe8,
+      rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
+        optimalUsageRatio: 82_00,
+        baseVariableBorrowRate: 30, // 0.25%
+        variableRateSlope1: 3_00,
+        variableRateSlope2: 75_00
+      }),
+      enabledToBorrow: EngineFlags.ENABLED,
+      flashloanable: EngineFlags.DISABLED,
+      stableRateModeEnabled: EngineFlags.DISABLED,
+      borrowableInIsolation: EngineFlags.DISABLED,
+      withSiloedBorrowing: EngineFlags.DISABLED,
+      ltv: 80_00, // 70.5%
+      liqThreshold: 85_50, // 76%
+      liqBonus: 5_00, // 5%
+      reserveFactor: 10_00, // 10%
+      supplyCap: 1_000_000_000, // 100k AAVE
+      borrowCap: 1_000_000_000, // 60k AAVE
+      debtCeiling: 100_000_000, // 100k USD
+      liqProtocolFee: 9_00, // 10%
+      eModeCategory: 0 // No category
+    });
+
     config.poolContext = IAaveV3ConfigEngine.PoolContext({
-      networkName: 'Arbitrum Sepolia',
-      networkAbbreviation: 'Arb-Sep'
+      networkName: 'Plume Testnet',
+      networkAbbreviation: 'Plume'
     });
     config.listings = listings;
-    config.treasury = 0x3F36849c1f7Fc7a58A503604790D457ab8bB8062;
-    config.interestRateStrategy = 0xd7E9886c895a307F58b14B70F2cd8bC3ef0C6650;
-    config.poolConfigurator = 0x10BF67A7f42FBbcB6f5C4302f33Cd3Ef17af095b;
-    config.rewardsController = 0xDb1a70f828679e342b2AB9b62E4C2a29fcC37957;
-    config.poolProxy = 0xb8b46BDC1B85E0d22d61218e750b2BbAE0fA5e45;
-    config.oracle = 0xCB594bE528eb3D06bd14D7Edf83F13695e7c5448;
+    config.treasury = 0x5BB548c3B66c29D2C29B57913b55419aD630e778;
+    config.interestRateStrategy = 0x2E41A96c76f44ACc67A0F733CC309799E6496B5b;
+    config.poolConfigurator = 0x351282c2e2F1273083c9aeA37B1E0fE540ABF649;
+    config.rewardsController = 0x76eb7Fe95F262D048CF256c333b665e8F47D93eE;
+    config.poolProxy = 0xe40E9E9a11DFbF488320150360754c8D9DF10eF3;
+    config.oracle = 0x0186033cA9088cd6C1d793bc45b201c6bb21721d;
     // config.listingCollateral = listingCollateral;
     // USDC/USDT pool == borrow/collateral
 
