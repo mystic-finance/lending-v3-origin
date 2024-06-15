@@ -3,8 +3,8 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {MathUtils} from 'aave-v3-core/contracts/protocol/libraries/math/MathUtils.sol';
-import {MathUtilsWrapper} from 'aave-v3-core/contracts/mocks/tests/MathUtilsWrapper.sol';
+import {MathUtils} from 'src/core/contracts/protocol/libraries/math/MathUtils.sol';
+import {MathUtilsWrapper} from 'src/core/contracts/mocks/tests/MathUtilsWrapper.sol';
 
 contract MathUtilsTests is Test {
   MathUtilsWrapper internal w;

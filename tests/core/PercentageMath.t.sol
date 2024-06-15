@@ -3,8 +3,8 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {PercentageMath} from 'aave-v3-core/contracts/protocol/libraries/math/PercentageMath.sol';
-import {PercentageMathWrapper} from 'aave-v3-core/contracts/mocks/tests/PercentageMathWrapper.sol';
+import {PercentageMath} from 'src/core/contracts/protocol/libraries/math/PercentageMath.sol';
+import {PercentageMathWrapper} from 'src/core/contracts/mocks/tests/PercentageMathWrapper.sol';
 
 contract PercentageMathTests is Test {
   PercentageMathWrapper internal w;

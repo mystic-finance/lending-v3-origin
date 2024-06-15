@@ -131,11 +131,17 @@ struct SubMarketConfig {
 }
 
 struct ListingConfig {
-  IAaveV3ConfigEngine.Listing[] listingCollateral;
+  IAaveV3ConfigEngine.Listing[] listings;
   IAaveV3ConfigEngine.Listing[] listingBorrow;
   IAaveV3ConfigEngine.CollateralUpdate collateralUpdate;
   IAaveV3ConfigEngine.BorrowUpdate borrowUpdate;
   IAaveV3ConfigEngine.PoolContext poolContext;
+  address treasury;
+  address interestRateStrategy;
+  address poolConfigurator;
+  address rewardsController;
+  address poolProxy;
+  address oracle;
 }
 
 struct DeployFlags {

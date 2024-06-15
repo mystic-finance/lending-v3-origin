@@ -4,8 +4,8 @@ pragma solidity ^0.8.0;
 import 'forge-std/Test.sol';
 
 import {SlotParser} from '../utils/SlotParser.sol';
-import {MockInitializableImple, MockInitializableImpleV2} from 'aave-v3-core/contracts/mocks/upgradeability/MockInitializableImplementation.sol';
-import 'aave-v3-core/contracts/protocol/libraries/aave-upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol';
+import {MockInitializableImple, MockInitializableImpleV2} from 'src/core/contracts/mocks/upgradeability/MockInitializableImplementation.sol';
+import 'src/core/contracts/protocol/libraries/aave-upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol';
 
 contract InitializableImmutableAdminUpgradeabilityProxyTests is Test {
   using stdStorage for StdStorage;

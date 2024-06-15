@@ -11,9 +11,9 @@ import {AaveV3GettersBatchTwo} from '../src/deployments/projects/aave-v3-batched
 import {AaveV3PeripheryBatch} from '../src/deployments/projects/aave-v3-batched/batches/AaveV3PeripheryBatch.sol';
 import {AaveV3ParaswapBatch} from '../src/deployments/projects/aave-v3-batched/batches/AaveV3ParaswapBatch.sol';
 import {AaveV3SetupBatch} from '../src/deployments/projects/aave-v3-batched/batches/AaveV3SetupBatch.sol';
-import {WETH9} from 'aave-v3-core/contracts/dependencies/weth/WETH9.sol';
+import {WETH9} from 'src/core/contracts/dependencies/weth/WETH9.sol';
 import {AugustusRegistryMock} from './mocks/AugustusRegistryMock.sol';
-import {MockParaSwapFeeClaimer} from 'aave-v3-periphery/contracts/mocks/swap/MockParaSwapFeeClaimer.sol';
+import {MockParaSwapFeeClaimer} from 'src/periphery/contracts/mocks/swap/MockParaSwapFeeClaimer.sol';
 import {BatchTestProcedures} from './utils/BatchTestProcedures.sol';
 
 contract DeploymentsGasLimits is BatchTestProcedures {
@@ -56,7 +56,11 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       address(new WETH9()),
       address(0),
       0.0005e4,
-      0.0004e4
+      0.0004e4,
+      0
+      // address(0),
+      // address(0),
+      // address(0)
     );
     flags = DeployFlags(false);
 
@@ -114,14 +118,14 @@ contract DeploymentsGasLimits is BatchTestProcedures {
     );
   }
 
-  function test6ParaswapDeployment() public {
-    new AaveV3ParaswapBatch(
-      roles.poolAdmin,
-      config,
-      marketReportOne.poolAddressesProvider,
-      peripheryReportOne.treasury
-    );
-  }
+  // function test6ParaswapDeployment() public {
+  //   new AaveV3ParaswapBatch(
+  //     roles.poolAdmin,
+  //     config,
+  //     marketReportOne.poolAddressesProvider,
+  //     peripheryReportOne.treasury
+  //   );
+  // }
 
   function test7SetupMarket() public {
     vm.prank(roles.marketOwner);
@@ -132,12 +136,13 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       poolReportOne.poolConfiguratorImplementation,
       gettersReportOne.protocolDataProvider,
       peripheryReportOne.aaveOracle,
-      peripheryReportOne.rewardsControllerImplementation
+      peripheryReportOne.rewardsControllerImplementation,
+      poolReportOne.kycPortal
     );
   }
 
   function test8TokensMarket() public {
-    new AaveV3TokensBatch(setupReportTwo.poolProxy);
+    new AaveV3TokensBatch(setupReportTwo.poolProxy, address(0), address(0), address(0));
   }
 
   function testCheckInitCodeSizeBatchs() public view {

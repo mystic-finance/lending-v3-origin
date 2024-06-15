@@ -72,16 +72,16 @@
 <span id="L1"><span class="lineNum">       1</span>                 :             : // SPDX-License-Identifier: BUSL-1.1</span>
 <span id="L2"><span class="lineNum">       2</span>                 :             : pragma solidity ^0.8.10;</span>
 <span id="L3"><span class="lineNum">       3</span>                 :             : </span>
-<span id="L4"><span class="lineNum">       4</span>                 :             : import {DataTypes} from 'aave-v3-core/contracts/protocol/libraries/types/DataTypes.sol';</span>
-<span id="L5"><span class="lineNum">       5</span>                 :             : import {FlashLoanSimpleReceiverBase} from 'aave-v3-core/contracts/flashloan/base/FlashLoanSimpleReceiverBase.sol';</span>
-<span id="L6"><span class="lineNum">       6</span>                 :             : import {GPv2SafeERC20} from 'aave-v3-core/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol';</span>
-<span id="L7"><span class="lineNum">       7</span>                 :             : import {IERC20} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';</span>
-<span id="L8"><span class="lineNum">       8</span>                 :             : import {IERC20Detailed} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';</span>
-<span id="L9"><span class="lineNum">       9</span>                 :             : import {IERC20WithPermit} from 'aave-v3-core/contracts/interfaces/IERC20WithPermit.sol';</span>
-<span id="L10"><span class="lineNum">      10</span>                 :             : import {IPoolAddressesProvider} from 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';</span>
-<span id="L11"><span class="lineNum">      11</span>                 :             : import {IPriceOracleGetter} from 'aave-v3-core/contracts/interfaces/IPriceOracleGetter.sol';</span>
-<span id="L12"><span class="lineNum">      12</span>                 :             : import {SafeMath} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/SafeMath.sol';</span>
-<span id="L13"><span class="lineNum">      13</span>                 :             : import {Ownable} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/Ownable.sol';</span>
+<span id="L4"><span class="lineNum">       4</span>                 :             : import {DataTypes} from 'src/core/contracts/protocol/libraries/types/DataTypes.sol';</span>
+<span id="L5"><span class="lineNum">       5</span>                 :             : import {FlashLoanSimpleReceiverBase} from 'src/core/contracts/flashloan/base/FlashLoanSimpleReceiverBase.sol';</span>
+<span id="L6"><span class="lineNum">       6</span>                 :             : import {GPv2SafeERC20} from 'src/core/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol';</span>
+<span id="L7"><span class="lineNum">       7</span>                 :             : import {IERC20} from 'src/core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';</span>
+<span id="L8"><span class="lineNum">       8</span>                 :             : import {IERC20Detailed} from 'src/core/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';</span>
+<span id="L9"><span class="lineNum">       9</span>                 :             : import {IERC20WithPermit} from 'src/core/contracts/interfaces/IERC20WithPermit.sol';</span>
+<span id="L10"><span class="lineNum">      10</span>                 :             : import {IPoolAddressesProvider} from 'src/core/contracts/interfaces/IPoolAddressesProvider.sol';</span>
+<span id="L11"><span class="lineNum">      11</span>                 :             : import {IPriceOracleGetter} from 'src/core/contracts/interfaces/IPriceOracleGetter.sol';</span>
+<span id="L12"><span class="lineNum">      12</span>                 :             : import {SafeMath} from 'src/core/contracts/dependencies/openzeppelin/contracts/SafeMath.sol';</span>
+<span id="L13"><span class="lineNum">      13</span>                 :             : import {Ownable} from 'src/core/contracts/dependencies/openzeppelin/contracts/Ownable.sol';</span>
 <span id="L14"><span class="lineNum">      14</span>                 :             : </span>
 <span id="L15"><span class="lineNum">      15</span>                 :             : /**</span>
 <span id="L16"><span class="lineNum">      16</span>                 :             :  * @title BaseParaSwapAdapter</span>

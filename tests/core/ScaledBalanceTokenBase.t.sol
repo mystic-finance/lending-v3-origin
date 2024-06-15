@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {WadRayMath} from 'aave-v3-core/contracts/protocol/libraries/math/WadRayMath.sol';
-import {MockScaledToken} from 'aave-v3-core/contracts/mocks/tokens/MockScaledToken.sol';
+import {WadRayMath} from 'src/core/contracts/protocol/libraries/math/WadRayMath.sol';
+import {MockScaledToken} from 'src/core/contracts/mocks/tokens/MockScaledToken.sol';
 
 import '../utils/TestnetProcedures.sol';
 

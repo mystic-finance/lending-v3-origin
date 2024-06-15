@@ -3,10 +3,10 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {ATokenInstance} from 'aave-v3-core/instances/ATokenInstance.sol';
-import {IAaveIncentivesController} from 'aave-v3-core/contracts/interfaces/IAaveIncentivesController.sol';
+import {ATokenInstance} from 'src/core/instances/ATokenInstance.sol';
+import {IAaveIncentivesController} from 'src/core/contracts/interfaces/IAaveIncentivesController.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
-import {Errors} from 'aave-v3-core/contracts/protocol/libraries/helpers/Errors.sol';
+import {Errors} from 'src/core/contracts/protocol/libraries/helpers/Errors.sol';
 
 contract ATokenEdgeCasesTests is TestnetProcedures {
   ATokenInstance public aToken;

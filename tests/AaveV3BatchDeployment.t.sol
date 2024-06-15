@@ -6,15 +6,15 @@ import '../src/deployments/interfaces/IMarketReportTypes.sol';
 import {ConfigEngineDeployer} from './utils/ConfigEngineDeployer.sol';
 
 import {AugustusRegistryMock} from './mocks/AugustusRegistryMock.sol';
-import {MockParaSwapFeeClaimer} from 'aave-v3-periphery/contracts/mocks/swap/MockParaSwapFeeClaimer.sol';
+import {MockParaSwapFeeClaimer} from 'src/periphery/contracts/mocks/swap/MockParaSwapFeeClaimer.sol';
 import {BatchTestProcedures} from './utils/BatchTestProcedures.sol';
 import {AaveV3TestListing} from './mocks/AaveV3TestListing.sol';
-import {ACLManager} from 'aave-v3-core/contracts/protocol/configuration/ACLManager.sol';
-import {WETH9} from 'aave-v3-core/contracts/dependencies/weth/WETH9.sol';
-import {IPoolAddressesProvider} from 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
-import {IAaveV3ConfigEngine} from 'aave-v3-periphery/contracts/v3-config-engine/IAaveV3ConfigEngine.sol';
-import {IPool} from 'aave-v3-core/contracts/interfaces/IPool.sol';
-import {AaveV3ConfigEngine} from 'aave-v3-periphery/contracts/v3-config-engine/AaveV3ConfigEngine.sol';
+import {ACLManager} from 'src/core/contracts/protocol/configuration/ACLManager.sol';
+import {WETH9} from 'src/core/contracts/dependencies/weth/WETH9.sol';
+import {IPoolAddressesProvider} from 'src/core/contracts/interfaces/IPoolAddressesProvider.sol';
+import {IAaveV3ConfigEngine} from 'src/periphery/contracts/v3-config-engine/IAaveV3ConfigEngine.sol';
+import {IPool} from 'src/core/contracts/interfaces/IPool.sol';
+import {AaveV3ConfigEngine} from 'src/periphery/contracts/v3-config-engine/AaveV3ConfigEngine.sol';
 
 contract AaveV3BatchDeployment is BatchTestProcedures {
   address public marketOwner;
@@ -22,6 +22,7 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
 
   Roles public roles;
   MarketConfig public config;
+  SubMarketConfig public subConfig;
   DeployFlags public flags;
   MarketReport deployedContracts;
 
@@ -49,7 +50,8 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
       weth9,
       address(0),
       0.0005e4,
-      0.0004e4
+      0.0004e4,
+      0
     );
   }
 
@@ -58,6 +60,7 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
       marketOwner,
       roles,
       config,
+      subConfig,
       flags,
       deployedContracts
     );
@@ -86,6 +89,7 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
       marketOwner,
       roles,
       config,
+      subConfig,
       flags,
       deployedContracts
     );
@@ -111,7 +115,7 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
   function testAaveV3BatchDeploy() public {
     checkFullReport(
       flags,
-      deployAaveV3Testnet(marketOwner, roles, config, flags, deployedContracts)
+      deployAaveV3Testnet(marketOwner, roles, config, subConfig, flags, deployedContracts)
     );
   }
 }

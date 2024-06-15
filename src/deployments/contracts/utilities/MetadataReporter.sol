@@ -69,8 +69,10 @@ contract MetadataReporter is IMetadataReporter {
       report.paraSwapWithdrawSwapAdapter
     );
     vm.serializeAddress(jsonReport, 'aaveParaSwapFeeClaimer', report.aaveParaSwapFeeClaimer);
-    // vm.serializeAddress(jsonReport, 'arcTimelock', report.timelock);
-    // vm.serializeAddress(jsonReport, 'arcKycPortal', report.kycPortal);
+    vm.serializeAddress(jsonReport, 'arcTimelock', report.timelock);
+    vm.serializeAddress(jsonReport, 'arcKycPortal', report.kycPortal);
+    vm.serializeAddress(jsonReport, 'deployEngine', report.engine);
+    vm.serializeAddress(jsonReport, 'interestRateStrategy', report.defaultInterestRateStrategyV2);
     string memory output = vm.serializeAddress(
       jsonReport,
       'paraSwapRepayAdapter',

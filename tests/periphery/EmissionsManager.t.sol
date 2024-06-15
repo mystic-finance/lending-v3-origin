@@ -2,15 +2,15 @@
 pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
-import {MockAggregator} from 'aave-v3-core/contracts/mocks/oracle/CLAggregators/MockAggregator.sol';
-import {RewardsController} from 'aave-v3-periphery/contracts/rewards/RewardsController.sol';
-import {EmissionManager} from 'aave-v3-periphery/contracts/rewards/EmissionManager.sol';
-import {DataTypes} from 'aave-v3-core/contracts/protocol/libraries/types/DataTypes.sol';
-import {IPool} from 'aave-v3-core/contracts/interfaces/IPool.sol';
-import {ITransferStrategyBase} from 'aave-v3-periphery/contracts/rewards/interfaces/ITransferStrategyBase.sol';
-import {IEACAggregatorProxy} from 'aave-v3-periphery/contracts/misc/interfaces/IEACAggregatorProxy.sol';
-import {RewardsDataTypes} from 'aave-v3-periphery/contracts/rewards/libraries/RewardsDataTypes.sol';
-import {PullRewardsTransferStrategy} from 'aave-v3-periphery/contracts/rewards/transfer-strategies/PullRewardsTransferStrategy.sol';
+import {MockAggregator} from 'src/core/contracts/mocks/oracle/CLAggregators/MockAggregator.sol';
+import {RewardsController} from 'src/periphery/contracts/rewards/RewardsController.sol';
+import {EmissionManager} from 'src/periphery/contracts/rewards/EmissionManager.sol';
+import {DataTypes} from 'src/core/contracts/protocol/libraries/types/DataTypes.sol';
+import {IPool} from 'src/core/contracts/interfaces/IPool.sol';
+import {ITransferStrategyBase} from 'src/periphery/contracts/rewards/interfaces/ITransferStrategyBase.sol';
+import {IEACAggregatorProxy} from 'src/periphery/contracts/misc/interfaces/IEACAggregatorProxy.sol';
+import {RewardsDataTypes} from 'src/periphery/contracts/rewards/libraries/RewardsDataTypes.sol';
+import {PullRewardsTransferStrategy} from 'src/periphery/contracts/rewards/transfer-strategies/PullRewardsTransferStrategy.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 
 contract EmissionManagerTest is TestnetProcedures {

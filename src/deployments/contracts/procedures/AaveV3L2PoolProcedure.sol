@@ -120,7 +120,7 @@ contract AaveV3L2PoolProcedure is AaveV3PoolConfigProcedure, IErrors {
       new SemiPermissionedPoolInstance(IPoolAddressesProvider(poolAddressesProvider))
     );
 
-    PermissionedPoolInstance(l2Pool).initialize(IPoolAddressesProvider(poolAddressesProvider));
+    SemiPermissionedPoolInstance(l2Pool).initialize(IPoolAddressesProvider(poolAddressesProvider));
 
     return l2Pool;
   }

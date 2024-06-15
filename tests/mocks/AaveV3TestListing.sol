@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import 'aave-v3-periphery/contracts/v3-config-engine/AaveV3Payload.sol';
-import {TestnetERC20} from 'aave-v3-periphery/contracts/mocks/testnet-helpers/TestnetERC20.sol';
-import {MockAggregator} from 'aave-v3-core/contracts/mocks/oracle/CLAggregators/MockAggregator.sol';
-import {ACLManager} from 'aave-v3-core/contracts/protocol/configuration/ACLManager.sol';
+import 'src/periphery/contracts/v3-config-engine/AaveV3Payload.sol';
+import {TestnetERC20} from 'src/periphery/contracts/mocks/testnet-helpers/TestnetERC20.sol';
+import {MockAggregator} from 'src/core/contracts/mocks/oracle/CLAggregators/MockAggregator.sol';
+import {ACLManager} from 'src/core/contracts/protocol/configuration/ACLManager.sol';
 import {MarketReport} from 'src/deployments/interfaces/IMarketReportTypes.sol';
 
 /**

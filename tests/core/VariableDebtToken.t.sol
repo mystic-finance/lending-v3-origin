@@ -4,12 +4,12 @@ pragma solidity ^0.8.0;
 import 'forge-std/Test.sol';
 
 import {VariableDebtTokenHarness as VariableDebtTokenInstance} from '../harness/VariableDebtToken.sol';
-import {IAaveIncentivesController} from 'aave-v3-core/contracts/interfaces/IAaveIncentivesController.sol';
-import {Errors} from 'aave-v3-core/contracts/protocol/libraries/helpers/Errors.sol';
-import {TestnetERC20} from 'aave-v3-periphery/contracts/mocks/testnet-helpers/TestnetERC20.sol';
-import {ReserveLogic, DataTypes} from 'aave-v3-core/contracts/protocol/libraries/logic/ReserveLogic.sol';
-import {WadRayMath} from 'aave-v3-core/contracts/protocol/libraries/math/WadRayMath.sol';
-import {ConfiguratorInputTypes, IPool} from 'aave-v3-core/contracts/protocol/pool/PoolConfigurator.sol';
+import {IAaveIncentivesController} from 'src/core/contracts/interfaces/IAaveIncentivesController.sol';
+import {Errors} from 'src/core/contracts/protocol/libraries/helpers/Errors.sol';
+import {TestnetERC20} from 'src/periphery/contracts/mocks/testnet-helpers/TestnetERC20.sol';
+import {ReserveLogic, DataTypes} from 'src/core/contracts/protocol/libraries/logic/ReserveLogic.sol';
+import {WadRayMath} from 'src/core/contracts/protocol/libraries/math/WadRayMath.sol';
+import {ConfiguratorInputTypes, IPool} from 'src/core/contracts/protocol/pool/PoolConfigurator.sol';
 import {EIP712SigUtils} from '../utils/EIP712SigUtils.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 

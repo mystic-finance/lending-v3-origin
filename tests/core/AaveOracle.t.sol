@@ -3,11 +3,11 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {MintableERC20} from 'aave-v3-core/contracts/mocks/tokens/MintableERC20.sol';
-import {MockAggregator} from 'aave-v3-core/contracts/mocks/oracle/CLAggregators/MockAggregator.sol';
+import {MintableERC20} from 'src/core/contracts/mocks/tokens/MintableERC20.sol';
+import {MockAggregator} from 'src/core/contracts/mocks/oracle/CLAggregators/MockAggregator.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
-import {Errors} from 'aave-v3-core/contracts/protocol/libraries/helpers/Errors.sol';
-import {PriceOracle} from 'aave-v3-core/contracts/mocks/oracle/PriceOracle.sol';
+import {Errors} from 'src/core/contracts/protocol/libraries/helpers/Errors.sol';
+import {PriceOracle} from 'src/core/contracts/mocks/oracle/PriceOracle.sol';
 
 contract AaveOracleTest is TestnetProcedures {
   function setUp() public {

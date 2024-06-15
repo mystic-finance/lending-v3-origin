@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {IAToken} from 'aave-v3-core/contracts/interfaces/IAToken.sol';
-import {IVariableDebtToken} from 'aave-v3-core/contracts/interfaces/IVariableDebtToken.sol';
-import {IERC20Detailed} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {IAToken} from 'src/core/contracts/interfaces/IAToken.sol';
+import {IVariableDebtToken} from 'src/core/contracts/interfaces/IVariableDebtToken.sol';
+import {IERC20Detailed} from 'src/core/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 
 interface IVariableDebtTokenWithERC20 is IVariableDebtToken, IERC20Detailed {}

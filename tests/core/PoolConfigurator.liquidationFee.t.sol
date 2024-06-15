@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {Errors} from 'aave-v3-core/contracts/protocol/libraries/helpers/Errors.sol';
+import {Errors} from 'src/core/contracts/protocol/libraries/helpers/Errors.sol';
 import '../utils/TestnetProcedures.sol';
 
 contract PoolConfiguratorLiquidationFeeTests is TestnetProcedures {

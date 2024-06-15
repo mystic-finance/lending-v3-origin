@@ -3,8 +3,8 @@ pragma solidity ^0.8.0;
 
 import {PermissionedPool} from '../contracts/protocol/pool/PermissionedPool.sol';
 import {IPoolAddressesProvider} from '../contracts/interfaces/IPoolAddressesProvider.sol';
-import {PoolInstance} from './PoolInstance.sol';
+import {PoolInstance} from './PoolInstancePerm.sol';
 
-contract PermissionedPoolInstance is PermissionedPool, PoolInstance {
+contract PermissionedPoolInstance is PoolInstance {
   constructor(IPoolAddressesProvider provider) PoolInstance(provider) {}
 }

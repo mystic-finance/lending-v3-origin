@@ -8,7 +8,7 @@ contract AaveV3SemiPermissionedPoolBatch is AaveV3L2PoolProcedure, IPoolReport {
   PoolReport internal _poolReport;
 
   constructor(address poolAddressesProvider) {
-    _poolReport = _deployAaveV3PermPool(poolAddressesProvider); // 3-1
+    _poolReport = _deployAaveV3SemiPermPool(poolAddressesProvider); // 3-1
   }
 
   function getPoolReport() external view returns (PoolReport memory) {

@@ -33,7 +33,7 @@ abstract contract StdUtils {
     function _bound(uint256 x, uint256 min, uint256 max) internal pure virtual returns (uint256 result) {
         require(min <= max, "StdUtils bound(uint256,uint256,uint256): Max is less than min.");
         // If x is between min and max, return x directly. This is to ensure that dictionary values
-        // do not get shifted if the min is nonzero. More info: https://github.com/foundry-rs/forge-std/issues/188
+        // do not get shifted if the min is nonzero. More info: https://github.com/foundry-rs/lib/forge-std/src/issues/188
         if (x >= min && x <= max) return x;
 
         uint256 size = max - min + 1;

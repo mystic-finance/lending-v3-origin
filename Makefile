@@ -37,5 +37,7 @@ git-diff :
 	@mkdir -p diffs
 	@printf '%s\n%s\n%s\n' "\`\`\`diff" "$$(git diff --no-index --diff-algorithm=patience --ignore-space-at-eol ${before} ${after})" "\`\`\`" > diffs/${out}.md
 
-deploy-script-test :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 421614 --rpc-url arb_sepolia --broadcast --verify  -vvvv --with-gas-price 4000000000 --gas-estimate-multiplier 200 --legacy
-deploy-list-asset :; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 421614 --rpc-url arb_sepolia --broadcast --verify  -vvvv --with-gas-price 4000000000 --gas-estimate-multiplier 200 --legacy
+deploy-script-test :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 421614 --rpc-url arb_sepolia --broadcast --verify  -vvvv --with-gas-price 200000000 --gas-estimate-multiplier 150
+deploy-script-test-plume :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 161221135 --rpc-url plume --broadcast --verify  -vvvv --with-gas-price 200000000 --gas-estimate-multiplier 150
+deploy-list-asset :; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 421614 --rpc-url arb_sepolia --broadcast  -vvvv --with-gas-price 200000000 --gas-estimate-multiplier 150 --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63
+deploy-list-asset-plume :; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 161221135 --rpc-url plume --broadcast  -vvvv --with-gas-price 200000000 --gas-estimate-multiplier 150 --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63

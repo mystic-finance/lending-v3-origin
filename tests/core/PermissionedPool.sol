@@ -3,14 +3,15 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {IAaveOracle} from 'aave-v3-core/contracts/interfaces/IAaveOracle.sol';
-import {L2Encoder} from 'aave-v3-core/contracts/misc/L2Encoder.sol';
-import {IL2Pool} from 'aave-v3-core/contracts/interfaces/IL2Pool.sol';
-import {IReserveInterestRateStrategy} from 'aave-v3-core/contracts/interfaces/IReserveInterestRateStrategy.sol';
-import {BorrowLogic} from 'aave-v3-core/contracts/protocol/libraries/logic/BorrowLogic.sol';
-import {SupplyLogic} from 'aave-v3-core/contracts/protocol/libraries/logic/SupplyLogic.sol';
-import {LiquidationLogic} from 'aave-v3-core/contracts/protocol/libraries/logic/LiquidationLogic.sol';
-import {TestnetERC20} from 'aave-v3-periphery/contracts/mocks/testnet-helpers/TestnetERC20.sol';
+import {IAaveOracle} from 'src/core/contracts/interfaces/IAaveOracle.sol';
+import {L2Encoder} from 'src/core/contracts/misc/L2Encoder.sol';
+import {IL2Pool} from 'src/core/contracts/interfaces/IL2Pool.sol';
+import {IReserveInterestRateStrategy} from 'src/core/contracts/interfaces/IReserveInterestRateStrategy.sol';
+import {IPoolAddressesProvider} from 'src/core/contracts/interfaces/IPoolAddressesProvider.sol';
+import {BorrowLogic} from 'src/core/contracts/protocol/libraries/logic/BorrowLogic.sol';
+import {SupplyLogic} from 'src/core/contracts/protocol/libraries/logic/SupplyLogic.sol';
+import {LiquidationLogic} from 'src/core/contracts/protocol/libraries/logic/LiquidationLogic.sol';
+import {TestnetERC20} from 'src/periphery/contracts/mocks/testnet-helpers/TestnetERC20.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 import {PoolTests, DataTypes, Errors, IERC20, IPool} from './Pool.t.sol';
 import {EIP712SigUtils} from '../utils/EIP712SigUtils.sol';
@@ -31,6 +32,7 @@ contract L2PoolTests is PoolTests {
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReserveStableRateBorrowing(tokenList.usdx, true);
+    // portal.addPoolUsers(alice, 0, IPoolAddressesProvider(report.poolAddressesProvider));
   }
 
   function test_l2_supply() public {

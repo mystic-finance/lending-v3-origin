@@ -14,6 +14,8 @@ import {WadRayMath} from 'aave-v3-core/contracts/protocol/libraries/math/WadRayM
 import {IAaveOracle} from 'aave-v3-core/contracts/interfaces/IAaveOracle.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 
+import {KYCPortal} from 'src/core/contracts/protocol/partner/KYCPortal.sol';
+
 contract PoolTests is TestnetProcedures {
   using stdStorage for StdStorage;
 
@@ -21,6 +23,8 @@ contract PoolTests is TestnetProcedures {
   using WadRayMath for uint256;
 
   IPool internal pool;
+  KYCPortal internal portal;
+  bool internal permissioned;
 
   event MintUnbacked(
     address indexed reserve,
@@ -133,6 +137,10 @@ contract PoolTests is TestnetProcedures {
   }
 
   function test_setUserUseReserveAsCollateral_false() public {
+    if (permissioned) {
+      vm.prank(poolAdmin);
+      portal.addPoolUsers(alice, 0, IPoolAddressesProvider(report.poolAddressesProvider));
+    }
     vm.startPrank(alice);
     pool.supply(tokenList.usdx, 1e6, alice, 0);
 
@@ -196,6 +204,10 @@ contract PoolTests is TestnetProcedures {
   }
 
   function test_reverts_setUserUseReserveAsCollateral_true_user_balance_zero() public {
+    if (permissioned) {
+      vm.prank(poolAdmin);
+      portal.addPoolUsers(alice, 0, IPoolAddressesProvider(report.poolAddressesProvider));
+    }
     vm.expectRevert(bytes(Errors.UNDERLYING_BALANCE_ZERO));
 
     vm.prank(alice);
@@ -206,6 +218,11 @@ contract PoolTests is TestnetProcedures {
     (address aUSDX, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.usdx);
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReserveActive(tokenList.usdx, false);
+
+    if (permissioned) {
+      vm.prank(poolAdmin);
+      portal.addPoolUsers(alice, 0, IPoolAddressesProvider(report.poolAddressesProvider));
+    }
 
     vm.prank(report.poolProxy);
     IAToken(aUSDX).mint(alice, alice, 100e6, 1e27);
@@ -229,6 +246,10 @@ contract PoolTests is TestnetProcedures {
   }
 
   function test_reverts_setUserUseReserveAsCollateral_false_hf_lower_lqt() public {
+    if (permissioned) {
+      vm.prank(poolAdmin);
+      portal.addPoolUsers(alice, 0, IPoolAddressesProvider(report.poolAddressesProvider));
+    }
     _seedUsdxLiquidity();
 
     vm.startPrank(alice);
@@ -386,6 +407,10 @@ contract PoolTests is TestnetProcedures {
   }
 
   function test_resetIsolationModeTotalDebt() public {
+    if (permissioned) {
+      vm.prank(poolAdmin);
+      portal.addPoolUsers(alice, 0, IPoolAddressesProvider(report.poolAddressesProvider));
+    }
     _seedUsdxLiquidity();
 
     vm.startPrank(poolAdmin);
@@ -415,6 +440,10 @@ contract PoolTests is TestnetProcedures {
   }
 
   function test_getters_getUserAccountData() public {
+    if (permissioned) {
+      vm.prank(poolAdmin);
+      portal.addPoolUsers(bob, 0, IPoolAddressesProvider(report.poolAddressesProvider));
+    }
     _seedUsdxLiquidity();
 
     DataTypes.ReserveConfigurationMap memory conf = pool.getConfiguration(tokenList.wbtc);
@@ -440,6 +469,10 @@ contract PoolTests is TestnetProcedures {
   }
 
   function test_mintToTreasury() public {
+    if (permissioned) {
+      vm.prank(poolAdmin);
+      portal.addPoolUsers(bob, 0, IPoolAddressesProvider(report.poolAddressesProvider));
+    }
     (, , address varDebtUSDX) = contracts.protocolDataProvider.getReserveTokensAddresses(
       tokenList.usdx
     );
@@ -474,6 +507,11 @@ contract PoolTests is TestnetProcedures {
     (, , address varDebtUSDX) = contracts.protocolDataProvider.getReserveTokensAddresses(
       tokenList.usdx
     );
+
+    if (permissioned) {
+      vm.prank(poolAdmin);
+      portal.addPoolUsers(bob, 0, IPoolAddressesProvider(report.poolAddressesProvider));
+    }
 
     _seedUsdxLiquidity();
 
@@ -564,6 +602,12 @@ contract PoolTests is TestnetProcedures {
   }
 
   function test_setUserEmode_twice_inconsistent_category() public {
+    if (permissioned) {
+      vm.prank(poolAdmin);
+      portal.addPoolUsers(carol, 0, IPoolAddressesProvider(report.poolAddressesProvider));
+      vm.prank(poolAdmin);
+      portal.addPoolUsers(alice, 0, IPoolAddressesProvider(report.poolAddressesProvider));
+    }
     vm.prank(carol);
     pool.supply(tokenList.wbtc, 10e8, carol, 0);
     vm.prank(carol);
@@ -614,6 +658,12 @@ contract PoolTests is TestnetProcedures {
   }
 
   function test_reverts_setUserEmode_0_bad_hf() public {
+    if (permissioned) {
+      vm.prank(poolAdmin);
+      portal.addPoolUsers(carol, 0, IPoolAddressesProvider(report.poolAddressesProvider));
+      vm.prank(poolAdmin);
+      portal.addPoolUsers(alice, 0, IPoolAddressesProvider(report.poolAddressesProvider));
+    }
     vm.prank(carol);
     pool.supply(tokenList.wbtc, 10e8, carol, 0);
     vm.prank(carol);
@@ -696,6 +746,10 @@ contract PoolTests is TestnetProcedures {
   }
 
   function _seedUsdxLiquidity() internal {
+    if (permissioned) {
+      vm.prank(poolAdmin);
+      portal.addPoolUsers(carol, 0, IPoolAddressesProvider(report.poolAddressesProvider));
+    }
     vm.prank(carol);
     pool.supply(tokenList.usdx, 50_000e6, carol, 0);
   }

@@ -3,10 +3,10 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {DataTypes} from 'aave-v3-core/contracts/protocol/libraries/types/DataTypes.sol';
-import {Errors} from 'aave-v3-core/contracts/protocol/libraries/helpers/Errors.sol';
-import {WadRayMath} from 'aave-v3-core/contracts/protocol/libraries/math/WadRayMath.sol';
-import {DefaultReserveInterestRateStrategyV2, IDefaultInterestRateStrategyV2, PercentageMath, IPoolAddressesProvider} from 'aave-v3-core/contracts/protocol/pool/DefaultReserveInterestRateStrategyV2.sol';
+import {DataTypes} from 'src/core/contracts/protocol/libraries/types/DataTypes.sol';
+import {Errors} from 'src/core/contracts/protocol/libraries/helpers/Errors.sol';
+import {WadRayMath} from 'src/core/contracts/protocol/libraries/math/WadRayMath.sol';
+import {DefaultReserveInterestRateStrategyV2, IDefaultInterestRateStrategyV2, PercentageMath, IPoolAddressesProvider} from 'src/core/contracts/protocol/pool/DefaultReserveInterestRateStrategyV2.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 
 contract RateStrategyTests is TestnetProcedures {

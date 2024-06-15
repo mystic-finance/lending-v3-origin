@@ -3,17 +3,17 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {IStableDebtToken} from 'aave-v3-core/contracts/interfaces/IStableDebtToken.sol';
-import {IVariableDebtToken} from 'aave-v3-core/contracts/interfaces/IVariableDebtToken.sol';
-import {IPoolAddressesProvider} from 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
-import {ISequencerOracle} from 'aave-v3-core/contracts/interfaces/ISequencerOracle.sol';
-import {Errors} from 'aave-v3-core/contracts/protocol/libraries/helpers/Errors.sol';
-import {TestnetERC20} from 'aave-v3-periphery/contracts/mocks/testnet-helpers/TestnetERC20.sol';
-import {UserConfiguration} from 'aave-v3-core/contracts/protocol/libraries/configuration/UserConfiguration.sol';
-import {PriceOracleSentinel} from 'aave-v3-core/contracts/protocol/configuration/PriceOracleSentinel.sol';
-import {SequencerOracle} from 'aave-v3-core/contracts/mocks/oracle/SequencerOracle.sol';
-import {BorrowLogic, IERC20} from 'aave-v3-core/contracts/protocol/libraries/logic/BorrowLogic.sol';
-import {DataTypes} from 'aave-v3-core/contracts/protocol/libraries/types/DataTypes.sol';
+import {IStableDebtToken} from 'src/core/contracts/interfaces/IStableDebtToken.sol';
+import {IVariableDebtToken} from 'src/core/contracts/interfaces/IVariableDebtToken.sol';
+import {IPoolAddressesProvider} from 'src/core/contracts/interfaces/IPoolAddressesProvider.sol';
+import {ISequencerOracle} from 'src/core/contracts/interfaces/ISequencerOracle.sol';
+import {Errors} from 'src/core/contracts/protocol/libraries/helpers/Errors.sol';
+import {TestnetERC20} from 'src/periphery/contracts/mocks/testnet-helpers/TestnetERC20.sol';
+import {UserConfiguration} from 'src/core/contracts/protocol/libraries/configuration/UserConfiguration.sol';
+import {PriceOracleSentinel} from 'src/core/contracts/protocol/configuration/PriceOracleSentinel.sol';
+import {SequencerOracle} from 'src/core/contracts/mocks/oracle/SequencerOracle.sol';
+import {BorrowLogic, IERC20} from 'src/core/contracts/protocol/libraries/logic/BorrowLogic.sol';
+import {DataTypes} from 'src/core/contracts/protocol/libraries/types/DataTypes.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 import {EIP712SigUtils} from '../utils/EIP712SigUtils.sol';
 

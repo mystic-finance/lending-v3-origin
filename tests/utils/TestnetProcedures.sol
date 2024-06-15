@@ -9,18 +9,18 @@ import {DeployUtils} from '../../src/deployments/contracts/utilities/DeployUtils
 import {FfiUtils} from '../../src/deployments/contracts/utilities/FfiUtils.sol';
 import {DefaultMarketInput} from '../../src/deployments/inputs/DefaultMarketInput.sol';
 import {AaveV3BatchOrchestration} from '../../src/deployments/projects/aave-v3-batched/AaveV3BatchOrchestration.sol';
-import {IPoolAddressesProvider} from 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
+import {IPoolAddressesProvider} from 'src/core/contracts/interfaces/IPoolAddressesProvider.sol';
 import {AaveV3TestListing} from '../mocks/AaveV3TestListing.sol';
-import {ACLManager, Errors} from 'aave-v3-core/contracts/protocol/configuration/ACLManager.sol';
-import {WETH9} from 'aave-v3-core/contracts/dependencies/weth/WETH9.sol';
-import {TestnetERC20} from 'aave-v3-periphery/contracts/mocks/testnet-helpers/TestnetERC20.sol';
-import {PoolConfigurator} from 'aave-v3-core/contracts/protocol/pool/PoolConfigurator.sol';
-import {DefaultReserveInterestRateStrategyV2} from 'aave-v3-core/contracts/protocol/pool/DefaultReserveInterestRateStrategyV2.sol';
-import {ReserveConfiguration} from 'aave-v3-core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
-import {PercentageMath} from 'aave-v3-core/contracts/protocol/libraries/math/PercentageMath.sol';
-import {AaveProtocolDataProvider} from 'aave-v3-core/contracts/misc/AaveProtocolDataProvider.sol';
+import {ACLManager, Errors} from 'src/core/contracts/protocol/configuration/ACLManager.sol';
+import {WETH9} from 'src/core/contracts/dependencies/weth/WETH9.sol';
+import {TestnetERC20} from 'src/periphery/contracts/mocks/testnet-helpers/TestnetERC20.sol';
+import {PoolConfigurator} from 'src/core/contracts/protocol/pool/PoolConfigurator.sol';
+import {DefaultReserveInterestRateStrategyV2} from 'src/core/contracts/protocol/pool/DefaultReserveInterestRateStrategyV2.sol';
+import {ReserveConfiguration} from 'src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
+import {PercentageMath} from 'src/core/contracts/protocol/libraries/math/PercentageMath.sol';
+import {AaveProtocolDataProvider} from 'src/core/contracts/misc/AaveProtocolDataProvider.sol';
 import {MarketReportUtils} from '../../src/deployments/contracts/utilities/MarketReportUtils.sol';
-import {AaveV3ConfigEngine, IAaveV3ConfigEngine} from 'aave-v3-periphery/contracts/v3-config-engine/AaveV3ConfigEngine.sol';
+import {AaveV3ConfigEngine, IAaveV3ConfigEngine} from 'src/periphery/contracts/v3-config-engine/AaveV3ConfigEngine.sol';
 
 struct TestVars {
   string aTokenName;
@@ -89,7 +89,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     string label;
   }
 
-  function _initTestEnvironment(bool mintUserTokens, bool l2) internal {
+  function _initTestEnvironment(bool mintUserTokens, bool l2, uint8 poolType) internal {
     poolAdmin = makeAddr('POOL_ADMIN');
 
     alicePrivateKey = 0xA11CE;
@@ -107,17 +107,21 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     (
       Roles memory roles,
       MarketConfig memory config,
+      SubMarketConfig memory subConfig,
       DeployFlags memory flags,
       MarketReport memory deployedContracts
     ) = _getMarketInput(poolAdmin);
     roleList = roles;
 
     flags.l2 = l2;
+    config.poolType = poolType;
+    subConfig.timelock = poolAdmin;
 
     (report, tokenList) = deployAaveV3TestnetAssets(
       poolAdmin,
       roles,
       config,
+      subConfig,
       flags,
       deployedContracts
     );
@@ -158,15 +162,23 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
   }
 
   function initTestEnvironment() public {
-    _initTestEnvironment(true, false);
+    _initTestEnvironment(true, false, 0);
   }
 
   function initL2TestEnvironment() public {
-    _initTestEnvironment(true, true);
+    _initTestEnvironment(true, true, 0);
+  }
+
+  function initPermTestEnvironment() public {
+    _initTestEnvironment(true, true, 1);
+  }
+
+  function initSemiPermTestEnvironment() public {
+    _initTestEnvironment(true, true, 2);
   }
 
   function initTestEnvironment(bool mintUserTokens) public {
-    _initTestEnvironment(mintUserTokens, false);
+    _initTestEnvironment(mintUserTokens, false, 0);
   }
 
   function detectFoundryLibrariesAndDelete() internal {
@@ -185,6 +197,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     address deployer,
     Roles memory roles,
     MarketConfig memory config,
+    SubMarketConfig memory subConfig,
     DeployFlags memory flags,
     MarketReport memory deployedContracts
   ) internal returns (MarketReport memory testReport) {
@@ -195,6 +208,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
       deployer,
       roles,
       config,
+      subConfig,
       flags,
       deployedContracts
     );
@@ -207,6 +221,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     address deployer,
     Roles memory roles,
     MarketConfig memory config,
+    SubMarketConfig memory subConfig,
     DeployFlags memory flags,
     MarketReport memory deployedContracts
   ) internal returns (MarketReport memory, TokenList memory) {
@@ -216,7 +231,14 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
 
     config.wrappedNativeToken = assetsList.weth;
 
-    MarketReport memory r = deployAaveV3Testnet(deployer, roles, config, flags, deployedContracts);
+    MarketReport memory r = deployAaveV3Testnet(
+      deployer,
+      roles,
+      config,
+      subConfig,
+      flags,
+      deployedContracts
+    );
 
     address engine = ConfigEngineDeployer.deployEngine(vm, r);
 

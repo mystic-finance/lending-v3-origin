@@ -3,12 +3,12 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {PoolAddressesProvider, IPoolAddressesProvider} from 'aave-v3-core/contracts/protocol/configuration/PoolAddressesProvider.sol';
-import {PoolInstance} from 'aave-v3-core/instances/PoolInstance.sol';
-import {MockInitializableV1, MockInitializableV2} from 'aave-v3-core/contracts/mocks/upgradeability/MockInitializableImplementation.sol';
-import {PoolConfiguratorInstance} from 'aave-v3-core/instances/PoolConfiguratorInstance.sol';
-import {MockPoolInherited} from 'aave-v3-core/contracts/mocks/helpers/MockPool.sol';
-import {ACLManager} from 'aave-v3-core/contracts/protocol/configuration/ACLManager.sol';
+import {PoolAddressesProvider, IPoolAddressesProvider} from 'src/core/contracts/protocol/configuration/PoolAddressesProvider.sol';
+import {PoolInstance} from 'src/core/instances/PoolInstance.sol';
+import {MockInitializableV1, MockInitializableV2} from 'src/core/contracts/mocks/upgradeability/MockInitializableImplementation.sol';
+import {PoolConfiguratorInstance} from 'src/core/instances/PoolConfiguratorInstance.sol';
+import {MockPoolInherited} from 'src/core/contracts/mocks/helpers/MockPool.sol';
+import {ACLManager} from 'src/core/contracts/protocol/configuration/ACLManager.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 import {SlotParser} from '../utils/SlotParser.sol';
 

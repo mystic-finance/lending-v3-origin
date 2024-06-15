@@ -3,8 +3,8 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {Errors} from 'aave-v3-core/contracts/protocol/libraries/helpers/Errors.sol';
-import {ConfiguratorInputTypes} from 'aave-v3-core/contracts/protocol/pool/PoolConfigurator.sol';
+import {Errors} from 'src/core/contracts/protocol/libraries/helpers/Errors.sol';
+import {ConfiguratorInputTypes} from 'src/core/contracts/protocol/pool/PoolConfigurator.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 
 contract PoolConfiguratorACLModifiersTest is TestnetProcedures {

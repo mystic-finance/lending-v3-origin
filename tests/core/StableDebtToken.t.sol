@@ -4,10 +4,10 @@ pragma solidity ^0.8.0;
 import 'forge-std/Test.sol';
 
 import {StableDebtTokenHarness as StableDebtTokenInstance} from '../harness/StableDebtToken.sol';
-import {Errors} from 'aave-v3-core/contracts/protocol/libraries/helpers/Errors.sol';
-import {IAaveIncentivesController} from 'aave-v3-core/contracts/interfaces/IAaveIncentivesController.sol';
-import {TestnetERC20} from 'aave-v3-periphery/contracts/mocks/testnet-helpers/TestnetERC20.sol';
-import {PoolConfigurator, ConfiguratorInputTypes, IPool} from 'aave-v3-core/contracts/protocol/pool/PoolConfigurator.sol';
+import {Errors} from 'src/core/contracts/protocol/libraries/helpers/Errors.sol';
+import {IAaveIncentivesController} from 'src/core/contracts/interfaces/IAaveIncentivesController.sol';
+import {TestnetERC20} from 'src/periphery/contracts/mocks/testnet-helpers/TestnetERC20.sol';
+import {PoolConfigurator, ConfiguratorInputTypes, IPool} from 'src/core/contracts/protocol/pool/PoolConfigurator.sol';
 import {EIP712SigUtils} from '../utils/EIP712SigUtils.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 

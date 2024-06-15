@@ -3,11 +3,11 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {AToken} from 'aave-v3-core/contracts/protocol/tokenization/AToken.sol';
-import {Errors} from 'aave-v3-core/contracts/protocol/libraries/helpers/Errors.sol';
-import {TestnetERC20} from 'aave-v3-periphery/contracts/mocks/testnet-helpers/TestnetERC20.sol';
-import {ConfiguratorInputTypes} from 'aave-v3-core/contracts/protocol/pool/PoolConfigurator.sol';
-import {IDefaultInterestRateStrategyV2} from 'aave-v3-core/contracts/protocol/pool/DefaultReserveInterestRateStrategyV2.sol';
+import {AToken} from 'src/core/contracts/protocol/tokenization/AToken.sol';
+import {Errors} from 'src/core/contracts/protocol/libraries/helpers/Errors.sol';
+import {TestnetERC20} from 'src/periphery/contracts/mocks/testnet-helpers/TestnetERC20.sol';
+import {ConfiguratorInputTypes} from 'src/core/contracts/protocol/pool/PoolConfigurator.sol';
+import {IDefaultInterestRateStrategyV2} from 'src/core/contracts/protocol/pool/DefaultReserveInterestRateStrategyV2.sol';
 import {TestnetProcedures, TestVars, TestReserveConfig} from '../utils/TestnetProcedures.sol';
 
 contract PoolConfiguratorInitReservesTest is TestnetProcedures {

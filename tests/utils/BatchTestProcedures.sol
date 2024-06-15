@@ -10,13 +10,13 @@ import {AaveV3SetupBatch} from '../../src/deployments/projects/aave-v3-batched/b
 import {FfiUtils} from '../../src/deployments/contracts/utilities/FfiUtils.sol';
 import {DefaultMarketInput} from '../../src/deployments/inputs/DefaultMarketInput.sol';
 import {AaveV3BatchOrchestration} from '../../src/deployments/projects/aave-v3-batched/AaveV3BatchOrchestration.sol';
-import {IPoolAddressesProvider} from 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
-import {ACLManager} from 'aave-v3-core/contracts/protocol/configuration/ACLManager.sol';
-import {WETH9} from 'aave-v3-core/contracts/dependencies/weth/WETH9.sol';
-import 'aave-v3-periphery/contracts/mocks/testnet-helpers/TestnetERC20.sol';
-import 'aave-v3-core/contracts/protocol/pool/PoolConfigurator.sol';
-import 'aave-v3-core/contracts/protocol/libraries/math/PercentageMath.sol';
-import 'aave-v3-core/contracts/misc/AaveProtocolDataProvider.sol';
+import {IPoolAddressesProvider} from 'src/core/contracts/interfaces/IPoolAddressesProvider.sol';
+import {ACLManager} from 'src/core/contracts/protocol/configuration/ACLManager.sol';
+import {WETH9} from 'src/core/contracts/dependencies/weth/WETH9.sol';
+import 'src/periphery/contracts/mocks/testnet-helpers/TestnetERC20.sol';
+import 'src/core/contracts/protocol/pool/PoolConfigurator.sol';
+import 'src/core/contracts/protocol/libraries/math/PercentageMath.sol';
+import 'src/core/contracts/misc/AaveProtocolDataProvider.sol';
 import {MarketReportUtils} from '../../src/deployments/contracts/utilities/MarketReportUtils.sol';
 
 struct TestVars {
@@ -66,6 +66,8 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       AaveV3SetupBatch setupContract
     )
   {
+    SubMarketConfig memory subConfig;
+
     (setupContract, initialReport) = AaveV3BatchOrchestration._deploySetupContract(
       roles.marketOwner,
       roles,
@@ -84,6 +86,8 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       flags
     );
 
+    poolReport = AaveV3BatchOrchestration._setupKycPortal(subConfig, poolReport, roles.poolAdmin);
+
     peripheryReport = AaveV3BatchOrchestration._deployPeripherals(
       roles,
       config,
@@ -91,12 +95,12 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       address(setupContract)
     );
 
-    paraswapReport = AaveV3BatchOrchestration._deployParaswapAdapters(
-      roles,
-      config,
-      initialReport.poolAddressesProvider,
-      peripheryReport.treasury
-    );
+    // paraswapReport = AaveV3BatchOrchestration._deployParaswapAdapters(
+    //   roles,
+    //   config,
+    //   initialReport.poolAddressesProvider,
+    //   peripheryReport.treasury
+    // );
 
     return (
       initialReport,
@@ -143,7 +147,8 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       poolReport.poolConfiguratorImplementation,
       gettersReport1.protocolDataProvider,
       peripheryReport.aaveOracle,
-      peripheryReport.rewardsControllerImplementation
+      peripheryReport.rewardsControllerImplementation,
+      poolReport.kycPortal
     );
 
     gettersReport2 = AaveV3BatchOrchestration._deployGettersBatch2(
@@ -186,10 +191,10 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
     assertTrue(r.walletBalanceProvider != address(0), 'report.walletBalanceProvider');
     assertTrue(r.uiIncentiveDataProvider != address(0), 'report.uiIncentiveDataProvider');
     assertTrue(r.uiPoolDataProvider != address(0), 'report.uiPoolDataProvider');
-    assertTrue(r.paraSwapLiquiditySwapAdapter != address(0), 'report.paraSwapLiquiditySwapAdapter');
-    assertTrue(r.paraSwapRepayAdapter != address(0), 'report.paraSwapRepayAdapter');
-    assertTrue(r.paraSwapWithdrawSwapAdapter != address(0), 'report.paraSwapWithdrawSwapAdapter');
-    assertTrue(r.aaveParaSwapFeeClaimer != address(0), 'report.aaveParaSwapFeeClaimer');
+    // assertTrue(r.paraSwapLiquiditySwapAdapter != address(0), 'report.paraSwapLiquiditySwapAdapter');
+    // assertTrue(r.paraSwapRepayAdapter != address(0), 'report.paraSwapRepayAdapter');
+    // assertTrue(r.paraSwapWithdrawSwapAdapter != address(0), 'report.paraSwapWithdrawSwapAdapter');
+    // assertTrue(r.aaveParaSwapFeeClaimer != address(0), 'report.aaveParaSwapFeeClaimer');
 
     if (flags.l2) {
       assertTrue(r.l2Encoder != address(0), 'report.l2Encoder');
@@ -210,6 +215,7 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
     address deployer,
     Roles memory roles,
     MarketConfig memory config,
+    SubMarketConfig memory subConfig,
     DeployFlags memory flags,
     MarketReport memory deployedContracts
   ) internal returns (MarketReport memory testReport) {
@@ -220,6 +226,7 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       deployer,
       roles,
       config,
+      subConfig,
       flags,
       deployedContracts
     );

@@ -32,12 +32,20 @@ import {AaveV3LibrariesBatch1} from '../aave-v3-libraries/AaveV3LibrariesBatch1.
 
 import {AaveV3LibrariesBatch2} from '../aave-v3-libraries/AaveV3LibrariesBatch2.sol';
 
+import {EngineFlags} from 'src/periphery/contracts/v3-config-engine/EngineFlags.sol';
+import {IERC20Metadata} from 'lib/solidity-utils/src/contracts/oz-common/interfaces/IERC20Metadata.sol';
+import {ReserveConfiguration} from 'src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
+import {PercentageMath} from 'src/core/contracts/protocol/libraries/math/PercentageMath.sol';
+
 /**
  * @title AaveV3BatchOrchestration
  * @author BGD
  * @dev Library which ensemble the deployment of Aave V3 using batch constructor deployment pattern.
  */
 library AaveV3BatchOrchestration {
+  using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
+  using PercentageMath for uint256;
+
   function deployAaveV3(
     address deployer,
     Roles memory roles,
@@ -77,21 +85,6 @@ library AaveV3BatchOrchestration {
 
     /*
     The following are done here:
-    1. Timelock deployment
-    2. KYCPortal deployment
-    */
-    {
-      if (subConfig.timelock == address(0)) {
-        subConfig.timelock = _deployTimelock(deployer);
-      }
-
-      if (subConfig.kycPortal == address(0)) {
-        subConfig.kycPortal = _deployKycPortal(subConfig.timelock);
-      }
-    }
-
-    /*
-    The following are done here:
     1. Pool Implementation deployment
     2. Pool Configurator deployment
     */
@@ -103,8 +96,7 @@ library AaveV3BatchOrchestration {
       poolReport = _deploySemiPermissionedPoolImplementations(initialReport.poolAddressesProvider); //3
     }
 
-    poolReport.kycPortal = subConfig.kycPortal;
-    poolReport.timelock = subConfig.timelock;
+    poolReport = _setupKycPortal(subConfig, poolReport, deployer);
 
     /*
     The following are done here:
@@ -135,7 +127,8 @@ library AaveV3BatchOrchestration {
       poolReport.poolConfiguratorImplementation,
       gettersReport1.protocolDataProvider,
       peripheryReport.aaveOracle,
-      peripheryReport.rewardsControllerImplementation
+      peripheryReport.rewardsControllerImplementation,
+      poolReport.kycPortal
     ); //5
 
     // ParaswapReport memory paraswapReport = _deployParaswapAdapters(
@@ -169,6 +162,8 @@ library AaveV3BatchOrchestration {
       subConfig
     ); // 7
 
+    // list reserve
+
     // Save final report at AaveV3SetupBatch contract
     MarketReport memory report = _generateMarketReport(
       initialReport,
@@ -183,11 +178,11 @@ library AaveV3BatchOrchestration {
 
     /*
     The following are done here:
-    1. Enginer deployment
+    1. Enginer deployment (deprecated)
     */
-    address engine = _deployEngine(report, subConfig);
+    // address engine = _deployEngine(report, subConfig);
 
-    report.engine = engine;
+    // report.engine = engine;
 
     setupBatch.setMarketReport(report);
 
@@ -195,15 +190,92 @@ library AaveV3BatchOrchestration {
   }
 
   function listAssetPairAaveV3(
-    address deployer,
     ListingConfig memory config,
-    MarketReport memory deployedContracts
-  ) internal returns (MarketReport memory) {
-    AaveV3ConfigEngine engine = AaveV3ConfigEngine(deployedContracts.engine);
-    engine.listAssets(config.poolContext, config.listingBorrow);
-    engine.listAssets(config.poolContext, config.listingCollateral);
+    SubMarketConfig memory subConfig
+  ) internal {
+    IPoolConfigurator configurator = IPoolConfigurator(config.poolConfigurator);
 
-    return deployedContracts;
+    // 1. set price feeds
+    _setPriceFeeds(IAaveOracle(config.oracle), config);
+
+    ConfiguratorInputTypes.InitReserveInput[]
+      memory initReserveInputs = new ConfiguratorInputTypes.InitReserveInput[](
+        config.listings.length
+      );
+
+    // 2. in a loop do the reserved configuration
+    for (uint256 i = 0; i < config.listings.length; i++) {
+      uint8 decimals = IERC20Metadata(config.listings[i].asset).decimals();
+      require(decimals > 0, 'INVALID_ASSET_DECIMALS');
+
+      // 3. set the underlying and debt asset to be asser for atoken and stoken generation, to allow switching of debt asset and supply assets
+      subConfig.underlyingAsset = config.listings[i].asset;
+      subConfig.debtAsset = config.listings[i].asset;
+
+      // 4. deploy all tokens
+      AaveV3TokensBatch.TokensReport memory tokensReport = _deployTokens(
+        config.poolProxy,
+        config.treasury,
+        subConfig
+      );
+
+      // 5. initialize reserve for each asset
+      initReserveInputs[i] = ConfiguratorInputTypes.InitReserveInput({
+        aTokenImpl: tokensReport.aToken,
+        stableDebtTokenImpl: tokensReport.stableDebtToken,
+        variableDebtTokenImpl: tokensReport.variableDebtToken,
+        underlyingAssetDecimals: decimals,
+        interestRateStrategyAddress: config.interestRateStrategy,
+        interestRateData: abi.encode(config.listings[i].rateStrategyParams),
+        underlyingAsset: config.listings[i].asset,
+        treasury: config.treasury,
+        incentivesController: config.rewardsController,
+        useVirtualBalance: true,
+        aTokenName: string.concat(
+          'Mystic ',
+          config.poolContext.networkName,
+          ' ',
+          config.listings[i].assetSymbol
+        ),
+        aTokenSymbol: string.concat(
+          'm',
+          config.poolContext.networkAbbreviation,
+          config.listings[i].assetSymbol
+        ),
+        variableDebtTokenName: string.concat(
+          'Mystic ',
+          config.poolContext.networkName,
+          ' Variable Debt ',
+          config.listings[i].assetSymbol
+        ),
+        variableDebtTokenSymbol: string.concat(
+          'variableDebt',
+          config.poolContext.networkAbbreviation,
+          config.listings[i].assetSymbol
+        ),
+        stableDebtTokenName: string.concat(
+          'Mystic ',
+          config.poolContext.networkName,
+          ' Stable Debt ',
+          config.listings[i].assetSymbol
+        ),
+        stableDebtTokenSymbol: string.concat(
+          'stableDebt',
+          config.poolContext.networkAbbreviation,
+          config.listings[i].assetSymbol
+        ),
+        params: bytes('')
+      });
+    }
+    configurator.initReserves(initReserveInputs);
+
+    // 6. configure caps, borrow side, collateral and assets emode
+    for (uint256 i = 0; i < config.listings.length; i++) {
+      _configureCaps(configurator, config.listings[i]);
+      _configBorrowSide(configurator, config.listings[i], IPool(config.poolProxy));
+      _configCollateralSide(configurator, config.listings[i], IPool(config.poolProxy));
+      _configAssetsEMode(configurator, config.listings[i]);
+    }
   }
 
   function _deploySetupContract(
@@ -361,6 +433,200 @@ library AaveV3BatchOrchestration {
   ) internal returns (address) {
     address engine = ConfigEngineDeployer.deployEngine(report, subConfig.create2_factory);
     return engine;
+  }
+
+  function _setPriceFeeds(IAaveOracle oracle, ListingConfig memory config) internal {
+    address[] memory assets = new address[](config.listings.length);
+    address[] memory sources = new address[](config.listings.length);
+
+    for (uint256 i = 0; i < config.listings.length; i++) {
+      require(config.listings[i].priceFeed != address(0), 'PRICE_FEED_ALWAYS_REQUIRED');
+      require(
+        IEACAggregatorProxy(config.listings[i].priceFeed).latestAnswer() > 0,
+        'FEED_SHOULD_RETURN_POSITIVE_PRICE'
+      );
+      assets[i] = config.listings[i].asset;
+      sources[i] = config.listings[i].priceFeed;
+    }
+
+    oracle.setAssetSources(assets, sources);
+  }
+
+  function _configureCaps(
+    IPoolConfigurator poolConfigurator,
+    IAaveV3ConfigEngine.Listing memory listing
+  ) internal {
+    if (listing.supplyCap != EngineFlags.KEEP_CURRENT) {
+      poolConfigurator.setSupplyCap(listing.asset, listing.supplyCap);
+    }
+
+    if (listing.borrowCap != EngineFlags.KEEP_CURRENT) {
+      poolConfigurator.setBorrowCap(listing.asset, listing.borrowCap);
+    }
+  }
+
+  function _configAssetsEMode(
+    IPoolConfigurator poolConfigurator,
+    IAaveV3ConfigEngine.Listing memory listing
+  ) internal {
+    if (listing.eModeCategory != EngineFlags.KEEP_CURRENT) {
+      poolConfigurator.setAssetEModeCategory(listing.asset, listing.eModeCategory);
+    }
+  }
+
+  function _setupKycPortal(
+    SubMarketConfig memory subConfig,
+    PoolReport memory poolReport,
+    address deployer
+  ) internal returns (PoolReport memory) {
+    /*
+    The following are done here:
+    1. Timelock deployment
+    2. KYCPortal deployment
+    */
+    {
+      if (subConfig.timelock == address(0)) {
+        subConfig.timelock = _deployTimelock(deployer);
+      }
+
+      if (subConfig.kycPortal == address(0)) {
+        subConfig.kycPortal = _deployKycPortal(subConfig.timelock);
+      }
+    }
+
+    poolReport.kycPortal = subConfig.kycPortal;
+    poolReport.timelock = subConfig.timelock;
+
+    return poolReport;
+  }
+
+  function _configBorrowSide(
+    IPoolConfigurator poolConfigurator,
+    IAaveV3ConfigEngine.Listing memory listing,
+    IPool pool
+  ) internal {
+    if (listing.enabledToBorrow != EngineFlags.KEEP_CURRENT) {
+      poolConfigurator.setReserveBorrowing(
+        listing.asset,
+        EngineFlags.toBool(listing.enabledToBorrow)
+      );
+    } else {
+      (, , bool borrowingEnabled, , ) = pool.getConfiguration(listing.asset).getFlags();
+      listing.enabledToBorrow = EngineFlags.fromBool(borrowingEnabled);
+    }
+
+    if (listing.enabledToBorrow == EngineFlags.ENABLED) {
+      if (listing.stableRateModeEnabled != EngineFlags.KEEP_CURRENT) {
+        poolConfigurator.setReserveStableRateBorrowing(
+          listing.asset,
+          EngineFlags.toBool(listing.stableRateModeEnabled)
+        );
+      }
+    }
+
+    if (listing.borrowableInIsolation != EngineFlags.KEEP_CURRENT) {
+      poolConfigurator.setBorrowableInIsolation(
+        listing.asset,
+        EngineFlags.toBool(listing.borrowableInIsolation)
+      );
+    }
+
+    if (listing.withSiloedBorrowing != EngineFlags.KEEP_CURRENT) {
+      poolConfigurator.setSiloedBorrowing(
+        listing.asset,
+        EngineFlags.toBool(listing.withSiloedBorrowing)
+      );
+    }
+
+    // The reserve factor should always be > 0
+    require(
+      (listing.reserveFactor > 0 && listing.reserveFactor <= 100_00) ||
+        listing.reserveFactor == EngineFlags.KEEP_CURRENT,
+      'INVALID_RESERVE_FACTOR'
+    );
+
+    if (listing.reserveFactor != EngineFlags.KEEP_CURRENT) {
+      poolConfigurator.setReserveFactor(listing.asset, listing.reserveFactor);
+    }
+
+    if (listing.flashloanable != EngineFlags.KEEP_CURRENT) {
+      poolConfigurator.setReserveFlashLoaning(
+        listing.asset,
+        EngineFlags.toBool(listing.flashloanable)
+      );
+    }
+  }
+
+  function _configCollateralSide(
+    IPoolConfigurator poolConfigurator,
+    IAaveV3ConfigEngine.Listing memory listing,
+    IPool pool
+  ) internal {
+    if (listing.liqThreshold != 0) {
+      bool notAllKeepCurrent = listing.ltv != EngineFlags.KEEP_CURRENT ||
+        listing.liqThreshold != EngineFlags.KEEP_CURRENT ||
+        listing.liqBonus != EngineFlags.KEEP_CURRENT;
+
+      bool atLeastOneKeepCurrent = listing.ltv == EngineFlags.KEEP_CURRENT ||
+        listing.liqThreshold == EngineFlags.KEEP_CURRENT ||
+        listing.liqBonus == EngineFlags.KEEP_CURRENT;
+
+      if (notAllKeepCurrent && atLeastOneKeepCurrent) {
+        DataTypes.ReserveConfigurationMap memory configuration = pool.getConfiguration(
+          listing.asset
+        );
+        (
+          uint256 currentLtv,
+          uint256 currentLiqThreshold,
+          uint256 currentLiqBonus,
+          ,
+          ,
+
+        ) = configuration.getParams();
+
+        if (listing.ltv == EngineFlags.KEEP_CURRENT) {
+          listing.ltv = currentLtv;
+        }
+
+        if (listing.liqThreshold == EngineFlags.KEEP_CURRENT) {
+          listing.liqThreshold = currentLiqThreshold;
+        }
+
+        if (listing.liqBonus == EngineFlags.KEEP_CURRENT) {
+          // Subtracting 100_00 to be consistent with the engine as 100_00 gets added while setting the liqBonus
+          listing.liqBonus = currentLiqBonus - 100_00;
+        }
+      }
+
+      if (notAllKeepCurrent) {
+        // LT*LB (in %) should never be above 100%, because it means instant undercollateralization
+        require(
+          listing.liqThreshold.percentMul(100_00 + listing.liqBonus) <= 100_00,
+          'INVALID_LT_LB_RATIO'
+        );
+
+        poolConfigurator.configureReserveAsCollateral(
+          listing.asset,
+          listing.ltv,
+          listing.liqThreshold,
+          // For reference, this is to simplify the interaction with the Aave protocol,
+          // as there the definition is as e.g. 105% (5% bonus for liquidators)
+          100_00 + listing.liqBonus
+        );
+      }
+
+      if (listing.liqProtocolFee != EngineFlags.KEEP_CURRENT) {
+        require(listing.liqProtocolFee < 100_00, 'INVALID_LIQ_PROTOCOL_FEE');
+        poolConfigurator.setLiquidationProtocolFee(listing.asset, listing.liqProtocolFee);
+      }
+
+      if (listing.debtCeiling != EngineFlags.KEEP_CURRENT) {
+        // For reference, this is to simplify the interactions with the Aave protocol,
+        // as there the definition is with 2 decimals. We don't see any reason to set
+        // a debt ceiling involving .something USD, so we simply don't allow to do it
+        poolConfigurator.setDebtCeiling(listing.asset, listing.debtCeiling * 100);
+      }
+    }
   }
 
   function _generateMarketReport(

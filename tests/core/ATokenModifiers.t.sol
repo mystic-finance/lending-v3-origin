@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {IAToken} from 'aave-v3-core/contracts/interfaces/IAToken.sol';
+import {IAToken} from 'src/core/contracts/interfaces/IAToken.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
-import {Errors} from 'aave-v3-core/contracts/protocol/libraries/helpers/Errors.sol';
+import {Errors} from 'src/core/contracts/protocol/libraries/helpers/Errors.sol';
 
 contract ATokenModifiersTests is TestnetProcedures {
   IAToken public aToken;

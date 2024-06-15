@@ -3,15 +3,15 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {AToken} from 'aave-v3-core/contracts/protocol/tokenization/AToken.sol';
-import {VariableDebtToken} from 'aave-v3-core/contracts/protocol/tokenization/VariableDebtToken.sol';
-import {StableDebtToken} from 'aave-v3-core/contracts/protocol/tokenization/StableDebtToken.sol';
-import {Errors} from 'aave-v3-core/contracts/protocol/libraries/helpers/Errors.sol';
-import {ConfiguratorInputTypes, IPool, IPoolAddressesProvider} from 'aave-v3-core/contracts/protocol/pool/PoolConfigurator.sol';
-import {MockATokenRepayment} from 'aave-v3-core/contracts/mocks/tokens/MockATokenRepayment.sol';
-import {MockVariableDebtToken, MockStableDebtToken} from 'aave-v3-core/contracts/mocks/tokens/MockDebtTokens.sol';
-import {DataTypes} from 'aave-v3-core/contracts/protocol/libraries/types/DataTypes.sol';
-import {ReserveLogic} from 'aave-v3-core/contracts/protocol/libraries/logic/ReserveLogic.sol';
+import {AToken} from 'src/core/contracts/protocol/tokenization/AToken.sol';
+import {VariableDebtToken} from 'src/core/contracts/protocol/tokenization/VariableDebtToken.sol';
+import {StableDebtToken} from 'src/core/contracts/protocol/tokenization/StableDebtToken.sol';
+import {Errors} from 'src/core/contracts/protocol/libraries/helpers/Errors.sol';
+import {ConfiguratorInputTypes, IPool, IPoolAddressesProvider} from 'src/core/contracts/protocol/pool/PoolConfigurator.sol';
+import {MockATokenRepayment} from 'src/core/contracts/mocks/tokens/MockATokenRepayment.sol';
+import {MockVariableDebtToken, MockStableDebtToken} from 'src/core/contracts/mocks/tokens/MockDebtTokens.sol';
+import {DataTypes} from 'src/core/contracts/protocol/libraries/types/DataTypes.sol';
+import {ReserveLogic} from 'src/core/contracts/protocol/libraries/logic/ReserveLogic.sol';
 
 import {SlotParser} from '../utils/SlotParser.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';

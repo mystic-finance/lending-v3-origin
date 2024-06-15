@@ -3,15 +3,15 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {MathUtils} from 'aave-v3-core/contracts/protocol/libraries/math/MathUtils.sol';
-import {WadRayMath} from 'aave-v3-core/contracts/protocol/libraries/math/WadRayMath.sol';
+import {MathUtils} from 'src/core/contracts/protocol/libraries/math/MathUtils.sol';
+import {WadRayMath} from 'src/core/contracts/protocol/libraries/math/WadRayMath.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
-import {Errors} from 'aave-v3-core/contracts/protocol/libraries/helpers/Errors.sol';
-import {ReserveLogic} from 'aave-v3-core/contracts/protocol/libraries/logic/ReserveLogic.sol';
-import {PercentageMath} from 'aave-v3-core/contracts/protocol/libraries/math/PercentageMath.sol';
-import {SafeCast} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/SafeCast.sol';
-import {IAToken} from 'aave-v3-core/contracts/interfaces/IAToken.sol';
-import {DataTypes} from 'aave-v3-core/contracts/protocol/libraries/types/DataTypes.sol';
+import {Errors} from 'src/core/contracts/protocol/libraries/helpers/Errors.sol';
+import {ReserveLogic} from 'src/core/contracts/protocol/libraries/logic/ReserveLogic.sol';
+import {PercentageMath} from 'src/core/contracts/protocol/libraries/math/PercentageMath.sol';
+import {SafeCast} from 'src/core/contracts/dependencies/openzeppelin/contracts/SafeCast.sol';
+import {IAToken} from 'src/core/contracts/interfaces/IAToken.sol';
+import {DataTypes} from 'src/core/contracts/protocol/libraries/types/DataTypes.sol';
 
 contract BridgeLogicTests is TestnetProcedures {
   using WadRayMath for uint256;

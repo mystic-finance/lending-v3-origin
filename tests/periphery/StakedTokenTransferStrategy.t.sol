@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {StakedTokenTransferStrategy, IERC20, IStakedToken} from 'aave-v3-periphery/contracts/rewards/transfer-strategies/StakedTokenTransferStrategy.sol';
+import {StakedTokenTransferStrategy, IERC20, IStakedToken} from 'src/periphery/contracts/rewards/transfer-strategies/StakedTokenTransferStrategy.sol';
 import {StakeMock} from './mocks/StakeMock.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 

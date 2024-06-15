@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {PoolLogic, ReserveLogic} from 'aave-v3-core/contracts/protocol/libraries/logic/PoolLogic.sol';
+import {PoolLogic, ReserveLogic} from 'src/core/contracts/protocol/libraries/logic/PoolLogic.sol';
 import '../utils/TestnetProcedures.sol';
 
 contract Mock {

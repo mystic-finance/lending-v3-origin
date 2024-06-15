@@ -3,20 +3,20 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {IStableDebtToken} from 'aave-v3-core/contracts/interfaces/IStableDebtToken.sol';
-import {IVariableDebtToken} from 'aave-v3-core/contracts/interfaces/IVariableDebtToken.sol';
-import {IAaveOracle} from 'aave-v3-core/contracts/interfaces/IAaveOracle.sol';
-import {Errors} from 'aave-v3-core/contracts/protocol/libraries/helpers/Errors.sol';
-import {IReserveInterestRateStrategy} from 'aave-v3-core/contracts/interfaces/IReserveInterestRateStrategy.sol';
-import {IPoolAddressesProvider} from 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
-import {ISequencerOracle} from 'aave-v3-core/contracts/interfaces/ISequencerOracle.sol';
-import {UserConfiguration} from 'aave-v3-core/contracts/protocol/libraries/configuration/UserConfiguration.sol';
-import {PriceOracleSentinel} from 'aave-v3-core/contracts/protocol/configuration/PriceOracleSentinel.sol';
-import {SequencerOracle} from 'aave-v3-core/contracts/mocks/oracle/SequencerOracle.sol';
-import {MockAggregator} from 'aave-v3-core/contracts/mocks/oracle/CLAggregators/MockAggregator.sol';
-import {DataTypes} from 'aave-v3-core/contracts/protocol/libraries/types/DataTypes.sol';
-import {ReserveConfiguration} from 'aave-v3-core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
-import {IERC20} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IStableDebtToken} from 'src/core/contracts/interfaces/IStableDebtToken.sol';
+import {IVariableDebtToken} from 'src/core/contracts/interfaces/IVariableDebtToken.sol';
+import {IAaveOracle} from 'src/core/contracts/interfaces/IAaveOracle.sol';
+import {Errors} from 'src/core/contracts/protocol/libraries/helpers/Errors.sol';
+import {IReserveInterestRateStrategy} from 'src/core/contracts/interfaces/IReserveInterestRateStrategy.sol';
+import {IPoolAddressesProvider} from 'src/core/contracts/interfaces/IPoolAddressesProvider.sol';
+import {ISequencerOracle} from 'src/core/contracts/interfaces/ISequencerOracle.sol';
+import {UserConfiguration} from 'src/core/contracts/protocol/libraries/configuration/UserConfiguration.sol';
+import {PriceOracleSentinel} from 'src/core/contracts/protocol/configuration/PriceOracleSentinel.sol';
+import {SequencerOracle} from 'src/core/contracts/mocks/oracle/SequencerOracle.sol';
+import {MockAggregator} from 'src/core/contracts/mocks/oracle/CLAggregators/MockAggregator.sol';
+import {DataTypes} from 'src/core/contracts/protocol/libraries/types/DataTypes.sol';
+import {ReserveConfiguration} from 'src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
+import {IERC20} from 'src/core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 
 contract PoolBorrowTests is TestnetProcedures {

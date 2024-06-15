@@ -3,10 +3,10 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {IPool} from 'aave-v3-core/contracts/interfaces/IPool.sol';
-import {IAToken, IERC20} from 'aave-v3-core/contracts/interfaces/IAToken.sol';
-import {Errors} from 'aave-v3-core/contracts/protocol/libraries/helpers/Errors.sol';
-import {TestnetERC20, IERC20WithPermit} from 'aave-v3-periphery/contracts/mocks/testnet-helpers/TestnetERC20.sol';
+import {IPool} from 'src/core/contracts/interfaces/IPool.sol';
+import {IAToken, IERC20} from 'src/core/contracts/interfaces/IAToken.sol';
+import {Errors} from 'src/core/contracts/protocol/libraries/helpers/Errors.sol';
+import {TestnetERC20, IERC20WithPermit} from 'src/periphery/contracts/mocks/testnet-helpers/TestnetERC20.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 import {EIP712SigUtils} from '../utils/EIP712SigUtils.sol';
 

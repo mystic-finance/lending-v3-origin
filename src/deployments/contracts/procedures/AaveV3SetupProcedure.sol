@@ -38,7 +38,8 @@ contract AaveV3SetupProcedure {
     address poolConfiguratorImplementation,
     address protocolDataProvider,
     address aaveOracle,
-    address rewardsControllerImplementation
+    address rewardsControllerImplementation,
+    address kycPortal
   ) internal returns (SetupReport memory) {
     _validateMarketSetup(roles);
 
@@ -58,8 +59,7 @@ contract AaveV3SetupProcedure {
       report.poolConfiguratorProxy,
       config.flashLoanPremiumTotal,
       config.flashLoanPremiumToProtocol,
-      address(0)
-      // config.kycPortal
+      kycPortal
     );
 
     _transferMarketOwnership(roles, initialReport);
@@ -129,17 +129,13 @@ contract AaveV3SetupProcedure {
     address kycPortal
   ) internal returns (address) {
     IPoolAddressesProvider provider = IPoolAddressesProvider(poolAddressesProvider);
+    bytes32 roleAdmin = 0x00;
 
     // Temporal admin set to the contract
     provider.setACLAdmin(address(this));
 
     ACLManager manager = new ACLManager(IPoolAddressesProvider(poolAddressesProvider));
     address aclManager = address(manager);
-
-    // Setup roles
-    if (kycPortal != address(0)) {
-      provider.setACLAdmin(kycPortal); //(roles.poolAdmin);
-    }
 
     provider.setACLManager(address(manager));
 
@@ -151,11 +147,27 @@ contract AaveV3SetupProcedure {
     );
 
     manager.addPoolAdmin(roles.poolAdmin);
-
     manager.addEmergencyAdmin(roles.emergencyAdmin);
 
-    manager.grantRole(manager.DEFAULT_ADMIN_ROLE(), roles.poolAdmin);
+    // Setup roles
+    if (kycPortal != address(0)) {
+      // set all needed roles here
+      manager.setRoleAdmin(manager.POOL_ADMIN_ROLE(), roleAdmin);
+      manager.setRoleAdmin(manager.EMERGENCY_ADMIN_ROLE(), roleAdmin);
+      manager.setRoleAdmin(manager.ASSET_LISTING_ADMIN_ROLE(), roleAdmin);
+      manager.setRoleAdmin(manager.POOL_USER(), roleAdmin);
+      manager.setRoleAdmin(manager.POOL_USER_TREASURY(), roleAdmin);
+      manager.setRoleAdmin(manager.POOL_USER_BOND(), roleAdmin);
+      manager.setRoleAdmin(manager.LIQUIDATOR_ADMIN(), roleAdmin);
+      manager.setRoleAdmin(manager.LIQUIDATOR_TREASURY(), roleAdmin);
+      manager.setRoleAdmin(manager.LIQUIDATOR_BOND(), roleAdmin);
+      manager.setRoleAdmin(manager.LIQUIDATOR(), roleAdmin);
+    }
 
+    // provider.setACLAdmin(roles.marketOwner);
+    manager.grantRole(manager.DEFAULT_ADMIN_ROLE(), roles.marketOwner);
+    manager.grantRole(manager.DEFAULT_ADMIN_ROLE(), roles.poolAdmin);
+    manager.grantRole(manager.DEFAULT_ADMIN_ROLE(), kycPortal);
     manager.revokeRole(manager.DEFAULT_ADMIN_ROLE(), address(this));
 
     return aclManager;

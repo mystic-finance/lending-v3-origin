@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {IERC20} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
-import {IPoolAddressesProvider} from 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
-import {IPool} from 'aave-v3-core/contracts/interfaces/IPool.sol';
-import {FlashLoanSimpleReceiverBase} from 'aave-v3-core/contracts/mocks/flashloan/MockSimpleFlashLoanReceiver.sol';
+import {IERC20} from 'src/core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IPoolAddressesProvider} from 'src/core/contracts/interfaces/IPoolAddressesProvider.sol';
+import {IPool} from 'src/core/contracts/interfaces/IPool.sol';
+import {FlashLoanSimpleReceiverBase} from 'src/core/contracts/mocks/flashloan/MockSimpleFlashLoanReceiver.sol';
 
 /// @dev Helper contract to test donation attacks not possible in the context of a flash loan
 contract MockFlashLoanATokenReceiver is FlashLoanSimpleReceiverBase {

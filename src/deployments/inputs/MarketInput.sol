@@ -18,9 +18,19 @@ abstract contract MarketInput {
       MarketReport memory deployedContracts
     );
 
-  function _listAsset(address) internal view virtual returns (ListingConfig memory config);
+  function _listAsset(
+    address,
+    address,
+    address
+  ) internal view virtual returns (ListingConfig memory config);
 
-  function _updateCollateral(address) internal view virtual returns (ListingConfig memory config);
+  function _updateCollateral(
+    address,
+    address
+  ) internal view virtual returns (ListingConfig memory config);
 
-  function _updateBorrowAsset(address) internal view virtual returns (ListingConfig memory config);
+  function _updateBorrowAsset(
+    address,
+    address
+  ) internal view virtual returns (ListingConfig memory config);
 }

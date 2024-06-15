@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {IAToken} from 'aave-v3-core/contracts/protocol/tokenization/AToken.sol';
-import {DefaultReserveInterestRateStrategyV2, DataTypes, IPoolAddressesProvider} from 'aave-v3-core/contracts/protocol/pool/DefaultReserveInterestRateStrategyV2.sol';
-import {IDefaultInterestRateStrategyV2} from 'aave-v3-core/contracts/protocol/pool/DefaultReserveInterestRateStrategyV2.sol';
+import {IAToken} from 'src/core/contracts/protocol/tokenization/AToken.sol';
+import {DefaultReserveInterestRateStrategyV2, DataTypes, IPoolAddressesProvider} from 'src/core/contracts/protocol/pool/DefaultReserveInterestRateStrategyV2.sol';
+import {IDefaultInterestRateStrategyV2} from 'src/core/contracts/protocol/pool/DefaultReserveInterestRateStrategyV2.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 
 // @dev Ignored from coverage report, due Foundry Coverage can not detect functions if they return 0.

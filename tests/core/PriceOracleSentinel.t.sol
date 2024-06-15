@@ -3,11 +3,11 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {Errors} from 'aave-v3-core/contracts/protocol/libraries/helpers/Errors.sol';
-import {PriceOracleSentinel} from 'aave-v3-core/contracts/protocol/configuration/PriceOracleSentinel.sol';
-import {IPoolAddressesProvider} from 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
-import {ACLManager} from 'aave-v3-core/contracts/protocol/configuration/ACLManager.sol';
-import {SequencerOracle, ISequencerOracle} from 'aave-v3-core/contracts/mocks/oracle/SequencerOracle.sol';
+import {Errors} from 'src/core/contracts/protocol/libraries/helpers/Errors.sol';
+import {PriceOracleSentinel} from 'src/core/contracts/protocol/configuration/PriceOracleSentinel.sol';
+import {IPoolAddressesProvider} from 'src/core/contracts/interfaces/IPoolAddressesProvider.sol';
+import {ACLManager} from 'src/core/contracts/protocol/configuration/ACLManager.sol';
+import {SequencerOracle, ISequencerOracle} from 'src/core/contracts/mocks/oracle/SequencerOracle.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 
 contract PriceOracleSentinelTest is TestnetProcedures {

@@ -3,13 +3,13 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {IAToken, IERC20} from 'aave-v3-core/contracts/interfaces/IAToken.sol';
-import {IVariableDebtToken} from 'aave-v3-core/contracts/interfaces/IVariableDebtToken.sol';
-import {Errors} from 'aave-v3-core/contracts/protocol/libraries/helpers/Errors.sol';
-import {SupplyLogic} from 'aave-v3-core/contracts/protocol/libraries/logic/SupplyLogic.sol';
-import {MathUtils} from 'aave-v3-core/contracts/protocol/libraries/math/MathUtils.sol';
-import {WadRayMath} from 'aave-v3-core/contracts/protocol/libraries/math/WadRayMath.sol';
-import {DataTypes} from 'aave-v3-core/contracts/protocol/libraries/types/DataTypes.sol';
+import {IAToken, IERC20} from 'src/core/contracts/interfaces/IAToken.sol';
+import {IVariableDebtToken} from 'src/core/contracts/interfaces/IVariableDebtToken.sol';
+import {Errors} from 'src/core/contracts/protocol/libraries/helpers/Errors.sol';
+import {SupplyLogic} from 'src/core/contracts/protocol/libraries/logic/SupplyLogic.sol';
+import {MathUtils} from 'src/core/contracts/protocol/libraries/math/MathUtils.sol';
+import {WadRayMath} from 'src/core/contracts/protocol/libraries/math/WadRayMath.sol';
+import {DataTypes} from 'src/core/contracts/protocol/libraries/types/DataTypes.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 
 contract ATokenTransferTests is TestnetProcedures {

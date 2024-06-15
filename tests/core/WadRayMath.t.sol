@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
-import {WadRayMathWrapper} from 'aave-v3-core/contracts/mocks/tests/WadRayMathWrapper.sol';
+import {WadRayMathWrapper} from 'src/core/contracts/mocks/tests/WadRayMathWrapper.sol';
 
 contract WadRayMathTests is Test {
   WadRayMathWrapper internal w;

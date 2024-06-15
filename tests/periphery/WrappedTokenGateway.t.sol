@@ -2,13 +2,13 @@
 pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
-import {AaveOracle} from 'aave-v3-core/contracts/misc/AaveOracle.sol';
-import {WrappedTokenGatewayV3} from 'aave-v3-periphery/contracts/misc/WrappedTokenGatewayV3.sol';
-import {AaveProtocolDataProvider} from 'aave-v3-core/contracts/misc/AaveProtocolDataProvider.sol';
-import {AToken} from 'aave-v3-core/contracts/protocol/tokenization/AToken.sol';
-import {StableDebtToken} from 'aave-v3-core/contracts/protocol/tokenization/StableDebtToken.sol';
-import {VariableDebtToken} from 'aave-v3-core/contracts/protocol/tokenization/VariableDebtToken.sol';
-import {DataTypes} from 'aave-v3-core/contracts/protocol/libraries/types/DataTypes.sol';
+import {AaveOracle} from 'src/core/contracts/misc/AaveOracle.sol';
+import {WrappedTokenGatewayV3} from 'src/periphery/contracts/misc/WrappedTokenGatewayV3.sol';
+import {AaveProtocolDataProvider} from 'src/core/contracts/misc/AaveProtocolDataProvider.sol';
+import {AToken} from 'src/core/contracts/protocol/tokenization/AToken.sol';
+import {StableDebtToken} from 'src/core/contracts/protocol/tokenization/StableDebtToken.sol';
+import {VariableDebtToken} from 'src/core/contracts/protocol/tokenization/VariableDebtToken.sol';
+import {DataTypes} from 'src/core/contracts/protocol/libraries/types/DataTypes.sol';
 import {EIP712SigUtils} from '../utils/EIP712SigUtils.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 
