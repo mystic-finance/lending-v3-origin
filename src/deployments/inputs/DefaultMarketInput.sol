@@ -32,9 +32,10 @@ contract DefaultMarketInput is MarketInput {
     config.flashLoanPremiumTotal = 0.0005e4;
     config.flashLoanPremiumToProtocol = 0.0004e4;
     config.poolType = 0;
-    config.marketReferenceCurrencyPriceInUsdProxyAggregator = address(0);
-    config.networkBaseTokenPriceInUsdProxyAggregator = address(0);
-    config.wrappedNativeToken = address(0);
+    config
+      .marketReferenceCurrencyPriceInUsdProxyAggregator = 0x34d75eB977F06A53362900D3F09F7eDEe324aFe8;
+    config.networkBaseTokenPriceInUsdProxyAggregator = 0x34d75eB977F06A53362900D3F09F7eDEe324aFe8;
+    config.wrappedNativeToken = 0xd9d6507119Ec56ce22A89bEdAcd6B44D495BFf08;
 
     subConfig.timelock = address(0);
     subConfig.kycPortal = address(0);
