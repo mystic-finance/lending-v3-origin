@@ -35,7 +35,7 @@ contract DefaultMarketInput is MarketInput {
     config
       .marketReferenceCurrencyPriceInUsdProxyAggregator = 0x34d75eB977F06A53362900D3F09F7eDEe324aFe8;
     config.networkBaseTokenPriceInUsdProxyAggregator = 0x34d75eB977F06A53362900D3F09F7eDEe324aFe8;
-    config.wrappedNativeToken = 0xd9d6507119Ec56ce22A89bEdAcd6B44D495BFf08;
+    config.wrappedNativeToken = address(0);
 
     subConfig.timelock = address(0);
     subConfig.kycPortal = address(0);
@@ -54,7 +54,7 @@ contract DefaultMarketInput is MarketInput {
     address debtAsset,
     address collateralAsset
   ) internal view override returns (ListingConfig memory config) {
-    IAaveV3ConfigEngine.Listing[] memory listings = new IAaveV3ConfigEngine.Listing[](3);
+    IAaveV3ConfigEngine.Listing[] memory listings = new IAaveV3ConfigEngine.Listing[](2);
     IAaveV3ConfigEngine.Listing[] memory listingCollateral = new IAaveV3ConfigEngine.Listing[](1);
 
     listings[0] = IAaveV3ConfigEngine.Listing({ //borrow asset
@@ -76,9 +76,9 @@ contract DefaultMarketInput is MarketInput {
       liqThreshold: 0, // 76%
       liqBonus: 5_00, // 5%
       reserveFactor: 10_00, // 10%
-      supplyCap: 1_000_000_000, // 100k AAVE
-      borrowCap: 100_000_000, // 60k AAVE
-      debtCeiling: 10_000_000, // 100k USD
+      supplyCap: 50_000_000_000, // 100k AAVE
+      borrowCap: 50_000_000_00, // 60k AAVE
+      debtCeiling: 100_000_000, // 100k USD
       liqProtocolFee: 10_00, // 10%
       eModeCategory: 0 // No category
     });
@@ -104,36 +104,36 @@ contract DefaultMarketInput is MarketInput {
       reserveFactor: 10_00, // 10%
       supplyCap: 100_000_000, // 100k AAVE
       borrowCap: 10, // 60k AAVE
-      debtCeiling: 10_000_000, // 100k USD
+      debtCeiling: 100_000_000, // 100k USD
       liqProtocolFee: 10_00, // 10%
       eModeCategory: 0 // No category
     });
 
-    listings[2] = IAaveV3ConfigEngine.Listing({ //collateral & debt
-      asset: 0xd9d6507119Ec56ce22A89bEdAcd6B44D495BFf08,
-      assetSymbol: 'WETH',
-      priceFeed: 0x34d75eB977F06A53362900D3F09F7eDEe324aFe8,
-      rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
-        optimalUsageRatio: 82_00,
-        baseVariableBorrowRate: 30, // 0.25%
-        variableRateSlope1: 3_00,
-        variableRateSlope2: 75_00
-      }),
-      enabledToBorrow: EngineFlags.ENABLED,
-      flashloanable: EngineFlags.DISABLED,
-      stableRateModeEnabled: EngineFlags.DISABLED,
-      borrowableInIsolation: EngineFlags.DISABLED,
-      withSiloedBorrowing: EngineFlags.DISABLED,
-      ltv: 80_00, // 70.5%
-      liqThreshold: 85_50, // 76%
-      liqBonus: 5_00, // 5%
-      reserveFactor: 10_00, // 10%
-      supplyCap: 1_000_000_000, // 100k AAVE
-      borrowCap: 1_000_000_000, // 60k AAVE
-      debtCeiling: 100_000_000, // 100k USD
-      liqProtocolFee: 9_00, // 10%
-      eModeCategory: 0 // No category
-    });
+    // listings[2] = IAaveV3ConfigEngine.Listing({ //collateral & debt
+    //   asset: 0x9A23141208671701eA6d834aA4d3E3795BB9CB87,
+    //   assetSymbol: 'WETH',
+    //   priceFeed: 0xe6351e45F3023f392E0065B1222c3531e0d57cE6,
+    //   rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
+    //     optimalUsageRatio: 82_00,
+    //     baseVariableBorrowRate: 30, // 0.25%
+    //     variableRateSlope1: 3_00,
+    //     variableRateSlope2: 75_00
+    //   }),
+    //   enabledToBorrow: EngineFlags.ENABLED,
+    //   flashloanable: EngineFlags.DISABLED,
+    //   stableRateModeEnabled: EngineFlags.DISABLED,
+    //   borrowableInIsolation: EngineFlags.DISABLED,
+    //   withSiloedBorrowing: EngineFlags.DISABLED,
+    //   ltv: 70_00, // 70.5%
+    //   liqThreshold: 75_50, // 76%
+    //   liqBonus: 5_00, // 5%
+    //   reserveFactor: 10_00, // 10%
+    //   supplyCap: 1_000_000_000, // 100k AAVE
+    //   borrowCap: 1_000_000_000, // 60k AAVE
+    //   debtCeiling: 100_000_000, // 100k USD
+    //   liqProtocolFee: 9_00, // 10%
+    //   eModeCategory: 0 // No category
+    // });
 
     config.poolContext = IAaveV3ConfigEngine.PoolContext({
       networkName: 'Plume Testnet',

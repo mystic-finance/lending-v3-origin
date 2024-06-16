@@ -40,4 +40,4 @@ git-diff :
 deploy-script-test :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 421614 --rpc-url arb_sepolia --broadcast --verify  -vvv --with-gas-price 200000000 --gas-estimate-multiplier 150
 deploy-script-test-plume :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 161221135 --rpc-url plume --broadcast --verify  -vvv --with-gas-price 200000000 --gas-estimate-multiplier 150
 deploy-list-asset :; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 421614 --rpc-url arb_sepolia --broadcast  -vvv --with-gas-price 200000000 --gas-estimate-multiplier 150 --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63
-deploy-list-asset-plume :; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 161221135 --rpc-url plume --broadcast  -vvv --with-gas-price 200000000 --gas-estimate-multiplier 150 --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63
+deploy-list-asset-plume :; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 161221135 --rpc-url plume --broadcast  -vv --with-gas-price 200000000 --gas-estimate-multiplier 150 --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63

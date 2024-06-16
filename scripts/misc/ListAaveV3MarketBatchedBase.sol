@@ -24,8 +24,8 @@ abstract contract ListAaveV3MarketBatchedBase is DeployUtils, MarketInput, Scrip
     console.log('Aave V3 Batch Listing');
     console.log('sender', msg.sender);
 
-    address debtAsset = 0xEa237441c92CAe6FC17Caaf9a7acB3f953be4bd1; //usdc
-    address collateralAsset = 0xc0aA307598C610AbF556319d8cB685D21d460ce7; //rwa token (test is usdt)
+    address debtAsset = 0x07b184FFDfBC2BDfa0B19a8143aCF3C95896Dd93; //usdc
+    address collateralAsset = 0xEf8A0681503552a335223d8305824413Fb2C5666; //rwa token (test is usdt)
 
     (config) = _listAsset(msg.sender, debtAsset, collateralAsset);
     (roles, , subConfig, , ) = _getMarketInput(msg.sender);
