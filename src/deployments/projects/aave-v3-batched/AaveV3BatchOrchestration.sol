@@ -189,6 +189,17 @@ library AaveV3BatchOrchestration {
     return report;
   }
 
+  function deployUIPoolDatProvider(
+    address networkBaseTokenPriceInUsdProxyAggregator,
+    address marketReferenceCurrencyPriceInUsdProxyAggregator
+  ) internal returns (address) {
+    return
+      _deployUIPoolDataProvider(
+        networkBaseTokenPriceInUsdProxyAggregator,
+        marketReferenceCurrencyPriceInUsdProxyAggregator
+      );
+  }
+
   function listAssetPairAaveV3(
     ListingConfig memory config,
     SubMarketConfig memory subConfig
@@ -197,6 +208,9 @@ library AaveV3BatchOrchestration {
 
     // 1. set price feeds
     _setPriceFeeds(IAaveOracle(config.oracle), config);
+
+    // configurator.dropReserve(config.listings[0].asset);
+    // configurator.dropReserve(config.listings[1].asset);
 
     ConfiguratorInputTypes.InitReserveInput[]
       memory initReserveInputs = new ConfiguratorInputTypes.InitReserveInput[](
@@ -286,6 +300,20 @@ library AaveV3BatchOrchestration {
   ) internal returns (AaveV3SetupBatch, InitialReport memory) {
     AaveV3SetupBatch setupBatch = new AaveV3SetupBatch(deployer, roles, config, deployedContracts);
     return (setupBatch, setupBatch.getInitialReport());
+  }
+
+  function _deployUIPoolDataProvider(
+    address networkBaseTokenPriceInUsdProxyAggregator,
+    address marketReferenceCurrencyPriceInUsdProxyAggregator
+  ) internal returns (address) {
+    address poolDataProvider = address(
+      new UiPoolDataProviderV3(
+        IEACAggregatorProxy(networkBaseTokenPriceInUsdProxyAggregator),
+        IEACAggregatorProxy(marketReferenceCurrencyPriceInUsdProxyAggregator)
+      )
+    );
+
+    return poolDataProvider;
   }
 
   function _deployGettersBatch1(

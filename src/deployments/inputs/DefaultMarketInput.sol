@@ -64,7 +64,7 @@ contract DefaultMarketInput is MarketInput {
       rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
         optimalUsageRatio: 80_00,
         baseVariableBorrowRate: 25, // 0.25%
-        variableRateSlope1: 3_00,
+        variableRateSlope1: 4_00,
         variableRateSlope2: 75_00
       }),
       enabledToBorrow: EngineFlags.ENABLED,
@@ -78,7 +78,7 @@ contract DefaultMarketInput is MarketInput {
       reserveFactor: 10_00, // 10%
       supplyCap: 50_000_000_000, // 100k AAVE
       borrowCap: 50_000_000_00, // 60k AAVE
-      debtCeiling: 100_000_000, // 100k USD
+      debtCeiling: 0, // 100k USD
       liqProtocolFee: 10_00, // 10%
       eModeCategory: 0 // No category
     });
@@ -88,10 +88,10 @@ contract DefaultMarketInput is MarketInput {
       assetSymbol: 'USDT',
       priceFeed: 0x34d75eB977F06A53362900D3F09F7eDEe324aFe8,
       rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
-        optimalUsageRatio: 80_00,
+        optimalUsageRatio: 90_00,
         baseVariableBorrowRate: 25, // 0.25%
         variableRateSlope1: 3_00,
-        variableRateSlope2: 75_00
+        variableRateSlope2: 60_00
       }),
       enabledToBorrow: EngineFlags.DISABLED,
       flashloanable: EngineFlags.DISABLED,
@@ -102,9 +102,9 @@ contract DefaultMarketInput is MarketInput {
       liqThreshold: 90_50, // 76%
       liqBonus: 5_00, // 5%
       reserveFactor: 10_00, // 10%
-      supplyCap: 100_000_000, // 100k AAVE
+      supplyCap: 50_000_000_000, // 100k AAVE
       borrowCap: 10, // 60k AAVE
-      debtCeiling: 100_000_000, // 100k USD
+      debtCeiling: 0, // 100k USD
       liqProtocolFee: 10_00, // 10%
       eModeCategory: 0 // No category
     });

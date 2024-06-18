@@ -20,19 +20,25 @@ abstract contract ListAaveV3MarketBatchedBase is DeployUtils, MarketInput, Scrip
     ListingConfig memory config;
     SubMarketConfig memory subConfig;
     MarketReport memory report;
+    MarketConfig memory oldConfig;
 
     console.log('Aave V3 Batch Listing');
     console.log('sender', msg.sender);
 
-    address debtAsset = 0x07b184FFDfBC2BDfa0B19a8143aCF3C95896Dd93; //usdc
-    address collateralAsset = 0xEf8A0681503552a335223d8305824413Fb2C5666; //rwa token (test is usdt)
+    address debtAsset = 0xEa237441c92CAe6FC17Caaf9a7acB3f953be4bd1; //usdc
+    address collateralAsset = 0x4632403a83fb736Ab2c76b4C32FAc9F81e2CfcE2; //rwa token (test is usdt)
 
     (config) = _listAsset(msg.sender, debtAsset, collateralAsset);
-    (roles, , subConfig, , ) = _getMarketInput(msg.sender);
+    (roles, oldConfig, subConfig, , ) = _getMarketInput(msg.sender);
 
     uint256 deployerPrivateKey = vm.envUint('PRIVATE_KEY');
 
     vm.startBroadcast(deployerPrivateKey);
+    // address uipd = AaveV3BatchOrchestration.deployUIPoolDatProvider(
+    //   oldConfig.networkBaseTokenPriceInUsdProxyAggregator,
+    //   oldConfig.marketReferenceCurrencyPriceInUsdProxyAggregator
+    // );
+    // console.log(uipd);
     AaveV3BatchOrchestration.listAssetPairAaveV3(config, subConfig);
     vm.stopBroadcast();
 
