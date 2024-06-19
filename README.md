@@ -194,3 +194,8 @@ const usdtAddress = "0xc0aA307598C610AbF556319d8cB685D21d460ce7";
 const amount = ethers.utils.parseUnits("1050", "USDT"); // Repaying 1050 USDT
 await permissionedPool.repay(usdtAddress, amount, 2, "0xYourAddressHere");
 ```
+
+### Deploying and Listing
+
+Check the DefaultMarketInput to see the configurations and update as needed.
+To see the example configurations for listing, check the `listing.config.ts` file

@@ -209,8 +209,8 @@ library AaveV3BatchOrchestration {
     // 1. set price feeds
     _setPriceFeeds(IAaveOracle(config.oracle), config);
 
-    // configurator.dropReserve(config.listings[0].asset);
-    // configurator.dropReserve(config.listings[1].asset);
+    configurator.dropReserve(config.listings[0].asset);
+    configurator.dropReserve(config.listings[1].asset);
 
     ConfiguratorInputTypes.InitReserveInput[]
       memory initReserveInputs = new ConfiguratorInputTypes.InitReserveInput[](
