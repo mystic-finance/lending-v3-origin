@@ -26,6 +26,8 @@ import {TimelockInstance} from 'src/core/instances/TimelockInstance.sol';
 import {TimelockController} from 'src/core/contracts/protocol/partner/Timelock.sol';
 
 import {KYCInstance} from 'src/core/instances/KYCInstance.sol';
+import {AaveBundler} from 'src/core/contracts/protocol/partner/AaveBundler.sol';
+
 import {ConfigEngineDeployer} from '../../../periphery/contracts/v3-config-engine/ConfigEngineDeployer.sol';
 
 import {AaveV3LibrariesBatch1} from '../aave-v3-libraries/AaveV3LibrariesBatch1.sol';
@@ -290,6 +292,11 @@ library AaveV3BatchOrchestration {
       _configCollateralSide(configurator, config.listings[i], IPool(config.poolProxy));
       _configAssetsEMode(configurator, config.listings[i]);
     }
+  }
+
+  function _deployAaveBundler() internal returns (address bundler) {
+    bundler = address(new AaveBundler());
+    return (bundler);
   }
 
   function _deploySetupContract(

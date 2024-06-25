@@ -1,6 +1,9 @@
 /** @type import('hardhat/config').HardhatUserConfig */
 
 require('@nomicfoundation/hardhat-toolbox');
+require('@nomicfoundation/hardhat-ethers');
+require('@nomicfoundation/hardhat-verify');
+require('dotenv').config();
 // require("@nomicfoundation/hardhat-foundry");
 
 module.exports = {
@@ -19,7 +22,7 @@ module.exports = {
         version: '0.8.19',
         settings: {
           optimizer: {enabled: true, runs: 200},
-          evmVersion: 'paris',
+          evmVersion: 'shanghai',
         },
       },
       {
@@ -30,6 +33,30 @@ module.exports = {
       },
     ],
   },
+  networks: {
+    hardhat: {},
+    'plume-testnet': {
+      url: 'https://testnet-rpc.plumenetwork.xyz/http',
+      chainId: 161221135,
+      accounts: [process.env.PRIVATE_KEY],
+    },
+  },
+  etherscan: {
+    apiKey: {
+      'plume-testnet': 'test',
+    },
+    customChains: [
+      {
+        network: 'plume-testnet',
+        chainId: 161221135,
+        urls: {
+          apiURL: 'https://testnet-explorer.plumenetwork.xyz/api?',
+          browserURL: 'https://testnet-explorer.plumenetwork.xyz',
+        },
+      },
+    ],
+  },
+
   paths: {
     sources: './src',
     tests: './test',
