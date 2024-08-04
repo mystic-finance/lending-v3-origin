@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+import 'forge-std/console.sol';
+
 import {AaveV3TokensBatch} from './batches/AaveV3TokensBatch.sol';
 import {AaveV3PoolBatch} from './batches/AaveV3PoolBatch.sol';
 import {AaveV3L2PoolBatch} from './batches/AaveV3L2PoolBatch.sol';
@@ -211,8 +213,8 @@ library AaveV3BatchOrchestration {
     // 1. set price feeds
     _setPriceFeeds(IAaveOracle(config.oracle), config);
 
-    configurator.dropReserve(config.listings[0].asset);
-    configurator.dropReserve(config.listings[1].asset);
+    // configurator.dropReserve(config.listings[0].asset);
+    // configurator.dropReserve(config.listings[1].asset);
 
     ConfiguratorInputTypes.InitReserveInput[]
       memory initReserveInputs = new ConfiguratorInputTypes.InitReserveInput[](
@@ -234,6 +236,10 @@ library AaveV3BatchOrchestration {
         config.treasury,
         subConfig
       );
+
+      console.log(tokensReport.aToken);
+      console.log(tokensReport.stableDebtToken);
+      console.log(tokensReport.variableDebtToken);
 
       // 5. initialize reserve for each asset
       initReserveInputs[i] = ConfiguratorInputTypes.InitReserveInput({

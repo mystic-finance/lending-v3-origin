@@ -37,8 +37,11 @@ git-diff :
 	@mkdir -p diffs
 	@printf '%s\n%s\n%s\n' "\`\`\`diff" "$$(git diff --no-index --diff-algorithm=patience --ignore-space-at-eol ${before} ${after})" "\`\`\`" > diffs/${out}.md
 
-deploy-script-test :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 421614 --rpc-url arb_sepolia --broadcast --verify  -vvv --with-gas-price 200000000 --gas-estimate-multiplier 150
-deploy-script-test-plume :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 161221135 --rpc-url plume --broadcast --verify  -vvv --with-gas-price 200000000 --gas-estimate-multiplier 150
-deploy-list-asset :; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 421614 --rpc-url arb_sepolia --broadcast  -vvv --with-gas-price 200000000 --gas-estimate-multiplier 150 --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63
-deploy-list-asset-plume :; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 161221135 --rpc-url plume --broadcast  -vv --with-gas-price 200000000 --gas-estimate-multiplier 150 --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63
+deploy-script-test :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 421614 --rpc-url arb_sepolia --broadcast --verify --slow  -vvv --with-gas-price 200000000 --gas-estimate-multiplier 150 --delay 5
+deploy-script-test-plume :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 161221135 --rpc-url plume --broadcast --slow --verifier blockscout --verifier-url https://plume-testnet.explorer.caldera.xyz/api --legacy --gas-estimate-multiplier 150 --delay 5
+
+deploy-list-asset :; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 421614 --rpc-url arb_sepolia --broadcast --slow  -vvv --with-gas-price 200000000  --gas-estimate-multiplier 150 --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63 --delay 5
+deploy-list-asset-plume :; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 161221135 --rpc-url plume --broadcast --legacy --slow --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63 --delay 5
+deploy-list-asset-plume-verify :; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 161221135 --rpc-url plume --broadcast --legacy --slow --verifier blockscout --verifier-url https://plume-testnet.explorer.caldera.xyz/api --gas-estimate-multiplier 150 --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63 --delay 5
+
 deploy-aave-bundler-plume :; forge script scripts/DeployAaveBundler.sol:Default --chain 161221135 --rpc-url plume --broadcast  -vv --with-gas-price 200000000 --gas-estimate-multiplier 150 --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63
