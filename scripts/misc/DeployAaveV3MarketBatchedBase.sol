@@ -31,6 +31,8 @@ abstract contract DeployAaveV3MarketBatchedBase is DeployUtils, MarketInput, Scr
     uint256 deployerPrivateKey = vm.envUint('PRIVATE_KEY');
 
     vm.startBroadcast(deployerPrivateKey);
+    // AaveV3BatchOrchestration2 orchestration = new AaveV3BatchOrchestration2();
+    console.log('first');
     report = AaveV3BatchOrchestration.deployAaveV3(
       msg.sender,
       roles,
@@ -39,6 +41,7 @@ abstract contract DeployAaveV3MarketBatchedBase is DeployUtils, MarketInput, Scr
       flags,
       report
     );
+    console.log('last');
     vm.stopBroadcast();
 
     // Write market deployment JSON report at /reports

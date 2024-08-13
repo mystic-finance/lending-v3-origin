@@ -36,6 +36,7 @@ bnb = "${RPC_BNB}"
 gnosis = "${RPC_GNOSIS}"
 base = "${RPC_BASE}"
 plume="${RPC_PLUME}"
+bellecour="${RPC_BELLECOUR}"
 arb_sepolia="${RPC_ARBITRUM_SEPOLIA}"
 
 [etherscan]

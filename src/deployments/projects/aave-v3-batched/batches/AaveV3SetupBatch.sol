@@ -8,14 +8,15 @@ import '../../../contracts/MarketReportStorage.sol';
 contract AaveV3SetupBatch is MarketReportStorage, AaveV3SetupProcedure, Ownable {
   InitialReport internal _initialReport;
   SetupReport internal _setupReport;
+  address ownerMain;
 
   constructor(
-    address owner,
+    address _owner,
     Roles memory roles,
     MarketConfig memory config,
     MarketReport memory deployedContracts
   ) {
-    transferOwnership(owner);
+    ownerMain = _owner;
 
     _initialReport = _initialDeployment(
       deployedContracts.poolAddressesProviderRegistry,
@@ -52,6 +53,7 @@ contract AaveV3SetupBatch is MarketReportStorage, AaveV3SetupProcedure, Ownable 
 
   function setMarketReport(MarketReport memory marketReport) external onlyOwner {
     _marketReport = marketReport;
+    transferOwnership(ownerMain);
   }
 
   function getInitialReport() external view returns (InitialReport memory) {

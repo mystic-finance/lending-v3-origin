@@ -46,7 +46,7 @@ import {PercentageMath} from 'src/core/contracts/protocol/libraries/math/Percent
  * @author BGD
  * @dev Library which ensemble the deployment of Aave V3 using batch constructor deployment pattern.
  */
-library AaveV3BatchOrchestration {
+contract AaveV3BatchOrchestration2 {
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
   using PercentageMath for uint256;
 
@@ -57,7 +57,7 @@ library AaveV3BatchOrchestration {
     SubMarketConfig memory subConfig,
     DeployFlags memory flags,
     MarketReport memory deployedContracts
-  ) internal returns (MarketReport memory) {
+  ) external returns (MarketReport memory) {
     /*
     The following are done here:
     1. pool address provider deployment
@@ -208,7 +208,7 @@ library AaveV3BatchOrchestration {
   function listAssetPairAaveV3(
     ListingConfig memory config,
     SubMarketConfig memory subConfig
-  ) internal {
+  ) external {
     IPoolConfigurator configurator = IPoolConfigurator(config.poolConfigurator);
 
     // 1. set price feeds

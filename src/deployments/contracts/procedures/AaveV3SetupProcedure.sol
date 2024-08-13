@@ -116,7 +116,7 @@ contract AaveV3SetupProcedure {
       IRewardsController(report.rewardsControllerProxy).EMISSION_MANAGER()
     );
     emissionManager.setRewardsController(report.rewardsControllerProxy);
-    IOwnable(address(emissionManager)).transferOwnership(poolAdmin);
+    try IOwnable(address(emissionManager)).transferOwnership(poolAdmin) {} catch {}
     return report;
   }
 
