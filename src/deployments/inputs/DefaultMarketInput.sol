@@ -24,7 +24,7 @@ contract DefaultMarketInput is MarketInput {
     roles.poolAdmin = deployer;
 
     config.marketId = 'Aave V3 Mystic Plume gnUSD/GOON Testnet Market';
-    config.providerId = 8081;
+    config.providerId = 8084;
     config.oracleDecimals = 8;
     config.flashLoanPremiumTotal = 0.0005e4;
     config.flashLoanPremiumToProtocol = 0.0004e4;

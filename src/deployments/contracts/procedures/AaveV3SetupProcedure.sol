@@ -83,6 +83,10 @@ contract AaveV3SetupProcedure {
       );
       IOwnable(poolAddressesProviderRegistry).transferOwnership(marketOwner);
     } else {
+      PoolAddressesProviderRegistry(poolAddressesProviderRegistry).registerAddressesProvider(
+        poolAddressesProvider,
+        providerId
+      );
       poolAddressesProviderRegistry = providerRegistry;
     }
 

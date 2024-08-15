@@ -30,7 +30,11 @@ import {TimelockController} from 'src/core/contracts/protocol/partner/Timelock.s
 import {KYCInstance} from 'src/core/instances/KYCInstance.sol';
 import {AaveBundler} from 'src/core/contracts/protocol/partner/AaveBundler.sol';
 
+import {PoolAddressesProviderRegistry} from 'src/core/contracts/protocol/configuration/PoolAddressesProviderRegistry.sol';
+
 import {ConfigEngineDeployer} from '../../../periphery/contracts/v3-config-engine/ConfigEngineDeployer.sol';
+
+import {PoolAddressesProvider} from 'src/core/contracts/protocol/configuration/PoolAddressesProvider.sol';
 
 import {AaveV3LibrariesBatch1} from '../aave-v3-libraries/AaveV3LibrariesBatch1.sol';
 
@@ -202,6 +206,19 @@ library AaveV3BatchOrchestration {
         networkBaseTokenPriceInUsdProxyAggregator,
         marketReferenceCurrencyPriceInUsdProxyAggregator
       );
+  }
+
+  function updateProviderRegistry(
+    address poolAddressesProviderRegistry,
+    address poolAddressesProvider,
+    uint providerId
+  ) internal returns (bool) {
+    address owner = PoolAddressesProviderRegistry(poolAddressesProviderRegistry).owner();
+    PoolAddressesProviderRegistry(poolAddressesProviderRegistry).registerAddressesProvider(
+      poolAddressesProvider,
+      providerId
+    );
+    return true;
   }
 
   function listAssetPairAaveV3(

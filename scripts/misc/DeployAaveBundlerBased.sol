@@ -17,7 +17,7 @@ abstract contract DeployAaveBundlerBased is DeployUtils, MarketInput, Script {
 
   function run() external {
     Roles memory roles;
-    ListingConfig memory config;
+    MarketConfig memory config;
     SubMarketConfig memory subConfig;
     MarketReport memory report;
     MarketConfig memory oldConfig;
@@ -25,12 +25,17 @@ abstract contract DeployAaveBundlerBased is DeployUtils, MarketInput, Script {
     console.log('Aave V3 Batch Listing');
     console.log('sender', msg.sender);
 
+    (roles, config, , , report) = _getMarketInput(msg.sender);
     uint256 deployerPrivateKey = vm.envUint('PRIVATE_KEY');
 
     vm.startBroadcast(deployerPrivateKey);
 
-    address bundler = AaveV3BatchOrchestration._deployAaveBundler();
-    console.log('bundler', bundler);
+    AaveV3BatchOrchestration.updateProviderRegistry(
+      report.poolAddressesProviderRegistry,
+      0x1E4aC9797E50bdb9706df99a45dB6afaff212239,
+      config.providerId
+    );
+    console.log('bundler');
     vm.stopBroadcast();
 
     // Write market deployment JSON report at /reports
