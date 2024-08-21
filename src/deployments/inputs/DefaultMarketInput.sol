@@ -58,7 +58,7 @@ contract DefaultMarketInput is MarketInput {
       //borrow asset
       asset: 0x5c1409a46cD113b3A667Db6dF0a8D7bE37ed3BB3,
       assetSymbol: 'gnUSD',
-      priceFeed: 0x34d75eB977F06A53362900D3F09F7eDEe324aFe8,
+      priceFeed: 0xe87465356E0850a7d8e0101bb81CBb82cCabCa64,
       rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
         optimalUsageRatio: 85_00,
         baseVariableBorrowRate: 1_00, // 0.25%
@@ -85,7 +85,7 @@ contract DefaultMarketInput is MarketInput {
       //collateral
       asset: 0xbA22114ec75f0D55C34A5E5A3cf384484Ad9e733,
       assetSymbol: 'GOON',
-      priceFeed: 0x71734ab801Ee8a215c003F09047bfd8e0419A953,
+      priceFeed: 0xAe1923a9E777c439a633ccf8558Cf0eE10829b16,
       rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
         optimalUsageRatio: 85_00,
         baseVariableBorrowRate: 55, // 0.25%
