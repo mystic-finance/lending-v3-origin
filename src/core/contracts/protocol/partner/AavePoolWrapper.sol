@@ -13,12 +13,10 @@ interface IPointsProgram {
 contract AavePoolWrapper is Ownable {
   using SafeERC20 for IERC20;
 
-  IPool public immutable aavePool;
   IPointsProgram public pointsProgram;
   uint8 public task;
 
-  constructor(address _aavePool, address _pointsProgram, uint8 _task) {
-    aavePool = IPool(_aavePool);
+  constructor(address _pointsProgram, uint8 _task) {
     pointsProgram = IPointsProgram(_pointsProgram);
     task = _task;
   }
@@ -31,7 +29,8 @@ contract AavePoolWrapper is Ownable {
     pointsProgram = IPointsProgram(_pointsProgram);
   }
 
-  function supply(address asset, uint256 amount) external {
+  function supply(address _aavePool, address asset, uint256 amount) external {
+    IPool aavePool = IPool(_aavePool);
     // Transfer tokens from user to this contract
     IERC20(asset).safeTransferFrom(msg.sender, address(this), amount);
 

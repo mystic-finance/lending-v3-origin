@@ -318,22 +318,22 @@ library AaveV3BatchOrchestration {
   }
 
   function deployAaveBundler(
-    address pool,
     address pointsProgram,
     uint8 taskId
   ) internal returns (address bundler) {
-    bundler = address(new AavePoolWrapper(pool, pointsProgram, taskId));
+    bundler = address(new AavePoolWrapper(pointsProgram, taskId));
     return (bundler);
   }
 
   function testAaveBundler(
+    address pool,
     address _wrapper,
     address token,
     uint amount
   ) internal returns (address bundler) {
     AavePoolWrapper wrapper = AavePoolWrapper(_wrapper);
     IERC20(token).approve(address(wrapper), amount);
-    wrapper.supply(token, amount);
+    wrapper.supply(pool, token, amount);
   }
 
   function _deploySetupContract(

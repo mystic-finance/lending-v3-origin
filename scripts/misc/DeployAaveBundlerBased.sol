@@ -37,17 +37,15 @@ abstract contract DeployAaveBundlerBased is DeployUtils, MarketInput, Script {
     //   0x1E4aC9797E50bdb9706df99a45dB6afaff212239,
     //   config.providerId
     // );
-    // address wrapper = AaveV3BatchOrchestration.deployAaveBundler(
-    //   config.poolProxy,
-    //   pointsProgram,
-    //   task
-    // );
+    // address wrapper = AaveV3BatchOrchestration.deployAaveBundler(pointsProgram, task);
 
     // AaveV3BatchOrchestration.testAaveBundler(
-    //   0x783fDF6b9494e6e9DAcFF1f938904Fc47642271F,
+    //   config.poolProxy,
+    //   0xDa2F2d62fe27553bD3d6f26E2685a92B069AA0bd,
     //   0x5c1409a46cD113b3A667Db6dF0a8D7bE37ed3BB3,
     //   10000
-    // ); 0x738eFcb730050f508B6778D49024A7Cd1481B36F
+    // );
+    // 0x738eFcb730050f508B6778D49024A7Cd1481B36F
 
     // console.log('wrapped', wrapper);
     vm.stopBroadcast();
@@ -59,3 +57,4 @@ abstract contract DeployAaveBundlerBased is DeployUtils, MarketInput, Script {
     // metadataReporter.writeJsonReportMarket(report);
   }
 }
+// 0x783fDF6b9494e6e9DAcFF1f938904Fc47642271F - partial,  0x738eFcb730050f508B6778D49024A7Cd1481B36F - full
