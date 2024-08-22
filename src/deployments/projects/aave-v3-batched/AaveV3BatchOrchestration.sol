@@ -28,7 +28,7 @@ import {TimelockInstance} from 'src/core/instances/TimelockInstance.sol';
 import {TimelockController} from 'src/core/contracts/protocol/partner/Timelock.sol';
 
 import {KYCInstance} from 'src/core/instances/KYCInstance.sol';
-import {AaveBundler} from 'src/core/contracts/protocol/partner/AaveBundler.sol';
+import {AavePoolWrapper} from 'src/core/contracts/protocol/partner/AavePoolWrapper.sol';
 
 import {PoolAddressesProviderRegistry} from 'src/core/contracts/protocol/configuration/PoolAddressesProviderRegistry.sol';
 
@@ -317,9 +317,23 @@ library AaveV3BatchOrchestration {
     }
   }
 
-  function _deployAaveBundler() internal returns (address bundler) {
-    bundler = address(new AaveBundler());
+  function deployAaveBundler(
+    address pool,
+    address pointsProgram,
+    uint8 taskId
+  ) internal returns (address bundler) {
+    bundler = address(new AavePoolWrapper(pool, pointsProgram, taskId));
     return (bundler);
+  }
+
+  function testAaveBundler(
+    address _wrapper,
+    address token,
+    uint amount
+  ) internal returns (address bundler) {
+    AavePoolWrapper wrapper = AavePoolWrapper(_wrapper);
+    IERC20(token).approve(address(wrapper), amount);
+    wrapper.supply(token, amount);
   }
 
   function _deploySetupContract(

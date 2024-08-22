@@ -17,7 +17,7 @@ abstract contract DeployAaveBundlerBased is DeployUtils, MarketInput, Script {
 
   function run() external {
     Roles memory roles;
-    MarketConfig memory config;
+    ListingConfig memory config;
     SubMarketConfig memory subConfig;
     MarketReport memory report;
     MarketConfig memory oldConfig;
@@ -25,17 +25,31 @@ abstract contract DeployAaveBundlerBased is DeployUtils, MarketInput, Script {
     console.log('Aave V3 Batch Listing');
     console.log('sender', msg.sender);
 
-    (roles, config, , , report) = _getMarketInput(msg.sender);
+    config = _listAsset(msg.sender, address(0), address(0));
     uint256 deployerPrivateKey = vm.envUint('PRIVATE_KEY');
+    address pointsProgram = vm.envAddress('POINTS_PROGRAM');
+    uint8 task = uint8(vm.envUint('POINTS_TASK_ID'));
 
     vm.startBroadcast(deployerPrivateKey);
 
-    AaveV3BatchOrchestration.updateProviderRegistry(
-      report.poolAddressesProviderRegistry,
-      0x1E4aC9797E50bdb9706df99a45dB6afaff212239,
-      config.providerId
-    );
-    console.log('bundler');
+    // AaveV3BatchOrchestration.updateProviderRegistry(
+    //   report.poolAddressesProviderRegistry,
+    //   0x1E4aC9797E50bdb9706df99a45dB6afaff212239,
+    //   config.providerId
+    // );
+    // address wrapper = AaveV3BatchOrchestration.deployAaveBundler(
+    //   config.poolProxy,
+    //   pointsProgram,
+    //   task
+    // );
+
+    // AaveV3BatchOrchestration.testAaveBundler(
+    //   0x783fDF6b9494e6e9DAcFF1f938904Fc47642271F,
+    //   0x5c1409a46cD113b3A667Db6dF0a8D7bE37ed3BB3,
+    //   10000
+    // ); 0x738eFcb730050f508B6778D49024A7Cd1481B36F
+
+    // console.log('wrapped', wrapper);
     vm.stopBroadcast();
 
     // Write market deployment JSON report at /reports
