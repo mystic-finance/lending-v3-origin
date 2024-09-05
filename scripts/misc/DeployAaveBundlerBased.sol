@@ -37,7 +37,11 @@ abstract contract DeployAaveBundlerBased is DeployUtils, MarketInput, Script {
     //   0x1E4aC9797E50bdb9706df99a45dB6afaff212239,
     //   config.providerId
     // );
-    // address wrapper = AaveV3BatchOrchestration.deployAaveBundler(pointsProgram, task);
+    address wrapper = AaveV3BatchOrchestration.updateAaveBundlerPointProgram(
+      0x8Dc5b3f1CcC75604710d9F464e3C5D2dfCAb60d8,
+      0xDa2F2d62fe27553bD3d6f26E2685a92B069AA0bd
+    );
+    console.log('done');
 
     // AaveV3BatchOrchestration.testAaveBundler(
     //   config.poolProxy,

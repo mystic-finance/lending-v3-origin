@@ -317,12 +317,40 @@ library AaveV3BatchOrchestration {
     }
   }
 
+  function updateAssetPairAaveV3(
+    ListingConfig memory config,
+    SubMarketConfig memory subConfig
+  ) internal {
+    IPoolConfigurator configurator = IPoolConfigurator(config.poolConfigurator);
+    ConfiguratorInputTypes.InitReserveInput[]
+      memory initReserveInputs = new ConfiguratorInputTypes.InitReserveInput[](
+        config.listings.length
+      );
+
+    // 6. configure caps, borrow side, collateral and assets emode
+    for (uint256 i = 0; i < config.listings.length; i++) {
+      _configureCaps(configurator, config.listings[i]);
+      _configBorrowSide(configurator, config.listings[i], IPool(config.poolProxy));
+      _configCollateralSide(configurator, config.listings[i], IPool(config.poolProxy));
+      _configAssetsEMode(configurator, config.listings[i]);
+    }
+  }
+
   function deployAaveBundler(
     address pointsProgram,
     uint8 taskId
   ) internal returns (address bundler) {
     bundler = address(new AavePoolWrapper(pointsProgram, taskId));
     return (bundler);
+  }
+
+  function updateAaveBundlerPointProgram(
+    address pointsProgram,
+    address _wrapper
+  ) internal returns (address wrapper) {
+    AavePoolWrapper bundler = AavePoolWrapper(_wrapper);
+    bundler.updatePointProgram(pointsProgram);
+    return address(bundler);
   }
 
   function testAaveBundler(

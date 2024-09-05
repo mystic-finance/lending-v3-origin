@@ -39,9 +39,11 @@ git-diff :
 
 deploy-script-test :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 421614 --rpc-url arb_sepolia --broadcast --verify --slow  -vvv --with-gas-price 200000000 --gas-estimate-multiplier 150 --delay 5
 deploy-script-test-plume :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 161221135 --rpc-url plume --broadcast --slow --verifier blockscout --verifier-url https://plume-testnet.explorer.caldera.xyz/api --legacy --gas-estimate-multiplier 150 --delay 5
+deploy-script-test-polygon :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 161221135 --rpc-url plume --broadcast --slow --verifier blockscout --verifier-url https://plume-testnet.explorer.caldera.xyz/api --legacy --gas-estimate-multiplier 150 --delay 5
+
 
 deploy-list-asset :; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 421614 --rpc-url arb_sepolia --broadcast --slow  -vvv --with-gas-price 200000000  --gas-estimate-multiplier 150 --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63 --delay 5
 deploy-list-asset-plume :; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 161221135 --rpc-url plume --broadcast --slow --sender 0x4C741E7f98B166286157940Bc7bb86EBaEC51D0a --delay 5
 deploy-list-asset-plume-verify :; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 161221135 --rpc-url plume --broadcast --legacy --slow --verifier blockscout --verifier-url https://plume-testnet.explorer.caldera.xyz/api --gas-estimate-multiplier 150 --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63 --delay 5
 
-deploy-aave-bundler-plume :; forge script scripts/DeployAaveBundler.sol:Default --chain 161221135 --rpc-url plume --broadcast --force  -vvvv --with-gas-price 300000000 --gas-estimate-multiplier 150 --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63 -vvv
+deploy-aave-bundler-plume :; forge script scripts/DeployAaveBundler.sol:Default --chain 161221135 --rpc-url plume --broadcast --force  -vvvv --gas-estimate-multiplier 150 --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63 -vvv

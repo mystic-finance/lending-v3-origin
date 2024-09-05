@@ -61,22 +61,22 @@ contract DefaultMarketInput is MarketInput {
       priceFeed: 0xe87465356E0850a7d8e0101bb81CBb82cCabCa64,
       rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
         optimalUsageRatio: 85_00,
-        baseVariableBorrowRate: 1_00, // 0.25%
+        baseVariableBorrowRate: 1_50, // 1%
         variableRateSlope1: 4_00,
         variableRateSlope2: 75_00
       }),
       enabledToBorrow: EngineFlags.ENABLED,
       flashloanable: EngineFlags.DISABLED,
       stableRateModeEnabled: EngineFlags.DISABLED,
-      borrowableInIsolation: EngineFlags.DISABLED,
+      borrowableInIsolation: EngineFlags.ENABLED,
       withSiloedBorrowing: EngineFlags.DISABLED,
-      ltv: 85_00, // 70.5%
-      liqThreshold: 0, // 76%
-      liqBonus: 12_50, // 5%
+      ltv: 88_00, // 90%
+      liqThreshold: 88_50, // 92.5%
+      liqBonus: 10_00, // 5%
       reserveFactor: 15_00, // 10%
       supplyCap: 50_000_000_000, // 100k AAVE
       borrowCap: 50_000_000_000, // 60k AAVE
-      debtCeiling: 0, // 100k USD
+      debtCeiling: EngineFlags.KEEP_CURRENT, //0, // 100k USD
       liqProtocolFee: 10_00, // 10%
       eModeCategory: 0 // No category
     });
@@ -88,22 +88,22 @@ contract DefaultMarketInput is MarketInput {
       priceFeed: 0xAe1923a9E777c439a633ccf8558Cf0eE10829b16,
       rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
         optimalUsageRatio: 85_00,
-        baseVariableBorrowRate: 55, // 0.25%
+        baseVariableBorrowRate: 1_25, // 1.25%
         variableRateSlope1: 3_00,
         variableRateSlope2: 70_00
       }),
-      enabledToBorrow: EngineFlags.DISABLED,
+      enabledToBorrow: EngineFlags.ENABLED,
       flashloanable: EngineFlags.DISABLED,
       stableRateModeEnabled: EngineFlags.DISABLED,
-      borrowableInIsolation: EngineFlags.DISABLED,
+      borrowableInIsolation: EngineFlags.ENABLED,
       withSiloedBorrowing: EngineFlags.DISABLED,
-      ltv: 85_00, // 70.5%
-      liqThreshold: 85_50, // 76%
+      ltv: 87_50, // 87.5%
+      liqThreshold: 88_00, // 90%
       liqBonus: 10_00, // 5%
       reserveFactor: 15_00, // 10%
       supplyCap: 50_000_000_000, // 100k AAVE
-      borrowCap: 10, // 60k AAVE
-      debtCeiling: 0, // 100k USD
+      borrowCap: 50_000_000_000, // 60k AAVE
+      debtCeiling: EngineFlags.KEEP_CURRENT, //0, // 100k USD
       liqProtocolFee: 10_00, // 10%
       eModeCategory: 0 // No category
     });
