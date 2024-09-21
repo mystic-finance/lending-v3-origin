@@ -277,7 +277,7 @@ library AaveV3BatchOrchestration {
           config.listings[i].assetSymbol
         ),
         aTokenSymbol: string.concat(
-          'm',
+          'my',
           config.poolContext.networkAbbreviation,
           config.listings[i].assetSymbol
         ),
@@ -288,7 +288,7 @@ library AaveV3BatchOrchestration {
           config.listings[i].assetSymbol
         ),
         variableDebtTokenSymbol: string.concat(
-          'variableDebt',
+          'my-V',
           config.poolContext.networkAbbreviation,
           config.listings[i].assetSymbol
         ),
@@ -299,7 +299,7 @@ library AaveV3BatchOrchestration {
           config.listings[i].assetSymbol
         ),
         stableDebtTokenSymbol: string.concat(
-          'stableDebt',
+          'my-S',
           config.poolContext.networkAbbreviation,
           config.listings[i].assetSymbol
         ),
