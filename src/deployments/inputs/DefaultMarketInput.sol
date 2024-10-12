@@ -25,13 +25,13 @@ contract DefaultMarketInput is MarketInput {
 
     config.marketId = 'Aave V3 Mystic Sepolia Market';
     config.providerId = 8088;
-    config.oracleDecimals = 18;
+    config.oracleDecimals = 8;
     config.flashLoanPremiumTotal = 0.0005e4;
     config.flashLoanPremiumToProtocol = 0.0004e4;
     config.poolType = 0;
     config
-      .marketReferenceCurrencyPriceInUsdProxyAggregator = 0x0153002d20B96532C639313c2d54c3dA09109309;
-    config.networkBaseTokenPriceInUsdProxyAggregator = 0x0153002d20B96532C639313c2d54c3dA09109309;
+      .marketReferenceCurrencyPriceInUsdProxyAggregator = 0xeA3B617b74C2cEc6Aa6DE6527f04c1528e3C6503;
+    config.networkBaseTokenPriceInUsdProxyAggregator = 0xeA3B617b74C2cEc6Aa6DE6527f04c1528e3C6503;
     config.wrappedNativeToken = address(0);
 
     subConfig.timelock = address(0);
@@ -51,14 +51,14 @@ contract DefaultMarketInput is MarketInput {
     address debtAsset,
     address collateralAsset
   ) internal view override returns (ListingConfig memory config) {
-    IAaveV3ConfigEngine.Listing[] memory listings = new IAaveV3ConfigEngine.Listing[](6);
+    IAaveV3ConfigEngine.Listing[] memory listings = new IAaveV3ConfigEngine.Listing[](2);
     IAaveV3ConfigEngine.Listing[] memory listingCollateral = new IAaveV3ConfigEngine.Listing[](1);
 
     listings[0] = IAaveV3ConfigEngine.Listing({
       //borrow asset
-      asset: 0x2A1b409Cd444Be8F4388c50997e0Ff87e9e718Ad,
-      assetSymbol: 'WETH',
-      priceFeed: 0xd30e2101a97dcbAeBCBC04F14C3f624E67A35165,
+      asset: 0xEa0c23A2411729073Ed52fF94b38FceffE82FDE3,
+      assetSymbol: 'PUSD',
+      priceFeed: 0xeA3B617b74C2cEc6Aa6DE6527f04c1528e3C6503,
       rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
         optimalUsageRatio: 85_00,
         baseVariableBorrowRate: 1_50, // 1%
@@ -83,9 +83,9 @@ contract DefaultMarketInput is MarketInput {
 
     listings[1] = IAaveV3ConfigEngine.Listing({
       //collateral
-      asset: 0x7f908D0faC9B8D590178bA073a053493A1D0A5d4,
-      assetSymbol: 'WBTC',
-      priceFeed: 0x56a43EB56Da12C0dc1D972ACb089c06a5dEF8e69,
+      asset: 0xc4FD844B1d074219bfC3A963920951d3604C88f0,
+      assetSymbol: 'WETH',
+      priceFeed: 0xBdf2dC39aEd22e8CC605b76a6024197acDF93Bc4,
       rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
         optimalUsageRatio: 85_00,
         baseVariableBorrowRate: 1_50, // 1.25%
@@ -108,113 +108,113 @@ contract DefaultMarketInput is MarketInput {
       eModeCategory: 0 // No category
     });
 
-    listings[2] = IAaveV3ConfigEngine.Listing({
-      //collateral
-      asset: 0x93b19315A575532907DeB0FA63Bbd74972934784,
-      assetSymbol: 'wstETH',
-      priceFeed: 0xd30e2101a97dcbAeBCBC04F14C3f624E67A35165,
-      rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
-        optimalUsageRatio: 85_00,
-        baseVariableBorrowRate: 1_50, // 1.25%
-        variableRateSlope1: 4_00,
-        variableRateSlope2: 70_00
-      }),
-      enabledToBorrow: EngineFlags.ENABLED,
-      flashloanable: EngineFlags.DISABLED,
-      stableRateModeEnabled: EngineFlags.DISABLED,
-      borrowableInIsolation: EngineFlags.ENABLED,
-      withSiloedBorrowing: EngineFlags.DISABLED,
-      ltv: 88_00, // 90%
-      liqThreshold: 88_50, // 92.5%
-      liqBonus: 10_00, // 5%
-      reserveFactor: 15_00, // 10%
-      supplyCap: 50_000_000_000, // 100k AAVE
-      borrowCap: 50_000_000_000, // 60k AAVE
-      debtCeiling: 10_000_000, //0, // 100k USD
-      liqProtocolFee: 10_00, // 10%
-      eModeCategory: 0 // No category
-    });
+    // listings[2] = IAaveV3ConfigEngine.Listing({
+    //   //collateral
+    //   asset: 0x93b19315A575532907DeB0FA63Bbd74972934784,
+    //   assetSymbol: 'wstETH',
+    //   priceFeed: 0xd30e2101a97dcbAeBCBC04F14C3f624E67A35165,
+    //   rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
+    //     optimalUsageRatio: 85_00,
+    //     baseVariableBorrowRate: 1_50, // 1.25%
+    //     variableRateSlope1: 4_00,
+    //     variableRateSlope2: 70_00
+    //   }),
+    //   enabledToBorrow: EngineFlags.ENABLED,
+    //   flashloanable: EngineFlags.DISABLED,
+    //   stableRateModeEnabled: EngineFlags.DISABLED,
+    //   borrowableInIsolation: EngineFlags.ENABLED,
+    //   withSiloedBorrowing: EngineFlags.DISABLED,
+    //   ltv: 88_00, // 90%
+    //   liqThreshold: 88_50, // 92.5%
+    //   liqBonus: 10_00, // 5%
+    //   reserveFactor: 15_00, // 10%
+    //   supplyCap: 50_000_000_000, // 100k AAVE
+    //   borrowCap: 50_000_000_000, // 60k AAVE
+    //   debtCeiling: 10_000_000, //0, // 100k USD
+    //   liqProtocolFee: 10_00, // 10%
+    //   eModeCategory: 0 // No category
+    // });
 
-    listings[3] = IAaveV3ConfigEngine.Listing({
-      //collateral
-      asset: 0xb1D4538B4571d411F07960EF2838Ce337FE1E80E,
-      assetSymbol: 'LINK',
-      priceFeed: 0x0FB99723Aee6f420beAD13e6bBB79b7E6F034298,
-      rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
-        optimalUsageRatio: 85_00,
-        baseVariableBorrowRate: 1_50, // 1.25%
-        variableRateSlope1: 4_00,
-        variableRateSlope2: 70_00
-      }),
-      enabledToBorrow: EngineFlags.ENABLED,
-      flashloanable: EngineFlags.DISABLED,
-      stableRateModeEnabled: EngineFlags.DISABLED,
-      borrowableInIsolation: EngineFlags.ENABLED,
-      withSiloedBorrowing: EngineFlags.DISABLED,
-      ltv: 88_00, // 90%
-      liqThreshold: 88_50, // 92.5%
-      liqBonus: 10_00, // 5%
-      reserveFactor: 15_00, // 10%
-      supplyCap: 50_000_000_000, // 100k AAVE
-      borrowCap: 50_000_000_000, // 60k AAVE
-      debtCeiling: 10_000_000, //0, // 100k USD
-      liqProtocolFee: 10_00, // 10%
-      eModeCategory: 0 // No category
-    });
+    // listings[3] = IAaveV3ConfigEngine.Listing({
+    //   //collateral
+    //   asset: 0xb1D4538B4571d411F07960EF2838Ce337FE1E80E,
+    //   assetSymbol: 'LINK',
+    //   priceFeed: 0x0FB99723Aee6f420beAD13e6bBB79b7E6F034298,
+    //   rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
+    //     optimalUsageRatio: 85_00,
+    //     baseVariableBorrowRate: 1_50, // 1.25%
+    //     variableRateSlope1: 4_00,
+    //     variableRateSlope2: 70_00
+    //   }),
+    //   enabledToBorrow: EngineFlags.ENABLED,
+    //   flashloanable: EngineFlags.DISABLED,
+    //   stableRateModeEnabled: EngineFlags.DISABLED,
+    //   borrowableInIsolation: EngineFlags.ENABLED,
+    //   withSiloedBorrowing: EngineFlags.DISABLED,
+    //   ltv: 88_00, // 90%
+    //   liqThreshold: 88_50, // 92.5%
+    //   liqBonus: 10_00, // 5%
+    //   reserveFactor: 15_00, // 10%
+    //   supplyCap: 50_000_000_000, // 100k AAVE
+    //   borrowCap: 50_000_000_000, // 60k AAVE
+    //   debtCeiling: 10_000_000, //0, // 100k USD
+    //   liqProtocolFee: 10_00, // 10%
+    //   eModeCategory: 0 // No category
+    // });
 
-    listings[4] = IAaveV3ConfigEngine.Listing({
-      //collateral
-      asset: 0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d,
-      assetSymbol: 'USDC',
-      priceFeed: 0x0153002d20B96532C639313c2d54c3dA09109309,
-      rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
-        optimalUsageRatio: 85_00,
-        baseVariableBorrowRate: 1_50, // 1.25%
-        variableRateSlope1: 4_00,
-        variableRateSlope2: 70_00
-      }),
-      enabledToBorrow: EngineFlags.ENABLED,
-      flashloanable: EngineFlags.DISABLED,
-      stableRateModeEnabled: EngineFlags.DISABLED,
-      borrowableInIsolation: EngineFlags.ENABLED,
-      withSiloedBorrowing: EngineFlags.DISABLED,
-      ltv: 88_00, // 90%
-      liqThreshold: 88_50, // 92.5%
-      liqBonus: 10_00, // 5%
-      reserveFactor: 15_00, // 10%
-      supplyCap: 50_000_000_000, // 100k AAVE
-      borrowCap: 50_000_000_000, // 60k AAVE
-      debtCeiling: 10_000_000, //0, // 100k USD
-      liqProtocolFee: 10_00, // 10%
-      eModeCategory: 0 // No category
-    });
+    // listings[4] = IAaveV3ConfigEngine.Listing({
+    //   //collateral
+    //   asset: 0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d,
+    //   assetSymbol: 'USDC',
+    //   priceFeed: 0x0153002d20B96532C639313c2d54c3dA09109309,
+    //   rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
+    //     optimalUsageRatio: 85_00,
+    //     baseVariableBorrowRate: 1_50, // 1.25%
+    //     variableRateSlope1: 4_00,
+    //     variableRateSlope2: 70_00
+    //   }),
+    //   enabledToBorrow: EngineFlags.ENABLED,
+    //   flashloanable: EngineFlags.DISABLED,
+    //   stableRateModeEnabled: EngineFlags.DISABLED,
+    //   borrowableInIsolation: EngineFlags.ENABLED,
+    //   withSiloedBorrowing: EngineFlags.DISABLED,
+    //   ltv: 88_00, // 90%
+    //   liqThreshold: 88_50, // 92.5%
+    //   liqBonus: 10_00, // 5%
+    //   reserveFactor: 15_00, // 10%
+    //   supplyCap: 50_000_000_000, // 100k AAVE
+    //   borrowCap: 50_000_000_000, // 60k AAVE
+    //   debtCeiling: 10_000_000, //0, // 100k USD
+    //   liqProtocolFee: 10_00, // 10%
+    //   eModeCategory: 0 // No category
+    // });
 
-    listings[5] = IAaveV3ConfigEngine.Listing({
-      //collateral
-      asset: 0x30fA2FbE15c1EaDfbEF28C188b7B8dbd3c1Ff2eB,
-      assetSymbol: 'USDT',
-      priceFeed: 0x80EDee6f667eCc9f63a0a6f55578F870651f06A4,
-      rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
-        optimalUsageRatio: 85_00,
-        baseVariableBorrowRate: 1_50, // 1.25%
-        variableRateSlope1: 4_00,
-        variableRateSlope2: 70_00
-      }),
-      enabledToBorrow: EngineFlags.ENABLED,
-      flashloanable: EngineFlags.DISABLED,
-      stableRateModeEnabled: EngineFlags.DISABLED,
-      borrowableInIsolation: EngineFlags.ENABLED,
-      withSiloedBorrowing: EngineFlags.DISABLED,
-      ltv: 88_00, // 90%
-      liqThreshold: 88_50, // 92.5%
-      liqBonus: 10_00, // 5%
-      reserveFactor: 15_00, // 10%
-      supplyCap: 50_000_000_000, // 100k AAVE
-      borrowCap: 50_000_000_000, // 60k AAVE
-      debtCeiling: 10_000_000, //0, // 100k USD
-      liqProtocolFee: 10_00, // 10%
-      eModeCategory: 0 // No category
-    });
+    // listings[5] = IAaveV3ConfigEngine.Listing({
+    //   //collateral
+    //   asset: 0x30fA2FbE15c1EaDfbEF28C188b7B8dbd3c1Ff2eB,
+    //   assetSymbol: 'USDT',
+    //   priceFeed: 0x80EDee6f667eCc9f63a0a6f55578F870651f06A4,
+    //   rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
+    //     optimalUsageRatio: 85_00,
+    //     baseVariableBorrowRate: 1_50, // 1.25%
+    //     variableRateSlope1: 4_00,
+    //     variableRateSlope2: 70_00
+    //   }),
+    //   enabledToBorrow: EngineFlags.ENABLED,
+    //   flashloanable: EngineFlags.DISABLED,
+    //   stableRateModeEnabled: EngineFlags.DISABLED,
+    //   borrowableInIsolation: EngineFlags.ENABLED,
+    //   withSiloedBorrowing: EngineFlags.DISABLED,
+    //   ltv: 88_00, // 90%
+    //   liqThreshold: 88_50, // 92.5%
+    //   liqBonus: 10_00, // 5%
+    //   reserveFactor: 15_00, // 10%
+    //   supplyCap: 50_000_000_000, // 100k AAVE
+    //   borrowCap: 50_000_000_000, // 60k AAVE
+    //   debtCeiling: 10_000_000, //0, // 100k USD
+    //   liqProtocolFee: 10_00, // 10%
+    //   eModeCategory: 0 // No category
+    // });
 
     // listings[6] = IAaveV3ConfigEngine.Listing({
     //   //collateral
@@ -244,16 +244,16 @@ contract DefaultMarketInput is MarketInput {
     // });
 
     config.poolContext = IAaveV3ConfigEngine.PoolContext({
-      networkName: 'Arbitrum Sepolia Market',
-      networkAbbreviation: 'ArbSepolia'
+      networkName: 'Plume DevNet Market',
+      networkAbbreviation: 'PlumeDevNet'
     });
     config.listings = listings;
-    config.treasury = 0x83bF91963A7808c11f61890dc3fE23B0967e02c0;
-    config.interestRateStrategy = 0x788319d3528d6BD73420F3eFbFa3d2da0889EB9b;
-    config.poolConfigurator = 0xC37578e6c74AC54096F112F2b49A77A269646843;
-    config.rewardsController = 0xa7E492Ef37d71318d94B10427A3E65A568731CDa;
-    config.poolProxy = 0xe8CdEa025ECA7BAAB98EAf1405246Ed5E1428402;
-    config.oracle = 0x3CB5953F9d108c33B50D6a4608ae3CeF5686aD78;
+    config.treasury = 0x7133d9d3d22471EC53D929eCA1AEe233b63c67f2;
+    config.interestRateStrategy = 0x47B61Fa5AD31CEE6a04a6d718aC4f9a34129A19b;
+    config.poolConfigurator = 0x246C014E3fB086885cd17B9CaCC99fbCf7b3A82f;
+    config.rewardsController = 0x5b13f6884FD023a696674f7Eb06Ea82663869393;
+    config.poolProxy = 0xDB487bEe0814E561706D4e1c002d565470D02bFe;
+    config.oracle = 0x7e8CB03f969c99D3660f27545fb70C1a60F0a3Ac;
     return (config);
   }
 

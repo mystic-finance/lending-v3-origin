@@ -44,6 +44,7 @@ import {EngineFlags} from 'src/periphery/contracts/v3-config-engine/EngineFlags.
 import {IERC20Metadata} from 'lib/solidity-utils/src/contracts/oz-common/interfaces/IERC20Metadata.sol';
 import {ReserveConfiguration} from 'src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 import {PercentageMath} from 'src/core/contracts/protocol/libraries/math/PercentageMath.sol';
+import {AavePoolVaultFactory} from 'src/core/contracts/protocol/vault/VaultFactory.sol';
 
 /**
  * @title AaveV3BatchOrchestration
@@ -342,6 +343,38 @@ library AaveV3BatchOrchestration {
   ) internal returns (address bundler) {
     bundler = address(new AavePoolWrapper(pointsProgram, taskId));
     return (bundler);
+  }
+
+  function deployAaveVaultFactory() internal returns (address aaveVaultFactory) {
+    aaveVaultFactory = address(new AavePoolVaultFactory());
+  }
+
+  function deployAaveVault(
+    address vaultFactory,
+    uint256 initialTimelock,
+    address asset,
+    uint256 maxDeposit,
+    uint256 maxWithdrawal,
+    uint256 fee,
+    address feeRecipient,
+    string memory name,
+    string memory symbol,
+    bytes32 salt
+  ) internal returns (address aaveVault) {
+    AavePoolVaultFactory aaveVaultFactory = AavePoolVaultFactory(vaultFactory);
+    aaveVault = address(
+      aaveVaultFactory.createVault(
+        initialTimelock,
+        asset,
+        maxDeposit,
+        maxWithdrawal,
+        fee,
+        feeRecipient,
+        name,
+        symbol,
+        salt
+      )
+    );
   }
 
   function updateAaveBundlerPointProgram(

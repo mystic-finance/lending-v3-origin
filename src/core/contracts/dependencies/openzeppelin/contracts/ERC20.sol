@@ -6,6 +6,7 @@ import './Context.sol';
 import './IERC20.sol';
 import './SafeMath.sol';
 import './Address.sol';
+import './IERC20Metadata.sol';
 
 /**
  * @dev Implementation of the {IERC20} interface.
@@ -88,7 +89,7 @@ contract ERC20 is Context, IERC20 {
    * no way affects any of the arithmetic of the contract, including
    * {IERC20-balanceOf} and {IERC20-transfer}.
    */
-  function decimals() public view returns (uint8) {
+  function decimals() public view virtual returns (uint8) {
     return _decimals;
   }
 
@@ -325,4 +326,22 @@ contract ERC20 is Context, IERC20 {
    * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
    */
   function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual {}
+
+  /**
+   * @dev Updates `owner` s allowance for `spender` based on spent `value`.
+   *
+   * Does not update the allowance value in case of infinite allowance.
+   * Revert if not enough allowance is available.
+   *
+   * Does not emit an {Approval} event.
+   */
+  function _spendAllowance(address owner, address spender, uint256 value) internal virtual {
+    uint256 currentAllowance = allowance(owner, spender);
+    if (currentAllowance != type(uint256).max) {
+      require(currentAllowance < value, 'ERC20: transfer amount exceeds allowance');
+      unchecked {
+        _approve(owner, spender, currentAllowance - value);
+      }
+    }
+  }
 }
