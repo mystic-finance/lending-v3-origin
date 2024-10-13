@@ -6,7 +6,7 @@ import '../../dependencies/openzeppelin/contracts/Math.sol';
 import '../../dependencies/openzeppelin/contracts/IERC20.sol';
 import '../../dependencies/openzeppelin/contracts/Ownable.sol';
 import '../../interfaces/IPool.sol';
-import '../../dependencies/chainlink/AggregatorInterface.sol';
+import '../../dependencies/chainlink/AggregatorV3Interface.sol';
 import '../../interfaces/IAaveVault.sol';
 
 contract AaveVault is ERC4626, Ownable, IAaveVault {
@@ -17,6 +17,7 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
   mapping(address => WithdrawalRequest) public withdrawalRequests;
 
   uint256 public constant PERCENTAGE_SCALE = 10000;
+  uint256 public constant priceFeedUpdateInterval_ = 3600; // 1 hour
   uint256 public withdrawalTimelock;
   uint256 public maxDeposit_;
   uint256 public maxWithdrawal_;
@@ -378,14 +379,24 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
   }
 
   function _convertToUsd(uint256 amount, address oracle) internal view returns (uint256) {
-    // (, int256 price, , , ) = AggregatorInterface(oracle).latestRoundData();
-    int256 price = AggregatorInterface(oracle).latestAnswer();
-    return (amount * uint256(price)) / 1e8; // Assuming 8 decimal places for price feed
+    (, int256 price, , uint256 updatedAt, ) = AggregatorV3Interface(oracle).latestRoundData();
+    uint decimals = AggregatorV3Interface(oracle).decimals();
+
+    require(price > 0, 'Invalid Price');
+    require(decimals > 0, 'Invalid Decimals');
+    require(updatedAt >= block.timestamp - priceFeedUpdateInterval_, 'Out of Date');
+    return (amount * uint256(price)) / 10 ** decimals; // Assuming 8 decimal places for price feed
   }
 
   function _convertFromUsd(uint256 amountUsd, address oracle) internal view returns (uint256) {
-    int256 price = AggregatorInterface(oracle).latestAnswer();
-    return (amountUsd * 1e8) / uint256(price); // Assuming 8 decimal places for price feed
+    // int256 price = AggregatorInterface(oracle).latestAnswer();
+    (, int256 price, , uint256 updatedAt, ) = AggregatorV3Interface(oracle).latestRoundData();
+    uint decimals = AggregatorV3Interface(oracle).decimals();
+
+    require(price > 0, 'Invalid Price');
+    require(decimals > 0, 'Invalid Decimals');
+    require(updatedAt >= block.timestamp - priceFeedUpdateInterval_, 'Out of Date');
+    return (amountUsd * 10 ** decimals) / uint256(price); // Assuming 8 decimal places for price feed
   }
 
   function accrueFees() internal returns (uint256 remaining) {
@@ -435,7 +446,7 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
   function _isAssetAndPoolSupported(address asset, address aavePool) internal view returns (bool) {
     return assetAllocations[aavePool][asset].asset != address(0);
   }
-  
+
   function getAavePools() external view returns (address[] memory) {
     return aavePools;
   }
