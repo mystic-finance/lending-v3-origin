@@ -13,7 +13,7 @@ interface IAaveVault is IERC4626 {
 
   struct WithdrawalRequest {
     address user;
-    uint256 shares;
+    uint256 assets;
     uint256 requestTime;
   }
 
