@@ -8,24 +8,32 @@ import '../mocks/ERC20Mock.sol'; // Mock ERC20 for testing
 import '../../src/core/contracts/interfaces/IPool.sol';
 import '../../src/core/contracts/dependencies/chainlink/AggregatorInterface.sol';
 import '../../src/core/contracts/interfaces/IAaveVault.sol';
+import '../../src/core/contracts/interfaces/ICreditDelegationToken.sol';
+import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 
-contract AaveVaultTest is Test {
+contract AaveVaultTest is TestnetProcedures {
   AaveVault vault;
   ERC20Mock baseAsset;
+  ERC20Mock collateralAsset;
   ERC20Mock aToken;
   address MOCK_PRICE_FEED;
   address owner = address(10);
   address curator = address(101);
   address curatorNew = address(102);
-  address bob = address(1567);
+  // address bob = address(1567);
+  address poolAddress;
 
   function setUp() public {
+    initTestEnvironment();
+
     owner = address(this);
     curator = address(0x1);
     bob = address(0x2);
     baseAsset = new ERC20Mock('Base Asset', 'BA', 18);
+    collateralAsset = new ERC20Mock('Collateral Asset', 'CA', 18);
     aToken = new ERC20Mock('Test AToken', 'TAT', 18);
     MOCK_PRICE_FEED = address(new MockAggregator(1e8));
+    poolAddress = address(contracts.poolProxy);
     vault = new AaveVault(
       address(baseAsset),
       1 days,
@@ -59,28 +67,14 @@ contract AaveVaultTest is Test {
     assertFalse(vault.curators(curatorNew), 'Curator should be removed');
   }
 
-  // function testAddAavePool() public {
-  //   vm.startPrank(curator);
-  //   vault.addAavePool(address(0x3));
-  //   // assertTrue(vault._isAavePoolAdded(address(0x3)), 'Aave pool should be added');
-  // }
-
-  // function testAddMultipleAavePool() public {
-  //   vm.startPrank(curator);
-  //   vault.addAavePool(address(0x3));
-  //   vault.addAavePool(address(0x5));
-  //   vault.addAavePool(address(0x8));
-  //   // assertTrue(vault._isAavePoolAdded(address(0x3)), 'Aave pool should be added');
-  // }
-
   function testAddAssetAllocation() public {
     vm.startPrank(curator);
-    vault.addAavePool(address(baseAsset), address(aToken), MOCK_PRICE_FEED, 1000, address(0x3)); // 10%
-    (, , , uint256 allocationPercentage) = vault.assetAllocations(address(0x3), address(baseAsset));
+    vault.addAavePool(address(baseAsset), address(aToken), MOCK_PRICE_FEED, 1000, poolAddress); // 10%
+    (, , , uint256 allocationPercentage) = vault.assetAllocations(poolAddress, address(baseAsset));
 
     assertEq(allocationPercentage, 1000, 'Asset allocation should be added');
     assertEq(
-      vault.poolAssets(address(0x3), 0),
+      vault.poolAssets(poolAddress, 0),
       address(baseAsset),
       'Asset should be in pool assets'
     );
@@ -89,9 +83,9 @@ contract AaveVaultTest is Test {
   function testAddAssetAllocationBatch() public {
     vm.startPrank(curator);
 
-    vault.addAavePool(address(baseAsset), address(aToken), MOCK_PRICE_FEED, 1000, address(0x3)); // 10%
+    vault.addAavePool(address(baseAsset), address(aToken), MOCK_PRICE_FEED, 1000, poolAddress); // 10%
     vault.addAavePool(address(baseAsset), address(aToken), MOCK_PRICE_FEED, 5000, address(0x5)); // 10%
-    (, , , uint256 allocationPercentage) = vault.assetAllocations(address(0x3), address(baseAsset));
+    (, , , uint256 allocationPercentage) = vault.assetAllocations(poolAddress, address(baseAsset));
 
     assertEq(allocationPercentage, 1000, 'Asset allocation should be added');
 
@@ -102,7 +96,7 @@ contract AaveVaultTest is Test {
 
     assertEq(allocationPercentage2, 5000, 'Asset allocation should be added');
     assertEq(
-      vault.poolAssets(address(0x3), 0),
+      vault.poolAssets(poolAddress, 0),
       address(baseAsset),
       'Asset should be in pool assets'
     );
@@ -110,25 +104,25 @@ contract AaveVaultTest is Test {
 
   function testUpdateAssetAllocation() public {
     vm.startPrank(curator);
-    vault.addAavePool(address(baseAsset), address(aToken), MOCK_PRICE_FEED, 1000, address(0x3)); // 10%
-    vault.updateAssetAllocation(address(baseAsset), address(0x3), 500); // Update to 5%
-    (, , , uint256 allocationPercentage) = vault.assetAllocations(address(0x3), address(baseAsset));
+    vault.addAavePool(address(baseAsset), address(aToken), MOCK_PRICE_FEED, 1000, poolAddress); // 10%
+    vault.updateAssetAllocation(address(baseAsset), poolAddress, 500); // Update to 5%
+    (, , , uint256 allocationPercentage) = vault.assetAllocations(poolAddress, address(baseAsset));
 
     assertEq(allocationPercentage, 500, 'Asset allocation should be updated');
   }
 
   function testReallocate() public {
     vm.startPrank(curator);
-    vault.addAavePool(address(baseAsset), address(aToken), MOCK_PRICE_FEED, 1000, address(0x3)); // 10%
-    vault.reallocate(address(baseAsset), address(0x3), 500); // Reallocate to 5%
-    (, , , uint256 allocationPercentage) = vault.assetAllocations(address(0x3), address(baseAsset));
+    vault.addAavePool(address(baseAsset), address(aToken), MOCK_PRICE_FEED, 1000, poolAddress); // 10%
+    vault.reallocate(address(baseAsset), poolAddress, 500); // Reallocate to 5%
+    (, , , uint256 allocationPercentage) = vault.assetAllocations(poolAddress, address(baseAsset));
 
     assertEq(allocationPercentage, 500, 'Asset allocation should be reallocated');
   }
 
   function testDeposit() public {
     vm.startPrank(curator);
-    vault.addAavePool(address(baseAsset), address(aToken), MOCK_PRICE_FEED, 1000, address(0x3)); // 10%
+    vault.addAavePool(address(baseAsset), address(aToken), MOCK_PRICE_FEED, 1000, poolAddress); // 10%
 
     vm.startPrank(bob);
     baseAsset.approve(address(vault), 100e18);
@@ -142,7 +136,7 @@ contract AaveVaultTest is Test {
 
   function testWithdraw() public {
     vm.startPrank(curator);
-    vault.addAavePool(address(baseAsset), address(aToken), MOCK_PRICE_FEED, 1000, address(0x3)); // 10%
+    vault.addAavePool(address(baseAsset), address(aToken), MOCK_PRICE_FEED, 1000, poolAddress); // 10%
 
     vm.startPrank(bob);
     baseAsset.approve(address(vault), 100e18);
@@ -162,9 +156,94 @@ contract AaveVaultTest is Test {
     );
   }
 
+  function initialBorrowPrep() public {
+    vm.startPrank(bob);
+    address variableDebtTokenAddress = IPool(poolAddress)
+      .getReserveData(vault.asset())
+      .variableDebtTokenAddress;
+    ICreditDelegationToken variableDebtToken = ICreditDelegationToken(variableDebtTokenAddress);
+    baseAsset.approve(address(vault), 1000e18); // Approve the vault to use collateral
+    variableDebtToken.approveDelegation(address(vault), 100e18);
+  }
+
+  function testBorrow() public {
+    vm.startPrank(curator);
+    vault.addAavePool(address(baseAsset), address(aToken), MOCK_PRICE_FEED, 1000, poolAddress); // 10%
+
+    // Mint some collateral for testing
+    collateralAsset.mint(bob, 1000e18);
+
+    vm.startPrank(bob);
+    initialBorrowPrep();
+
+    // Borrowing from the pool
+    vault.borrow(address(collateralAsset), 100e18, poolAddress, bob, false); // Borrow 100e18
+    // Add assertions to check the state after borrowing
+    assertEq(
+      baseAsset.balanceOf(bob),
+      1100e18,
+      'Bob should not have less than 1100 asset after borrow'
+    );
+  }
+
+  function testBorrowReceiveShares() public {
+    vm.startPrank(curator);
+    vault.addAavePool(address(baseAsset), address(aToken), MOCK_PRICE_FEED, 1000, poolAddress); // 10%
+    uint assetBefore = vault.totalAssets();
+    uint balanceBefore = vault.balanceOf(bob);
+    // Mint some collateral for testing
+    collateralAsset.mint(bob, 1000e18);
+    vm.startPrank(bob);
+    initialBorrowPrep();
+
+    // Borrowing from the pool
+    vault.borrow(address(collateralAsset), 100e18, poolAddress, bob, true); // Borrow 100e18
+    // Add assertions to check the state after borrowing
+    assertEq(
+      vault.totalAssets(),
+      assetBefore + 100e18,
+      'Total assets should reflect the new borrowed asset'
+    );
+    assert(vault.balanceOf(bob) > balanceBefore);
+  }
+
+  function testRepay() public {
+    vm.startPrank(curator);
+    vault.addAavePool(address(baseAsset), address(aToken), MOCK_PRICE_FEED, 1000, poolAddress); // 10%
+
+    // Mint some collateral for testing
+    baseAsset.mint(bob, 1000e18);
+    vm.startPrank(bob);
+    initialBorrowPrep();
+    vault.borrow(address(collateralAsset), 100e18, poolAddress, bob, true);
+
+    // Repay the borrowed amount
+    vault.repay(100e18, poolAddress, bob); // Repay 100e18
+    // Add assertions to check the state after repayment
+    // For example, check the balance of the vault or the borrowed amount in the pool
+  }
+
+  function testRepayWithShares() public {
+    vm.startPrank(curator);
+    vault.addAavePool(address(baseAsset), address(aToken), MOCK_PRICE_FEED, 1000, poolAddress); // 10%
+
+    // Mint some collateral for testing
+    baseAsset.mint(bob, 1000e18);
+    vm.startPrank(bob);
+    vault.deposit(200e18, bob);
+    initialBorrowPrep();
+    vault.borrow(address(collateralAsset), 100e18, poolAddress, bob, false);
+
+    // Repay using shares
+    uint256 sharesToRepay = vault.simulateWithdrawal(100e18); // Simulate how many shares are needed to repay
+    vault.repayWithShares(sharesToRepay, poolAddress, bob); // Repay 100e18
+    // Add assertions to check the state after repayment with shares
+    // For example, check the balance of the vault or the borrowed amount in the pool
+  }
+
   function testAccrueFees() public {
     vm.startPrank(curator);
-    vault.addAavePool(address(baseAsset), address(aToken), MOCK_PRICE_FEED, 1000, address(0x3)); // 10%
+    vault.addAavePool(address(baseAsset), address(aToken), MOCK_PRICE_FEED, 1000, poolAddress); // 10%
 
     address asset = vault.asset();
     console.log(asset);
