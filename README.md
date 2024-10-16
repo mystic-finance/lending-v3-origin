@@ -110,3 +110,5 @@ Interfaces and other components required for integrations are explicitly MIT lic
 - src/core/contracts/protocol/configuration/ACLManager.sol
 - src/deployments/projects/aave-v3-batched/AaveV3BatchOrchestration.sol
 - src/deployments/inputs/DefaultMarketInput.sol
+- src/core/contracts/protocol/partner/KYCId.sol
+- src/core/contracts/protocol/pool/CustodianPermissionedPool.sol
