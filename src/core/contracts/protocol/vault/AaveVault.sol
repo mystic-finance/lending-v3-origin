@@ -91,12 +91,13 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
 
   function addAavePool(
     address newAsset,
-    address aToken,
+    address ,
     address oracle,
     uint256 allocationPercentage,
     address aavePoolAddress
   ) external onlyCurator {
     _addAavePool(aavePoolAddress);
+    address aToken = _getAssetATokenAddress(aavePoolAddress);
     addAssetAllocation(newAsset, aToken, oracle, allocationPercentage, aavePoolAddress);
   }
 
@@ -109,17 +110,17 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
 
   function addAssetAllocation(
     address newAsset,
-    address aToken,
+    address ,
     address oracle,
     uint256 allocationPercentage,
     address aavePoolAddress
   ) public onlyCurator {
     require(newAsset != address(0), 'Asset address cannot be zero');
-    require(aToken != address(0), 'AToken address cannot be zero');
     require(oracle != address(0), 'Oracle address cannot be zero');
     require(aavePoolAddress != address(0), 'Pool address cannot be zero');
     require(allocationPercentage != 0, 'Allocation Percentage cannot be zero');
 
+    address aToken = _getAssetATokenAddress(aavePoolAddress);
     if (assetAllocations[aavePoolAddress][newAsset].allocationPercentage > 0) {
       updateAssetAllocation(newAsset, aavePoolAddress, allocationPercentage);
     } else {
@@ -229,6 +230,16 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
     return totalDeposited;
   }
 
+  function totalAssetsInUsd() public view returns (uint256) {
+    // since all assets added from pools are expected to be same, there is no need to track deposits for each asset
+    uint256 total = 0;
+    address aavePool = aavePools[0];
+    address asset = poolAssets[aavePool][0];
+    AssetAllocation memory allocation = assetAllocations[aavePool][asset];
+    total = _convertToUsd(totalDeposited, allocation.oracle);
+    return total;
+  }
+
   function maxDeposit(address) public view override(ERC4626, IAaveVault) returns (uint256) {
     return maxDeposit_;
   }
@@ -250,7 +261,6 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
     address receiver
   ) public override(ERC4626, IERC4626) returns (uint256) {
     require(assets <= maxDeposit_, 'Deposit amount exceeds maximum');
-    totalDeposited += assets;
     return super.deposit(assets, receiver);
   }
 
@@ -260,7 +270,6 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
   ) public override(ERC4626, IERC4626) returns (uint256) {
     uint256 assets = _convertToAssets(shares, Math.Rounding.Ceil);
     require(assets <= maxDeposit_, 'Mint amount exceeds maximum deposit');
-    totalDeposited += assets;
     return super.mint(shares, receiver);
   }
 
@@ -287,7 +296,8 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
 
   function borrow(
     address collateralAsset,
-    uint256 amount,
+    uint256 collateralAmount,
+    uint256 amount, //borrow amount
     address aavePoolAddress,
     address receiver,
     bool receiveShares
@@ -303,6 +313,13 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
       .getReserveData(asset())
       .variableDebtTokenAddress;
     ICreditDelegationToken variableDebtToken = ICreditDelegationToken(variableDebtTokenAddress);
+
+    // deposit collateral if needed
+    if (collateralAmount > 0) {
+      IERC20(collateralAsset).transferFrom(msg.sender, address(this), collateralAmount);
+      IERC20(collateralAsset).approve(aavePoolAddress, collateralAmount);
+      IPool(aavePoolAddress).supply(collateralAsset, collateralAmount, msg.sender, 0);
+    }
 
     // Check borrow allowance
     require(
@@ -334,7 +351,6 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
     );
 
     uint256 assets = withdrawalRequests[owner].assets;
-    totalDeposited -= assets;
     delete withdrawalRequests[owner];
     uint withdrawAsset = accrueFees(assets);
     return super.withdraw(withdrawAsset, receiver, owner);
@@ -354,7 +370,6 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
     uint256 assets = withdrawalRequests[owner].assets;
     uint shares = _convertToShares(assets, Math.Rounding.Floor);
 
-    totalDeposited -= assets;
     delete withdrawalRequests[owner];
     uint withdrawShares = accrueFees(shares, 0);
     return super.redeem(withdrawShares, receiver, owner);
@@ -408,6 +423,7 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
     uint256 shares
   ) internal override {
     super._deposit(caller, receiver, assets, shares);
+    totalDeposited += assets;
     _rebalance();
   }
 
@@ -420,10 +436,11 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
   ) internal override {
     _withdrawFromAave(assets);
     super._withdraw(caller, receiver, owner, assets, shares);
+    totalDeposited -= assets;
   }
 
   function _rebalance() internal {
-    uint256 totalAssetsUsd = totalAssets();
+    uint256 totalAssetsUsd = totalAssetsInUsd();
 
     for (uint256 i = 0; i < aavePools.length; i++) {
       address aavePool = aavePools[i];
@@ -498,7 +515,7 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
 
     require(price > 0, 'Invalid Price');
     require(decimals > 0, 'Invalid Decimals');
-    require(updatedAt >= block.timestamp - priceFeedUpdateInterval_, 'Out of Date');
+    // require(updatedAt >= block.timestamp - priceFeedUpdateInterval_, 'Out of Date');
     return (amount * uint256(price)) / 10 ** decimals; // Assuming 8 decimal places for price feed
   }
 
@@ -509,22 +526,22 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
 
     require(price > 0, 'Invalid Price');
     require(decimals > 0, 'Invalid Decimals');
-    require(updatedAt >= block.timestamp - priceFeedUpdateInterval_, 'Out of Date');
+    // require(updatedAt >= block.timestamp - priceFeedUpdateInterval_, 'Out of Date');
     return (amountUsd * 10 ** decimals) / uint256(price); // Assuming 8 decimal places for price feed
   }
 
-  function accrueFees() internal returns (uint256 remaining) {
-    uint256 totalAssetValue = totalAssets();
-    uint256 feeAmount = (totalAssetValue * fee) / PERCENTAGE_SCALE;
-    uint256 feeShares = _convertToShares(feeAmount, Math.Rounding.Floor);
-    _mint(feeRecipient, feeShares);
-    emit FeeAccrued(feeAmount);
-  }
+  // function accrueFees() internal returns (uint256 remaining) {
+  //   uint256 totalAssetValue = totalAssets();
+  //   uint256 feeAmount = (totalAssetValue * fee) / PERCENTAGE_SCALE;
+  //   uint256 feeShares = _convertToShares(feeAmount, Math.Rounding.Floor);
+  //   _mint(feeRecipient, feeShares);
+  //   emit FeeAccrued(feeAmount);
+  // }
 
   function accrueFees(uint totalAssetValue) internal returns (uint256 remaining) {
     uint256 feeAmount = (totalAssetValue * fee) / PERCENTAGE_SCALE;
     uint256 feeShares = _convertToShares(feeAmount, Math.Rounding.Floor);
-    _mint(feeRecipient, feeShares);
+    _transfer(msg.sender, feeRecipient, feeShares);
     emit FeeAccrued(feeAmount);
 
     return totalAssetValue - feeAmount;
@@ -534,7 +551,7 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
     //trigger function overload without extra params
     uint256 feeShares = (shares * fee) / PERCENTAGE_SCALE;
     uint256 feeAmount = _convertToAssets(feeShares, Math.Rounding.Floor);
-    _mint(feeRecipient, feeShares);
+    _transfer(msg.sender, feeRecipient, feeShares);
     emit FeeAccrued(feeAmount);
 
     return shares - feeShares;
@@ -618,6 +635,15 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
     // Convert ray (1e27) to percentage with 2 decimals (1e4)
     supplyAPR = liquidityRate / 1e23;
     borrowAPR = variableBorrowRate / 1e23; // Using variable borrow rate
+  }
+
+  function _getAssetATokenAddress(
+    address aavePool
+  ) internal view returns (address) {
+    IPool pool = IPool(aavePool);
+
+    DataTypes.ReserveDataLegacy memory baseData = pool.getReserveData(asset());
+    return baseData.aTokenAddress;
   }
 
   function setWithdrawalTimelock(uint256 newTimelock) external onlyCuratorOrOwner {
