@@ -91,7 +91,6 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
 
   function addAavePool(
     address newAsset,
-    address ,
     address oracle,
     uint256 allocationPercentage,
     address aavePoolAddress
