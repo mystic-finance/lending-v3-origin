@@ -44,7 +44,7 @@ import {EngineFlags} from 'src/periphery/contracts/v3-config-engine/EngineFlags.
 import {IERC20Metadata} from 'lib/solidity-utils/src/contracts/oz-common/interfaces/IERC20Metadata.sol';
 import {ReserveConfiguration} from 'src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 import {PercentageMath} from 'src/core/contracts/protocol/libraries/math/PercentageMath.sol';
-import {AavePoolVaultFactory} from 'src/core/contracts/protocol/vault/VaultFactory.sol';
+import {MysticPoolVaultFactory} from 'src/core/contracts/protocol/vault/VaultFactory.sol';
 
 /**
  * @title AaveV3BatchOrchestration
@@ -346,7 +346,7 @@ library AaveV3BatchOrchestration {
   }
 
   function deployAaveVaultFactory() internal returns (address aaveVaultFactory) {
-    aaveVaultFactory = address(new AavePoolVaultFactory());
+    aaveVaultFactory = address(new MysticPoolVaultFactory());
   }
 
   function deployAaveVault(
@@ -361,7 +361,7 @@ library AaveV3BatchOrchestration {
     string memory symbol,
     bytes32 salt
   ) internal returns (address aaveVault) {
-    AavePoolVaultFactory aaveVaultFactory = AavePoolVaultFactory(vaultFactory);
+    MysticPoolVaultFactory aaveVaultFactory = MysticPoolVaultFactory(vaultFactory);
     aaveVault = address(
       aaveVaultFactory.createVault(
         initialTimelock,

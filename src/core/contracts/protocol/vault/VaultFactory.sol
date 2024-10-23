@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.10;
 
-import '../../interfaces/IAaveVault.sol';
+import '../../interfaces/IMysticVault.sol';
 import {IVaultFactory} from '../../interfaces/IVaultFactory.sol';
 
 import {EventsLib} from '../libraries/vault/EventsLib.sol';
 import {ErrorsLib} from '../libraries/vault/ErrorsLib.sol';
 
-import {AaveVault} from './AaveVault.sol';
+import {MysticVault} from './MysticVault.sol';
 
 /// @notice This contract allows to create MetaMorpho vaults, and to index them easily.
-contract AavePoolVaultFactory is IVaultFactory {
+contract MysticPoolVaultFactory is IVaultFactory {
   address public owner;
   /// @inheritdoc IVaultFactory
   mapping(address => bool) public isVault;
@@ -35,10 +35,10 @@ contract AavePoolVaultFactory is IVaultFactory {
     string memory name,
     string memory symbol,
     bytes32 salt
-  ) external returns (IAaveVault vault) {
-    vault = IAaveVault(
+  ) external returns (IMysticVault vault) {
+    vault = IMysticVault(
       address(
-        new AaveVault{salt: salt}(
+        new MysticVault{salt: salt}(
           asset,
           initialTimelock,
           owner,

@@ -7,19 +7,19 @@ import '../../dependencies/openzeppelin/contracts/IERC20.sol';
 import '../../dependencies/openzeppelin/contracts/Ownable.sol';
 import '../../interfaces/IPool.sol';
 import '../../dependencies/chainlink/AggregatorV3Interface.sol';
-import '../../interfaces/IAaveVault.sol';
+import '../../interfaces/IMysticVault.sol';
 import '../../interfaces/ICreditDelegationToken.sol';
 
 import {UserConfiguration} from 'src/core/contracts/protocol/libraries/configuration/UserConfiguration.sol';
 import {ReserveConfiguration} from 'src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 
-contract AaveVault is ERC4626, Ownable, IAaveVault {
+contract MysticVault is ERC4626, Ownable, IMysticVault {
   using UserConfiguration for DataTypes.UserConfigurationMap;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
   mapping(address => mapping(address => AssetAllocation)) public assetAllocations;
   mapping(address => address[]) public poolAssets;
-  address[] public aavePools;
+  address[] public mysticPools;
   mapping(address => bool) public curators;
   mapping(address => WithdrawalRequest) public withdrawalRequests;
 
@@ -40,9 +40,9 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
 
   event CuratorAdded(address curator);
   event CuratorRemoved(address curator);
-  event AssetAllocationAdded(address asset, address aavePool, uint256 allocationPercentage);
-  event AssetAllocationUpdated(address asset, address aavePool, uint256 newAllocationPercentage);
-  event AavePoolAdded(address aavePool);
+  event AssetAllocationAdded(address asset, address mysticPool, uint256 allocationPercentage);
+  event AssetAllocationUpdated(address asset, address mysticPool, uint256 newAllocationPercentage);
+  event MysticPoolAdded(address mysticPool);
   event Rebalanced();
   event FeeAccrued(uint256 amount);
   event FeesWithdrawn(uint256 amount);
@@ -89,124 +89,123 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
     emit CuratorRemoved(curator);
   }
 
-  function addAavePool(
+  function addMysticPool(
     address newAsset,
     address oracle,
     uint256 allocationPercentage,
-    address aavePoolAddress
+    address mysticPoolAddress
   ) external onlyCurator {
-    _addAavePool(aavePoolAddress);
-    address aToken = _getAssetATokenAddress(aavePoolAddress);
-    addAssetAllocation(newAsset, aToken, oracle, allocationPercentage, aavePoolAddress);
+    _addMysticPool(mysticPoolAddress);
+    addAssetAllocation(newAsset, address(0), oracle, allocationPercentage, mysticPoolAddress); // atoken is generated in addAssetAllocation
   }
 
-  function _addAavePool(address aavePoolAddress) internal {
-    require(aavePoolAddress != address(0), 'Pool address cannot be zero');
-    require(!_isAavePoolAdded(aavePoolAddress), 'Aave pool already added');
-    aavePools.push(aavePoolAddress);
-    emit AavePoolAdded(aavePoolAddress);
+  function _addMysticPool(address mysticPoolAddress) internal {
+    require(mysticPoolAddress != address(0), 'Pool address cannot be zero');
+    require(!_isMysticPoolAdded(mysticPoolAddress), 'Mystic pool already added');
+    mysticPools.push(mysticPoolAddress);
+    emit MysticPoolAdded(mysticPoolAddress);
   }
 
   function addAssetAllocation(
     address newAsset,
-    address ,
+    address,
     address oracle,
     uint256 allocationPercentage,
-    address aavePoolAddress
+    address mysticPoolAddress
   ) public onlyCurator {
     require(newAsset != address(0), 'Asset address cannot be zero');
     require(oracle != address(0), 'Oracle address cannot be zero');
-    require(aavePoolAddress != address(0), 'Pool address cannot be zero');
+    require(mysticPoolAddress != address(0), 'Pool address cannot be zero');
     require(allocationPercentage != 0, 'Allocation Percentage cannot be zero');
 
-    address aToken = _getAssetATokenAddress(aavePoolAddress);
-    if (assetAllocations[aavePoolAddress][newAsset].allocationPercentage > 0) {
-      updateAssetAllocation(newAsset, aavePoolAddress, allocationPercentage);
+    address aToken = _getAssetATokenAddress(mysticPoolAddress);
+    if (assetAllocations[mysticPoolAddress][newAsset].allocationPercentage > 0) {
+      updateAssetAllocation(newAsset, mysticPoolAddress, allocationPercentage);
     } else {
       require(
         allocationPercentage <= PERCENTAGE_SCALE && allocationPercentage > 0,
         'Allocation must be <= 100%'
       );
-      require(_isAavePoolAdded(aavePoolAddress), 'Aave pool not added');
+      require(_isMysticPoolAdded(mysticPoolAddress), 'Mystic pool not added');
       require(
-        _checkTotalAllocation(newAsset, aavePoolAddress, allocationPercentage),
+        _checkTotalAllocation(newAsset, mysticPoolAddress, allocationPercentage),
         'Total allocation exceeds 100%'
       );
 
       require(newAsset == asset(), 'asset does not match base asset');
-      assetAllocations[aavePoolAddress][newAsset] = AssetAllocation({
+      assetAllocations[mysticPoolAddress][newAsset] = AssetAllocation({
         asset: newAsset,
         aToken: aToken,
         oracle: oracle,
         allocationPercentage: allocationPercentage
       });
 
-      if (!_isAssetInPool(newAsset, aavePoolAddress)) {
-        poolAssets[aavePoolAddress].push(newAsset);
-        // we expect one asset per aavePoolAddress so one in the array
+      if (!_isAssetInPool(newAsset, mysticPoolAddress)) {
+        poolAssets[mysticPoolAddress].push(newAsset);
+        // we expect one asset per mysticPoolAddress so one in the array
       }
 
-      IERC20(newAsset).approve(aavePoolAddress, type(uint256).max);
-      emit AssetAllocationAdded(newAsset, aavePoolAddress, allocationPercentage);
+      IERC20(newAsset).approve(mysticPoolAddress, type(uint256).max);
+      emit AssetAllocationAdded(newAsset, mysticPoolAddress, allocationPercentage);
     }
   }
 
   function updateAssetAllocation(
     address updateAsset,
-    address aavePoolAddress,
+    address mysticPoolAddress,
     uint256 newAllocationPercentage
   ) public onlyCurator {
     require(
       newAllocationPercentage <= PERCENTAGE_SCALE && newAllocationPercentage > 0,
       'Allocation must be <= 100%'
     );
-    require(_isAavePoolAdded(aavePoolAddress), 'Aave pool not added');
+    require(_isMysticPoolAdded(mysticPoolAddress), 'Mystic pool not added');
     require(
-      _checkTotalAllocation(updateAsset, aavePoolAddress, newAllocationPercentage),
+      _checkTotalAllocation(updateAsset, mysticPoolAddress, newAllocationPercentage),
       'Total allocation exceeds 100%'
     );
     require(updateAsset == asset(), 'asset does not match base asset');
 
-    assetAllocations[aavePoolAddress][updateAsset].allocationPercentage = newAllocationPercentage;
-    emit AssetAllocationUpdated(updateAsset, aavePoolAddress, newAllocationPercentage);
+    assetAllocations[mysticPoolAddress][updateAsset].allocationPercentage = newAllocationPercentage;
+    emit AssetAllocationUpdated(updateAsset, mysticPoolAddress, newAllocationPercentage);
   }
 
   function reallocate(
     address asset,
-    address aavePoolAddress,
+    address mysticPoolAddress,
     uint256 newAllocationPercentage
   ) external onlyCurator {
-    updateAssetAllocation(asset, aavePoolAddress, newAllocationPercentage);
+    updateAssetAllocation(asset, mysticPoolAddress, newAllocationPercentage);
     _rebalance();
   }
 
   function _checkTotalAllocation(
     address asset,
-    address aavePoolAddress,
+    address mysticPoolAddress,
     uint256 newAllocation
   ) internal view returns (bool) {
     uint256 totalAllocation = newAllocation;
-    for (uint256 i = 0; i < poolAssets[aavePoolAddress].length; i++) {
-      address currentAsset = poolAssets[aavePoolAddress][i];
+    for (uint256 i = 0; i < poolAssets[mysticPoolAddress].length; i++) {
+      address currentAsset = poolAssets[mysticPoolAddress][i];
       if (currentAsset != asset) {
-        totalAllocation += assetAllocations[aavePoolAddress][currentAsset].allocationPercentage;
+        totalAllocation += assetAllocations[mysticPoolAddress][currentAsset].allocationPercentage;
       }
     }
     return totalAllocation <= PERCENTAGE_SCALE;
   }
 
-  function _isAssetInPool(address asset, address aavePoolAddress) internal view returns (bool) {
-    for (uint256 i = 0; i < poolAssets[aavePoolAddress].length; i++) {
-      if (poolAssets[aavePoolAddress][i] == asset) {
+  function _isAssetInPool(address asset, address mysticPoolAddress) internal view returns (bool) {
+    for (uint256 i = 0; i < poolAssets[mysticPoolAddress].length; i++) {
+      if (poolAssets[mysticPoolAddress][i] == asset) {
         return true;
       }
     }
     return false;
   }
 
-  function _isAavePoolAdded(address aavePoolAddress) internal view returns (bool) {
-    for (uint256 i = 0; i < aavePools.length; i++) {
-      if (aavePools[i] == aavePoolAddress) {
+  function _isMysticPoolAdded(address mysticPoolAddress) internal view returns (bool) {
+    for (uint256 i = 0; i < mysticPools.length; i++) {
+      if (mysticPools[i] == mysticPoolAddress) {
         return true;
       }
     }
@@ -215,11 +214,11 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
 
   function totalAssets() public view override(IERC4626, ERC4626) returns (uint256) {
     // uint256 total = 0;
-    // for (uint256 i = 0; i < aavePools.length; i++) {
-    //   address aavePool = aavePools[i];
-    //   for (uint256 j = 0; j < poolAssets[aavePool].length; j++) {
-    //     address asset = poolAssets[aavePool][j];
-    //     AssetAllocation memory allocation = assetAllocations[aavePool][asset];
+    // for (uint256 i = 0; i < mysticPools.length; i++) {
+    //   address mysticPool = mysticPools[i];
+    //   for (uint256 j = 0; j < poolAssets[mysticPool].length; j++) {
+    //     address asset = poolAssets[mysticPool][j];
+    //     AssetAllocation memory allocation = assetAllocations[mysticPool][asset];
     //     uint256 balance = IERC20(allocation.asset).balanceOf(address(this)) +
     //       IERC20(allocation.aToken).balanceOf(address(this));
     //     total += _convertToUsd(balance, allocation.oracle);
@@ -232,14 +231,14 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
   function totalAssetsInUsd() public view returns (uint256) {
     // since all assets added from pools are expected to be same, there is no need to track deposits for each asset
     uint256 total = 0;
-    address aavePool = aavePools[0];
-    address asset = poolAssets[aavePool][0];
-    AssetAllocation memory allocation = assetAllocations[aavePool][asset];
+    address mysticPool = mysticPools[0];
+    address asset = poolAssets[mysticPool][0];
+    AssetAllocation memory allocation = assetAllocations[mysticPool][asset];
     total = _convertToUsd(totalDeposited, allocation.oracle);
     return total;
   }
 
-  function maxDeposit(address) public view override(ERC4626, IAaveVault) returns (uint256) {
+  function maxDeposit(address) public view override(ERC4626, IMysticVault) returns (uint256) {
     return maxDeposit_;
   }
 
@@ -275,12 +274,11 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
   function isApprovedCollateral(
     address collateralAsset,
     address user,
-    address aavePoolAddress
+    address mysticPoolAddress
   ) public view returns (bool) {
-    address[] memory reserves = IPool(aavePoolAddress).getReservesList();
-    DataTypes.UserConfigurationMap memory userConfig = IPool(aavePoolAddress).getUserConfiguration(
-      user
-    );
+    address[] memory reserves = IPool(mysticPoolAddress).getReservesList();
+    DataTypes.UserConfigurationMap memory userConfig = IPool(mysticPoolAddress)
+      .getUserConfiguration(user);
 
     for (uint256 i = 0; i < reserves.length; i++) {
       bool approvedCollateral = userConfig.isUsingAsCollateral(i);
@@ -297,18 +295,18 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
     address collateralAsset,
     uint256 collateralAmount,
     uint256 amount, //borrow amount
-    address aavePoolAddress,
+    address mysticPoolAddress,
     address receiver,
     bool receiveShares
   ) external {
-    require(_isAssetAndPoolSupported(asset(), aavePoolAddress), 'Asset or pool not supported');
+    require(_isAssetAndPoolSupported(asset(), mysticPoolAddress), 'Asset or pool not supported');
     require(
-      isApprovedCollateral(collateralAsset, msg.sender, aavePoolAddress),
+      isApprovedCollateral(collateralAsset, msg.sender, mysticPoolAddress),
       'Collateral not supported'
     );
 
     // Get the variable debt token address
-    address variableDebtTokenAddress = IPool(aavePoolAddress)
+    address variableDebtTokenAddress = IPool(mysticPoolAddress)
       .getReserveData(asset())
       .variableDebtTokenAddress;
     ICreditDelegationToken variableDebtToken = ICreditDelegationToken(variableDebtTokenAddress);
@@ -316,8 +314,8 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
     // deposit collateral if needed
     if (collateralAmount > 0) {
       IERC20(collateralAsset).transferFrom(msg.sender, address(this), collateralAmount);
-      IERC20(collateralAsset).approve(aavePoolAddress, collateralAmount);
-      IPool(aavePoolAddress).supply(collateralAsset, collateralAmount, msg.sender, 0);
+      IERC20(collateralAsset).approve(mysticPoolAddress, collateralAmount);
+      IPool(mysticPoolAddress).supply(collateralAsset, collateralAmount, msg.sender, 0);
     }
 
     // Check borrow allowance
@@ -330,10 +328,10 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
 
     // Proceed to borrow the specified amount
     if (receiveShares) {
-      IPool(aavePoolAddress).borrow(asset(), amount, 2, 0, msg.sender);
+      IPool(mysticPoolAddress).borrow(asset(), amount, 2, 0, msg.sender);
       deposit(amount, receiver);
     } else {
-      IPool(aavePoolAddress).borrow(asset(), amount, 2, 0, msg.sender);
+      IPool(mysticPoolAddress).borrow(asset(), amount, 2, 0, msg.sender);
       IERC20(asset()).transfer(receiver, amount);
     }
   }
@@ -386,33 +384,33 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
     });
   }
 
-  function repay(uint256 amount, address aavePoolAddress, address onBehalfOf) external {
-    require(_isAssetAndPoolSupported(asset(), aavePoolAddress), 'Asset or pool not supported');
+  function repay(uint256 amount, address mysticPoolAddress, address onBehalfOf) external {
+    require(_isAssetAndPoolSupported(asset(), mysticPoolAddress), 'Asset or pool not supported');
     totalBorrowed -= amount;
 
     IERC20(asset()).transferFrom(msg.sender, address(this), amount);
-    uint256 allowance = IERC20(asset()).allowance(address(this), aavePoolAddress);
+    uint256 allowance = IERC20(asset()).allowance(address(this), mysticPoolAddress);
     if (allowance < amount) {
-      IERC20(asset()).approve(aavePoolAddress, type(uint256).max);
+      IERC20(asset()).approve(mysticPoolAddress, type(uint256).max);
     }
 
-    IPool(aavePoolAddress).repay(asset(), amount, 2, onBehalfOf);
+    IPool(mysticPoolAddress).repay(asset(), amount, 2, onBehalfOf);
   }
 
-  function repayWithShares(uint256 shares, address aavePoolAddress, address onBehalfOf) external {
-    require(_isAssetAndPoolSupported(asset(), aavePoolAddress), 'Asset or pool not supported');
+  function repayWithShares(uint256 shares, address mysticPoolAddress, address onBehalfOf) external {
+    require(_isAssetAndPoolSupported(asset(), mysticPoolAddress), 'Asset or pool not supported');
     uint256 amount = _convertToAssets(shares, Math.Rounding.Ceil);
     totalBorrowed -= amount;
 
     uint256 assets = convertToAssets(shares);
     _burn(msg.sender, shares);
 
-    uint256 allowance = IERC20(asset()).allowance(address(this), aavePoolAddress);
+    uint256 allowance = IERC20(asset()).allowance(address(this), mysticPoolAddress);
     if (allowance < assets) {
-      IERC20(asset()).approve(aavePoolAddress, type(uint256).max);
+      IERC20(asset()).approve(mysticPoolAddress, type(uint256).max);
     }
 
-    IPool(aavePoolAddress).repay(asset(), amount, 2, onBehalfOf);
+    IPool(mysticPoolAddress).repay(asset(), amount, 2, onBehalfOf);
   }
 
   function _deposit(
@@ -433,7 +431,7 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
     uint256 assets,
     uint256 shares
   ) internal override {
-    _withdrawFromAave(assets);
+    _withdrawFromMystic(assets);
     super._withdraw(caller, receiver, owner, assets, shares);
     totalDeposited -= assets;
   }
@@ -441,11 +439,11 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
   function _rebalance() internal {
     uint256 totalAssetsUsd = totalAssetsInUsd();
 
-    for (uint256 i = 0; i < aavePools.length; i++) {
-      address aavePool = aavePools[i];
-      for (uint256 j = 0; j < poolAssets[aavePool].length; j++) {
-        address asset = poolAssets[aavePool][j];
-        AssetAllocation memory allocation = assetAllocations[aavePool][asset];
+    for (uint256 i = 0; i < mysticPools.length; i++) {
+      address mysticPool = mysticPools[i];
+      for (uint256 j = 0; j < poolAssets[mysticPool].length; j++) {
+        address asset = poolAssets[mysticPool][j];
+        AssetAllocation memory allocation = assetAllocations[mysticPool][asset];
         uint256 targetAllocationUsd = (totalAssetsUsd * allocation.allocationPercentage) /
           PERCENTAGE_SCALE;
         uint256 currentAllocationUsd = _convertToUsd(
@@ -457,11 +455,11 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
         if (currentAllocationUsd < targetAllocationUsd) {
           uint256 amountToDepositUsd = targetAllocationUsd - currentAllocationUsd;
           uint256 amountToDeposit = _convertFromUsd(amountToDepositUsd, allocation.oracle);
-          _depositToAave(aavePool, allocation, amountToDeposit);
+          _depositToMystic(mysticPool, allocation, amountToDeposit);
         } else if (currentAllocationUsd > targetAllocationUsd) {
           uint256 amountToWithdrawUsd = currentAllocationUsd - targetAllocationUsd;
           uint256 amountToWithdraw = _convertFromUsd(amountToWithdrawUsd, allocation.oracle);
-          _withdrawFromAavePool(aavePool, allocation, amountToWithdraw);
+          _withdrawFromMysticPool(mysticPool, allocation, amountToWithdraw);
         }
       }
     }
@@ -469,28 +467,28 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
     emit Rebalanced();
   }
 
-  function _depositToAave(
-    address aavePool,
+  function _depositToMystic(
+    address mysticPool,
     AssetAllocation memory allocation,
     uint256 amount
   ) internal {
-    IERC20(allocation.asset).approve(aavePool, amount);
-    IPool(aavePool).supply(allocation.asset, amount, address(this), 0);
+    IERC20(allocation.asset).approve(mysticPool, amount);
+    IPool(mysticPool).supply(allocation.asset, amount, address(this), 0);
   }
 
-  function _withdrawFromAave(uint256 assetsUsd) internal {
-    for (uint256 i = 0; i < aavePools.length; i++) {
-      address aavePool = aavePools[i];
-      for (uint256 j = 0; j < poolAssets[aavePool].length; j++) {
-        address asset = poolAssets[aavePool][j];
-        AssetAllocation memory allocation = assetAllocations[aavePool][asset];
+  function _withdrawFromMystic(uint256 assetsUsd) internal {
+    for (uint256 i = 0; i < mysticPools.length; i++) {
+      address mysticPool = mysticPools[i];
+      for (uint256 j = 0; j < poolAssets[mysticPool].length; j++) {
+        address asset = poolAssets[mysticPool][j];
+        AssetAllocation memory allocation = assetAllocations[mysticPool][asset];
         uint256 aTokenBalance = IERC20(allocation.aToken).balanceOf(address(this));
         uint256 aTokenBalanceUsd = _convertToUsd(aTokenBalance, allocation.oracle);
 
         if (aTokenBalanceUsd > 0) {
           uint256 amountToWithdrawUsd = aTokenBalanceUsd < assetsUsd ? aTokenBalanceUsd : assetsUsd;
           uint256 amountToWithdraw = _convertFromUsd(amountToWithdrawUsd, allocation.oracle);
-          IPool(aavePool).withdraw(allocation.asset, amountToWithdraw, address(this));
+          IPool(mysticPool).withdraw(allocation.asset, amountToWithdraw, address(this));
           assetsUsd -= amountToWithdrawUsd;
 
           if (assetsUsd == 0) break;
@@ -500,12 +498,12 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
     }
   }
 
-  function _withdrawFromAavePool(
-    address aavePool,
+  function _withdrawFromMysticPool(
+    address mysticPool,
     AssetAllocation memory allocation,
     uint256 amount
   ) internal {
-    IPool(aavePool).withdraw(allocation.asset, amount, address(this));
+    IPool(mysticPool).withdraw(allocation.asset, amount, address(this));
   }
 
   function _convertToUsd(uint256 amount, address oracle) internal view returns (uint256) {
@@ -573,40 +571,43 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
     return _convertToShares(assets, Math.Rounding.Floor);
   }
 
-  function _isAssetAndPoolSupported(address asset, address aavePool) internal view returns (bool) {
-    return assetAllocations[aavePool][asset].asset != address(0);
+  function _isAssetAndPoolSupported(
+    address asset,
+    address mysticPool
+  ) internal view returns (bool) {
+    return assetAllocations[mysticPool][asset].asset != address(0);
   }
 
-  function getAavePools() external view returns (address[] memory) {
-    return aavePools;
+  function getMysticPools() external view returns (address[] memory) {
+    return mysticPools;
   }
 
-  function getPoolAssets(address aavePool) external view returns (address[] memory) {
-    return poolAssets[aavePool];
+  function getPoolAssets(address mysticPool) external view returns (address[] memory) {
+    return poolAssets[mysticPool];
   }
 
-  function getTotalAllocation(address aavePool) public view returns (uint256) {
+  function getTotalAllocation(address mysticPool) public view returns (uint256) {
     uint256 totalAllocation = 0;
-    for (uint256 i = 0; i < poolAssets[aavePool].length; i++) {
-      address asset = poolAssets[aavePool][i];
-      totalAllocation += assetAllocations[aavePool][asset].allocationPercentage;
+    for (uint256 i = 0; i < poolAssets[mysticPool].length; i++) {
+      address asset = poolAssets[mysticPool][i];
+      totalAllocation += assetAllocations[mysticPool][asset].allocationPercentage;
     }
     return totalAllocation;
   }
 
   function getAPRs() public view returns (APRData memory) {
-    require(aavePools.length > 0, 'No Aave pools added');
+    require(mysticPools.length > 0, 'No Mystic pools added');
 
     uint256 totalSupplyAPR = 0;
     uint256 totalBorrowAPR = 0;
     uint256 totalWeight = 0;
 
-    for (uint256 i = 0; i < aavePools.length; i++) {
-      address aavePool = aavePools[i];
-      AssetAllocation memory allocation = assetAllocations[aavePool][asset()];
+    for (uint256 i = 0; i < mysticPools.length; i++) {
+      address mysticPool = mysticPools[i];
+      AssetAllocation memory allocation = assetAllocations[mysticPool][asset()];
 
       if (allocation.allocationPercentage > 0) {
-        (uint256 supplyAPR, uint256 borrowAPR) = _getAssetAPRs(aavePool);
+        (uint256 supplyAPR, uint256 borrowAPR) = _getAssetAPRs(mysticPool);
 
         uint256 weight = allocation.allocationPercentage;
         totalSupplyAPR += supplyAPR * weight;
@@ -623,9 +624,9 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
   }
 
   function _getAssetAPRs(
-    address aavePool
+    address mysticPool
   ) internal view returns (uint256 supplyAPR, uint256 borrowAPR) {
-    IPool pool = IPool(aavePool);
+    IPool pool = IPool(mysticPool);
 
     DataTypes.ReserveDataLegacy memory baseData = pool.getReserveData(asset());
     uint256 liquidityRate = baseData.currentLiquidityRate;
@@ -636,10 +637,8 @@ contract AaveVault is ERC4626, Ownable, IAaveVault {
     borrowAPR = variableBorrowRate / 1e23; // Using variable borrow rate
   }
 
-  function _getAssetATokenAddress(
-    address aavePool
-  ) internal view returns (address) {
-    IPool pool = IPool(aavePool);
+  function _getAssetATokenAddress(address mysticPool) internal view returns (address) {
+    IPool pool = IPool(mysticPool);
 
     DataTypes.ReserveDataLegacy memory baseData = pool.getReserveData(asset());
     return baseData.aTokenAddress;

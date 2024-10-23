@@ -28,7 +28,7 @@ abstract contract DeployAaveVaultBase is DeployUtils, MarketInput, Script {
     config = _listAsset(msg.sender, address(0), address(0));
     uint256 deployerPrivateKey = vm.envUint('PRIVATE_KEY');
     address vaultFactory = vm.envAddress('VAULT_FACTORY');
- 
+
     if (vaultFactory == address(0)) {
       vm.startBroadcast(deployerPrivateKey);
 
@@ -61,7 +61,7 @@ abstract contract DeployAaveVaultBase is DeployUtils, MarketInput, Script {
         symbol,
         salt
       );
-      console.log('aave vault', aaveVault);
+      console.log('mystic vault', aaveVault);
 
       vm.stopBroadcast();
     }

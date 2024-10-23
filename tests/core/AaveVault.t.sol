@@ -2,17 +2,17 @@
 pragma solidity ^0.8.10;
 
 import 'forge-std/Test.sol';
-import 'src/core/contracts/protocol/vault/AaveVault.sol';
+import 'src/core/contracts/protocol/vault/MysticVault.sol';
 import {MockAggregator} from 'src/core/contracts/mocks/oracle/CLAggregators/MockAggregator.sol';
 import '../mocks/ERC20Mock.sol'; // Mock ERC20 for testing
 import '../../src/core/contracts/interfaces/IPool.sol';
 import '../../src/core/contracts/dependencies/chainlink/AggregatorInterface.sol';
-import '../../src/core/contracts/interfaces/IAaveVault.sol';
+import '../../src/core/contracts/interfaces/IMysticVault.sol';
 import '../../src/core/contracts/interfaces/ICreditDelegationToken.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 
-contract AaveVaultTest is TestnetProcedures {
-  AaveVault vault;
+contract MysticVaultTest is TestnetProcedures {
+  MysticVault vault;
   ERC20Mock baseAsset;
   ERC20Mock collateralAsset;
   ERC20Mock aToken;
@@ -34,7 +34,7 @@ contract AaveVaultTest is TestnetProcedures {
     aToken = new ERC20Mock('Test AToken', 'TAT', 18);
     MOCK_PRICE_FEED = address(new MockAggregator(1e8));
     poolAddress = address(contracts.poolProxy);
-    vault = new AaveVault(
+    vault = new MysticVault(
       address(baseAsset),
       1 days,
       owner,
@@ -43,7 +43,7 @@ contract AaveVaultTest is TestnetProcedures {
       1000e18,
       100, // 1%
       owner,
-      'Aave Vault',
+      'Mystic Vault',
       'AVLT'
     );
 
@@ -72,7 +72,7 @@ contract AaveVaultTest is TestnetProcedures {
 
   function testAddAssetAllocation() public {
     vm.startPrank(curator);
-    vault.addAavePool(address(baseAsset), MOCK_PRICE_FEED, 1000, poolAddress); // 10%
+    vault.addMysticPool(address(baseAsset), MOCK_PRICE_FEED, 1000, poolAddress); // 10%
     (, , , uint256 allocationPercentage) = vault.assetAllocations(poolAddress, address(baseAsset));
 
     assertEq(allocationPercentage, 1000, 'Asset allocation should be added');
@@ -86,8 +86,8 @@ contract AaveVaultTest is TestnetProcedures {
   // function testAddAssetAllocationBatch() public {
   //   vm.startPrank(curator);
 
-  //   vault.addAavePool(address(baseAsset), address(aToken), MOCK_PRICE_FEED, 1000, poolAddress); // 10%
-  //   vault.addAavePool(address(baseAsset), address(aToken), MOCK_PRICE_FEED, 5000, address(0x5)); // 10%
+  //   vault.addMysticPool(address(baseAsset), address(aToken), MOCK_PRICE_FEED, 1000, poolAddress); // 10%
+  //   vault.addMysticPool(address(baseAsset), address(aToken), MOCK_PRICE_FEED, 5000, address(0x5)); // 10%
   //   (, , , uint256 allocationPercentage) = vault.assetAllocations(poolAddress, address(baseAsset));
 
   //   assertEq(allocationPercentage, 1000, 'Asset allocation should be added');
@@ -107,7 +107,7 @@ contract AaveVaultTest is TestnetProcedures {
 
   function testUpdateAssetAllocation() public {
     vm.startPrank(curator);
-    vault.addAavePool(address(baseAsset), MOCK_PRICE_FEED, 1000, poolAddress); // 10%
+    vault.addMysticPool(address(baseAsset), MOCK_PRICE_FEED, 1000, poolAddress); // 10%
     vault.updateAssetAllocation(address(baseAsset), poolAddress, 500); // Update to 5%
     (, , , uint256 allocationPercentage) = vault.assetAllocations(poolAddress, address(baseAsset));
 
@@ -116,7 +116,7 @@ contract AaveVaultTest is TestnetProcedures {
 
   function testReallocate() public {
     vm.startPrank(curator);
-    vault.addAavePool(address(baseAsset), MOCK_PRICE_FEED, 1000, poolAddress); // 10%
+    vault.addMysticPool(address(baseAsset), MOCK_PRICE_FEED, 1000, poolAddress); // 10%
     vault.reallocate(address(baseAsset), poolAddress, 500); // Reallocate to 5%
     (, , , uint256 allocationPercentage) = vault.assetAllocations(poolAddress, address(baseAsset));
 
@@ -125,7 +125,7 @@ contract AaveVaultTest is TestnetProcedures {
 
   function testDeposit() public {
     vm.startPrank(curator);
-    vault.addAavePool(address(baseAsset), MOCK_PRICE_FEED, 8000, poolAddress); // 10%
+    vault.addMysticPool(address(baseAsset), MOCK_PRICE_FEED, 8000, poolAddress); // 10%
 
     vm.startPrank(bob);
     baseAsset.approve(address(vault), 100e18);
@@ -229,7 +229,7 @@ contract AaveVaultTest is TestnetProcedures {
 
   function testAccrueFees() public {
     vm.startPrank(curator);
-    vault.addAavePool(address(baseAsset), MOCK_PRICE_FEED, 5000, poolAddress); // 50%
+    vault.addMysticPool(address(baseAsset), MOCK_PRICE_FEED, 5000, poolAddress); // 50%
 
     address asset = vault.asset();
     console.log(asset);
@@ -276,7 +276,7 @@ contract AaveVaultTest is TestnetProcedures {
 
   function testRequestWithdrawal() public {
     vm.startPrank(curator);
-    vault.addAavePool(address(baseAsset), MOCK_PRICE_FEED, 1000, poolAddress); // 10%
+    vault.addMysticPool(address(baseAsset), MOCK_PRICE_FEED, 1000, poolAddress); // 10%
 
     vm.startPrank(bob);
     baseAsset.approve(address(vault), 100e18);

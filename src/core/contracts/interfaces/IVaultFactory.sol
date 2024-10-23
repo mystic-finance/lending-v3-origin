@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity >=0.5.0;
 
-import {IAaveVault} from './IAaveVault.sol';
+import {IMysticVault} from './IMysticVault.sol';
 
 /// @title IVaultFactory
 /// @author Morpho Labs
@@ -30,5 +30,5 @@ interface IVaultFactory {
     string memory name,
     string memory symbol,
     bytes32 salt
-  ) external returns (IAaveVault vault);
+  ) external returns (IMysticVault vault);
 }
