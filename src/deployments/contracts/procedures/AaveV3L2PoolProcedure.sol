@@ -6,8 +6,6 @@ import {PermissionedPoolInstance} from 'src/core/instances/PermissionedPoolInsta
 
 import {SemiPermissionedPoolInstance} from 'src/core/instances/SemiPermissionedPoolInstance.sol';
 
-import {TimelockInstance} from 'src/core/instances/TimelockInstance.sol';
-
 import {KYCInstance} from 'src/core/instances/KYCInstance.sol';
 
 import {IPoolAddressesProvider} from 'src/core/contracts/interfaces/IPoolAddressesProvider.sol';

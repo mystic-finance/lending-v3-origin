@@ -23,8 +23,6 @@ import '../../interfaces/IMarketReportTypes.sol';
 import {IMarketReportStorage} from '../../interfaces/IMarketReportStorage.sol';
 import {IPoolReport} from '../../interfaces/IPoolReport.sol';
 
-import {TimelockInstance} from 'src/core/instances/TimelockInstance.sol';
-
 import {TimelockController} from 'src/core/contracts/protocol/partner/Timelock.sol';
 
 import {KYCInstance} from 'src/core/instances/KYCInstance.sol';
@@ -279,7 +277,7 @@ library AaveV3BatchOrchestration {
         ),
         aTokenSymbol: string.concat(
           'my',
-          config.poolContext.networkAbbreviation,
+          // config.poolContext.networkAbbreviation,
           config.listings[i].assetSymbol
         ),
         variableDebtTokenName: string.concat(
@@ -289,8 +287,8 @@ library AaveV3BatchOrchestration {
           config.listings[i].assetSymbol
         ),
         variableDebtTokenSymbol: string.concat(
-          'my-V',
-          config.poolContext.networkAbbreviation,
+          'myVLoan',
+          // config.poolContext.networkAbbreviation,
           config.listings[i].assetSymbol
         ),
         stableDebtTokenName: string.concat(
@@ -300,8 +298,8 @@ library AaveV3BatchOrchestration {
           config.listings[i].assetSymbol
         ),
         stableDebtTokenSymbol: string.concat(
-          'my-S',
-          config.poolContext.networkAbbreviation,
+          'mySLoan',
+          // config.poolContext.networkAbbreviation,
           config.listings[i].assetSymbol
         ),
         params: bytes('')
