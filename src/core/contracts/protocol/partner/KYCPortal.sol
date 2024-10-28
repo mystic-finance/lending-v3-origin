@@ -6,10 +6,12 @@ import {IPoolAddressesProvider} from '../../interfaces/IPoolAddressesProvider.so
 import {Ownable} from '../../dependencies/openzeppelin/contracts/Ownable.sol';
 import {SafeMath} from '../../dependencies/openzeppelin/contracts/SafeMath.sol';
 import {Errors} from '../libraries/helpers/Errors.sol';
+import {MysticIdentity} from './KYCId.sol';
 
 contract KYCPortal is Ownable {
   using SafeMath for uint256;
   address timelock;
+  MysticIdentity identity;
   // IPoolAddressesProvider public immutable ADDRESSES_PROVIDER;
 
   struct Partner {
@@ -40,14 +42,15 @@ contract KYCPortal is Ownable {
   event PartnerRemoved(address indexed partner);
   event UserRemoved(address indexed partner, uint8 poolType);
 
-  constructor(address _timelock) {
+  constructor(address _timelock, address _identity) {
     relayers[msg.sender] = true;
-    // ADDRESSES_PROVIDER = _address_provider;
-
+    identity = MysticIdentity(_identity);
     // renounce ownership to timelock contract to avoid multiple ownership
     relayers[_timelock] = true;
     timelock = _timelock;
+
     transferOwnership(_timelock);
+    IACLManager(_addressProvider.getACLManager()).addLiquidatorAdmin(_timelock);
   }
 
   modifier onlyRelayer() {
@@ -74,11 +77,20 @@ contract KYCPortal is Ownable {
   }
 
   function _addAllPermissions(address partner, IPoolAddressesProvider _addressProvider) internal {
+    _verifyIdentity(partner);
+
     IACLManager(_addressProvider.getACLManager()).addPoolUser(partner);
 
-    IACLManager(_addressProvider.getACLManager()).addBondPoolUser(partner);
+    IACLManager(_addressProvider.getACLManager()).addRegulatedPoolUser(partner);
 
-    IACLManager(_addressProvider.getACLManager()).addTreasuryPoolUser(partner);
+    IACLManager(_addressProvider.getACLManager()).addInvestorPoolUser(partner);
+  }
+
+  function _verifyIdentity(address user) internal {
+    require(
+      identity.balanceOf(user) == 1,
+      'Unique Identity Per User is needed before permission can be given'
+    );
   }
 
   function _addPermissions(
@@ -86,12 +98,14 @@ contract KYCPortal is Ownable {
     uint8 poolType,
     IPoolAddressesProvider _addressProvider
   ) internal {
+    _verifyIdentity(partner);
+
     if (poolType == 0) {
       IACLManager(_addressProvider.getACLManager()).addPoolUser(partner);
     } else if (poolType == 1) {
-      IACLManager(_addressProvider.getACLManager()).addBondPoolUser(partner);
+      IACLManager(_addressProvider.getACLManager()).addRegulatedPoolUser(partner);
     } else if (poolType == 2) {
-      IACLManager(_addressProvider.getACLManager()).addTreasuryPoolUser(partner);
+      IACLManager(_addressProvider.getACLManager()).addInvestorPoolUser(partner);
     }
   }
 
@@ -101,9 +115,9 @@ contract KYCPortal is Ownable {
   ) internal {
     IACLManager(_addressProvider.getACLManager()).removePoolUser(partner);
 
-    IACLManager(_addressProvider.getACLManager()).removeBondPoolUser(partner);
+    IACLManager(_addressProvider.getACLManager()).removeRegulatedPoolUser(partner);
 
-    IACLManager(_addressProvider.getACLManager()).removeTreasuryPoolUser(partner);
+    IACLManager(_addressProvider.getACLManager()).removeInvestorPoolUser(partner);
   }
 
   function _removePermissions(
@@ -114,9 +128,9 @@ contract KYCPortal is Ownable {
     if (poolType == 0) {
       IACLManager(_addressProvider.getACLManager()).removePoolUser(partner);
     } else if (poolType == 1) {
-      IACLManager(_addressProvider.getACLManager()).removeBondPoolUser(partner);
+      IACLManager(_addressProvider.getACLManager()).removeRegulatedPoolUser(partner);
     } else if (poolType == 2) {
-      IACLManager(_addressProvider.getACLManager()).removeTreasuryPoolUser(partner);
+      IACLManager(_addressProvider.getACLManager()).removeInvestorPoolUser(partner);
     }
   }
 
@@ -125,12 +139,14 @@ contract KYCPortal is Ownable {
     uint8 liquidationType,
     IPoolAddressesProvider _addressProvider
   ) internal {
+    _verifyIdentity(liquidator);
+
     if (liquidationType == 0) {
       IACLManager(_addressProvider.getACLManager()).addLiquidator(liquidator);
     } else if (liquidationType == 1) {
-      IACLManager(_addressProvider.getACLManager()).addTreasuryLiquidator(liquidator);
+      IACLManager(_addressProvider.getACLManager()).addInvestorLiquidator(liquidator);
     } else if (liquidationType == 2) {
-      IACLManager(_addressProvider.getACLManager()).addBondLiquidator(liquidator);
+      IACLManager(_addressProvider.getACLManager()).addRegulatedLiquidator(liquidator);
     }
   }
 
@@ -142,9 +158,9 @@ contract KYCPortal is Ownable {
     if (liquidationType == 0) {
       IACLManager(_addressProvider.getACLManager()).removeLiquidator(liquidator);
     } else if (liquidationType == 1) {
-      IACLManager(_addressProvider.getACLManager()).removeTreasuryLiquidator(liquidator);
+      IACLManager(_addressProvider.getACLManager()).removeInvestorLiquidator(liquidator);
     } else if (liquidationType == 2) {
-      IACLManager(_addressProvider.getACLManager()).removeBondLiquidator(liquidator);
+      IACLManager(_addressProvider.getACLManager()).removeRegulatedLiquidator(liquidator);
     }
   }
 
@@ -169,22 +185,10 @@ contract KYCPortal is Ownable {
     return 0;
   }
 
-  // function _removeLiquidatorFromArray(Liquidator[] memory arr, Liquidator calldata liquidator) internal returns (Liquidator[] memory)  {
-  //   uint index = _findLiquidatorFromArray(arr, liquidator);
-
-  //   if(index > 0){
-  //     arr[index] = arr[arr.length - 1];
-  //     // Remove the last element
-  //     arr[arr.length-1] = Liquidator(0, address(0));
-  //   }
-
-  //   return arr;
-  // }
-
   /**
    * @dev add approved relayer.
    */
-  function addRelayer(address relayer) public onlyRelayer {
+  function addRelayer(address relayer) public onlyOwner {
     relayers[relayer] = true;
   }
 
@@ -200,8 +204,8 @@ contract KYCPortal is Ownable {
 
     require(!poolUsers[_hash], 'User already added');
     require(poolType < 3, 'pool type is limited');
-
     poolUsers[_hash] = true;
+
     _addPermissions(user, poolType, _addressProvider);
 
     emit UserAdded(user, poolType);
@@ -218,6 +222,7 @@ contract KYCPortal is Ownable {
     bytes32 _hash = keccak256(abi.encode(user, poolType, _addressProvider));
 
     require(poolUsers[_hash], 'User not added');
+    require(poolType < 3, 'pool type is limited');
     poolUsers[_hash] = false;
 
     _removePermissions(user, poolType, _addressProvider);

@@ -7,13 +7,13 @@ import '@openzeppelin/contracts/token/ERC721/extensions/ERC721Pausable.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol';
 
-contract MysticId is ERC721, ERC721Pausable, Ownable, ERC721Burnable {
+contract MysticIdentity is ERC721, ERC721Pausable, Ownable, ERC721Burnable {
   uint256 private _nextTokenId;
 
-  constructor(address initialOwner) ERC721('Mystic Id', 'MID') Ownable(initialOwner) {}
+  constructor(address initialOwner) ERC721('Mystic Identity', 'MyID') Ownable(initialOwner) {}
 
   function _baseURI() internal pure override returns (string memory) {
-    return 'https://mystic-swap.herokuapp.com';
+    return 'https://mystic-swap.herokuapp.com/id/';
   }
 
   function pause() public onlyOwner {

@@ -14,6 +14,9 @@ contract AaveBundler {
   using UserConfiguration for DataTypes.UserConfigurationMap;
   using SafeERC20 for IERC20;
 
+  mapping(address => uint256) public borrows; // Amount borrowed by user
+  mapping(address => uint256) public collateral; // Amount of collateral held for each user
+
   constructor() {}
 
   function checkCollateralSetting(
@@ -65,35 +68,18 @@ contract AaveBundler {
     uint256 borrowAmount,
     uint256 interestRateMode,
     uint16 referralCode,
-    address onBehalfOf
   ) external {
     IPool pool = IPool(addressesProvider.getPool());
+    borrows[msg.sender] += borrowAmount; // Track borrowed amount
+    collateral[msg.sender] += collateralAmount;
 
-    {
-      // Get asset prices
-      uint256 collateralPrice = IPriceOracleGetter(addressesProvider.getPriceOracle())
-        .getAssetPrice(collateralAsset);
-      uint256 borrowPrice = IPriceOracleGetter(addressesProvider.getPriceOracle()).getAssetPrice(
-        borrowAsset
-      );
-
-      // Get collateral configuration
-      (uint256 baseLTV, , , , , ) = pool.getConfiguration(collateralAsset).getParams();
-
-      // Calculate LTV
-      uint256 currentLTV = (borrowAmount * borrowPrice * 1e4) /
-        (collateralAmount * collateralPrice); // Multiply by 1e4 for percentage calculation
-
-      // Check if LTV is within limits
-      require(currentLTV <= baseLTV, 'Borrow amount exceeds allowed LTV');
-    }
-
-    // Supply collateral
-
+    // Hold collateral
     IERC20(collateralAsset).safeTransferFrom(msg.sender, address(this), collateralAmount);
     IERC20(collateralAsset).safeApprove(address(pool), collateralAmount);
 
-    pool.supply(collateralAsset, collateralAmount, onBehalfOf, referralCode);
+    // supply collateral as owner of the asset
+    pool.supply(collateralAsset, collateralAmount, msg.sender, referralCode);
+    pool.setUserUseReserveAsCollateral(collateralAsset, true);
 
     // Check if the asset is already set as collateral
     require(
@@ -101,14 +87,16 @@ contract AaveBundler {
       'collateral not set for asset'
     );
 
+    // Calculate the current health factor
+    uint256 currentHealthFactor = calculateHealthFactor(pool, msg.sender);
+    require(currentHealthFactor >= 1, "Health factor must remain above 1");
+
     // Borrow
-    pool.borrow(borrowAsset, borrowAmount, interestRateMode, referralCode, onBehalfOf);
+    pool.borrow(borrowAsset, borrowAmount, interestRateMode, referralCode, msg.sender);
 
     // Transfer remaining aTokens to the user
-    address aTokenAddress = pool.getReserveData(collateralAsset).aTokenAddress;
-    uint256 aTokenBalance = IERC20(aTokenAddress).balanceOf(address(this));
-    IERC20(aTokenAddress).safeTransfer(onBehalfOf, aTokenBalance);
-    IERC20(borrowAsset).safeTransfer(onBehalfOf, borrowAmount);
+    IERC20(borrowAsset).safeTransfer(msg.sender, borrowAmount);
+   
   }
 
   function repay(
@@ -116,7 +104,6 @@ contract AaveBundler {
     address asset,
     uint256 amount,
     uint256 interestRateMode,
-    address onBehalfOf
   ) external {
     IPool pool = IPool(addressesProvider.getPool());
 
@@ -127,12 +114,92 @@ contract AaveBundler {
     IERC20(asset).safeApprove(address(pool), amount);
 
     // Repay the loan
-    pool.repay(asset, amount, interestRateMode, onBehalfOf);
+    pool.repay(asset, amount, interestRateMode, msg.sender);
+
+    // Update the user's borrowed amount
+    borrows[msg.sender] -= amount;
 
     // If there's any excess (in case of full repayment), return it to the user
     uint256 remainingBalance = IERC20(asset).balanceOf(address(this));
     if (remainingBalance > 0) {
       IERC20(asset).safeTransfer(msg.sender, remainingBalance);
     }
+  }
+
+  function withdrawCollateral(
+      IPoolAddressesProvider addressesProvider,
+      address collateralAsset,
+      uint256 amount
+  ) external {
+      require(collateral[msg.sender] >= amount, "Insufficient collateral to withdraw");
+
+      // Withdraw collateral from the pool
+      pool.withdraw(collateralAsset, amount, address(this));
+      
+      // Update the collateral tracking
+      collateral[msg.sender] -= amount;
+
+      // Calculate the current health factor
+      uint256 currentHealthFactor = calculateHealthFactor(pool, msg.sender);
+      require(currentHealthFactor >= 1, "Health factor must remain above 1");
+
+      // Transfer the collateral back to the user
+      IERC20(collateralAsset).safeTransfer(msg.sender, amount);
+  }
+
+  function calculateHealthFactor(IPool pool, address user) internal view returns (uint256) {
+    // Implement the logic to calculate the health factor based on the user's collateral and debt
+    // This is a placeholder; you will need to fetch the user's collateral and debt values from the pool
+    // and calculate the health factor accordingly.
+    // Example:
+    uint256 totalCollateralValue = collateral[user]; // Calculate total collateral value
+    uint256 totalDebtValue = borrows[user]; // Get total debt value
+
+    // Assuming a simple calculation for demonstration purposes
+    if (totalDebtValue == 0) return type(uint256).max; // No debt means infinite health factor
+
+    // Health factor calculation
+    // intentionally made to be higher than conventional hf of collateralValue * liqThreshold/DebtValue (since liqThreshold is in range 0.8 - 0.95)
+    // we want hf to be conventionally higher than pool hf to avoid loss through liquidation from the pool
+    return totalCollateralValue / totalDebtValue; 
+  }
+
+  function liquidate(address user, uint256 collateralAmount, uint256 debtAmount) external {
+      IPool pool = IPool(addressesProvider.getPool());
+
+      // Check the user's health factor
+      uint256 healthFactor = calculateHealthFactor(pool, user);
+      require(healthFactor < 1, "Health factor is above threshold, no liquidation needed");
+
+      // Get asset prices
+      uint256 collateralPrice = IPriceOracleGetter(addressesProvider.getPriceOracle())
+        .getAssetPrice(collateralAsset);
+      uint256 borrowPrice = IPriceOracleGetter(addressesProvider.getPriceOracle()).getAssetPrice(
+        borrowAsset
+      );
+
+      // threoreticallydebtAMount should be whole Debt
+      require(collateralAmount * collateralPrice <= debtAmount*borrowPrice, "Amount value must match for accouting");
+
+
+      // Repay the debt
+      IERC20(borrowAsset).safeTransferFrom(msg.sender, address(this), debtAmount);
+      IERC20(borrowAsset).safeApprove(address(pool), debtAmount);
+      pool.repay(borrowAsset, debtAmount, interestRateMode, user);
+
+      // Withdraw collateral from the pool
+      pool.withdraw(collateralAsset, collateralAmount, address(this));
+
+       // Check the user's health factor
+      uint256 healthFactor = calculateHealthFactor(pool, user);
+      require(healthFactor > 1, "Health factor is below threshold, liquidation is not successful");
+
+      // Update the user's collateral and borrows
+      collateral[user] -= collateralAmount;
+      borrows[user] -= debtAmount;
+
+      // Transfer the collateral back to the liquidator
+      IERC20(collateralAsset).safeTransfer(msg.sender, amount);
+      emit Liquidation(user, collateralAmount, debtAmount);
   }
 }
