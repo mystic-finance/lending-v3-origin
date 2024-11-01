@@ -23,7 +23,7 @@ contract DefaultMarketInput is MarketInput {
     roles.emergencyAdmin = deployer;
     roles.poolAdmin = deployer;
 
-    config.marketId = 'Aave V3 Mystic Plume Devnet Market';
+    config.marketId = 'Mystic Arbitrum Mainnet Market';
     config.providerId = 8088;
     config.oracleDecimals = 8;
     config.flashLoanPremiumTotal = 0.0005e4;
@@ -62,18 +62,18 @@ contract DefaultMarketInput is MarketInput {
       rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
         optimalUsageRatio: 85_00,
         baseVariableBorrowRate: 1_75, // 1.75%
-        variableRateSlope1: 4_00,
-        variableRateSlope2: 70_00
+        variableRateSlope1: 15_00,
+        variableRateSlope2: 80_00
       }),
       enabledToBorrow: EngineFlags.ENABLED,
-      flashloanable: EngineFlags.DISABLED,
+      flashloanable: EngineFlags.ENABLED,
       stableRateModeEnabled: EngineFlags.DISABLED,
       borrowableInIsolation: EngineFlags.ENABLED,
       withSiloedBorrowing: EngineFlags.DISABLED,
       ltv: 88_00, // 90%
       liqThreshold: 88_50, // 92.5%
       liqBonus: 10_00, // 5%
-      reserveFactor: 15_00, // 10%
+      reserveFactor: 10_00, // 10%
       supplyCap: 50_000_000_000, // 100k AAVE
       borrowCap: 50_000_000_000, // 60k AAVE
       debtCeiling: 0, //0, // 100k USD
@@ -93,7 +93,7 @@ contract DefaultMarketInput is MarketInput {
         variableRateSlope2: 70_00
       }),
       enabledToBorrow: EngineFlags.ENABLED,
-      flashloanable: EngineFlags.DISABLED,
+      flashloanable: EngineFlags.ENABLED,
       stableRateModeEnabled: EngineFlags.DISABLED,
       borrowableInIsolation: EngineFlags.ENABLED,
       withSiloedBorrowing: EngineFlags.DISABLED,
@@ -244,8 +244,8 @@ contract DefaultMarketInput is MarketInput {
     // });
 
     config.poolContext = IAaveV3ConfigEngine.PoolContext({
-      networkName: 'Plume TestNet Market',
-      networkAbbreviation: 'PlumeTestNet'
+      networkName: 'Arbitrum Mainnet Market',
+      networkAbbreviation: 'ArbMainnet'
     });
     config.listings = listings;
     config.treasury = 0x792d661d7a80a022215EF897A9781c0dfB9ba0ce;
