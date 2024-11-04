@@ -23,24 +23,24 @@ contract DefaultMarketInput is MarketInput {
     roles.emergencyAdmin = deployer;
     roles.poolAdmin = deployer;
 
-    config.marketId = 'Aave V3 Mystic Plume gnUSD/GOON Testnet Market';
+    config.marketId = 'Aave V3 Mystic Polygon Testnet Market';
     config.providerId = 8084;
     config.oracleDecimals = 8;
     config.flashLoanPremiumTotal = 0.0005e4;
     config.flashLoanPremiumToProtocol = 0.0004e4;
     config.poolType = 0;
     config
-      .marketReferenceCurrencyPriceInUsdProxyAggregator = 0x34d75eB977F06A53362900D3F09F7eDEe324aFe8;
-    config.networkBaseTokenPriceInUsdProxyAggregator = 0x34d75eB977F06A53362900D3F09F7eDEe324aFe8;
+      .marketReferenceCurrencyPriceInUsdProxyAggregator = 0x59AB56F7285e723CD417aFf63EEea800fD037995;
+    config.networkBaseTokenPriceInUsdProxyAggregator = 0x59AB56F7285e723CD417aFf63EEea800fD037995;
     config.wrappedNativeToken = address(0);
 
-    subConfig.timelock = 0x42eF942275605a0d8dF85cAc7e1Ead0c8dA2346F; //address(0);
-    subConfig.kycPortal = 0xA85206d14d5C0fC88D60dFAED7d7891f99f700c3; //address(0);
+    subConfig.timelock = address(0);
+    subConfig.kycPortal = address(0);
     subConfig.underlyingAsset = address(0);
     subConfig.debtAsset = address(0);
     subConfig.create2_factory = 0x4e59b44847b379578588920cA78FbF26c0B4956C; //0x914d7Fec6aaC8cd542e72Bca78B30650d45643d7;
 
-    deployedContracts.poolAddressesProviderRegistry = 0x1A1d9065b4d705484706ADc2D7a147d128a34296; //address(0);
+    deployedContracts.poolAddressesProviderRegistry = address(0);
     flags.l2 = true;
 
     return (roles, config, subConfig, flags, deployedContracts);
@@ -56,17 +56,17 @@ contract DefaultMarketInput is MarketInput {
 
     listings[0] = IAaveV3ConfigEngine.Listing({
       //borrow asset
-      asset: 0x5c1409a46cD113b3A667Db6dF0a8D7bE37ed3BB3,
-      assetSymbol: 'gnUSD',
-      priceFeed: 0xe87465356E0850a7d8e0101bb81CBb82cCabCa64,
+      asset: 0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619,
+      assetSymbol: 'ETH',
+      priceFeed: 0x59AB56F7285e723CD417aFf63EEea800fD037995,
       rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
         optimalUsageRatio: 85_00,
         baseVariableBorrowRate: 1_50, // 1%
-        variableRateSlope1: 4_00,
+        variableRateSlope1: 10_00,
         variableRateSlope2: 75_00
       }),
       enabledToBorrow: EngineFlags.ENABLED,
-      flashloanable: EngineFlags.DISABLED,
+      flashloanable: EngineFlags.ENABLED,
       stableRateModeEnabled: EngineFlags.DISABLED,
       borrowableInIsolation: EngineFlags.ENABLED,
       withSiloedBorrowing: EngineFlags.DISABLED,
@@ -76,24 +76,24 @@ contract DefaultMarketInput is MarketInput {
       reserveFactor: 15_00, // 10%
       supplyCap: 50_000_000_000, // 100k AAVE
       borrowCap: 50_000_000_000, // 60k AAVE
-      debtCeiling: EngineFlags.KEEP_CURRENT, //0, // 100k USD
+      debtCeiling: 0, // 100k USD
       liqProtocolFee: 10_00, // 10%
       eModeCategory: 0 // No category
     });
 
     listings[1] = IAaveV3ConfigEngine.Listing({
       //collateral
-      asset: 0xbA22114ec75f0D55C34A5E5A3cf384484Ad9e733,
-      assetSymbol: 'GOON',
-      priceFeed: 0xAe1923a9E777c439a633ccf8558Cf0eE10829b16,
+      asset: 0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6,
+      assetSymbol: 'WBTC',
+      priceFeed: 0x830ED9E3461667BAE2765131Ae784dd307a24fBF,
       rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
         optimalUsageRatio: 85_00,
         baseVariableBorrowRate: 1_25, // 1.25%
-        variableRateSlope1: 3_00,
+        variableRateSlope1: 10_00,
         variableRateSlope2: 70_00
       }),
       enabledToBorrow: EngineFlags.ENABLED,
-      flashloanable: EngineFlags.DISABLED,
+      flashloanable: EngineFlags.ENABLED,
       stableRateModeEnabled: EngineFlags.DISABLED,
       borrowableInIsolation: EngineFlags.ENABLED,
       withSiloedBorrowing: EngineFlags.DISABLED,
@@ -103,22 +103,22 @@ contract DefaultMarketInput is MarketInput {
       reserveFactor: 15_00, // 10%
       supplyCap: 50_000_000_000, // 100k AAVE
       borrowCap: 50_000_000_000, // 60k AAVE
-      debtCeiling: EngineFlags.KEEP_CURRENT, //0, // 100k USD
+      debtCeiling: 0, // 100k USD
       liqProtocolFee: 10_00, // 10%
       eModeCategory: 0 // No category
     });
 
     config.poolContext = IAaveV3ConfigEngine.PoolContext({
-      networkName: 'Plume Testnet',
-      networkAbbreviation: 'Plume'
+      networkName: 'Polygon mainner',
+      networkAbbreviation: 'Polygon'
     });
     config.listings = listings;
-    config.treasury = 0x1CeA8B4007C50C926B88fEd9a521fAafB5fE2a2B;
-    config.interestRateStrategy = 0xC49c6327cedfa4bD2ca3a7cC5487AFd66aB157d6;
-    config.poolConfigurator = 0xb1E1A3318b1195d2ECD937897e4a4E1cc285Fad2;
-    config.rewardsController = 0xA12926f249E68C95DDC9E6D7c7Eaa83F0c853B62;
-    config.poolProxy = 0xE55bb0aECBE4ae6BD9643818E4E04183980ef98A;
-    config.oracle = 0xac6DFA76713EdbAf779DF45960ECe500533f6b52;
+    config.treasury = 0x1B7cbcA30a2c224E4ced24ccB33592424eE97178;
+    config.interestRateStrategy = 0xa7d5A175F3eD04f885d14139E67e850863F7f199;
+    config.poolConfigurator = 0x12742Ef8dc6F2876F5CcDa70Fbac9574AAE2658c;
+    config.rewardsController = 0x626Cc646271B8FaB6e32485028c2FDC2D70522D5;
+    config.poolProxy = 0x9fEae4675b90f336328AAbeC5253C707129eEB86;
+    config.oracle = 0x1033Ca0E2F5b58a753672EC88da7A512d5A8Cdee;
     // USDC/USDT pool == borrow/collateral
 
     return (config);
