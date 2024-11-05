@@ -41,7 +41,7 @@ deploy-script-test-arb-sepolia :; forge script scripts/DeployAaveV3MarketBatched
 deploy-script-plume-devnet3 :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 98864 --rpc-url plume3 --broadcast --slow --verifier blockscout --verifier-url https://test-explorer.plumenetwork.xyz/api --legacy --gas-estimate-multiplier 5000 --delay 5
 deploy-script-plume-devnet :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 18230 --rpc-url plume2 --broadcast --slow --legacy --gas-estimate-multiplier 150 --delay 5
 deploy-script-test-polygon :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 137 --rpc-url polygon --broadcast --slow --verify --legacy --delay 5 --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63 -vvv
-deploy-script-test-arbitrum :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 42161 --rpc-url arbitrum --broadcast --slow --verify --legacy --delay 5 -vvv
+deploy-script-test-arbitrum :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 42161 --rpc-url arbitrum --broadcast --slow --verify  --legacy --delay 5 --verifier etherscan --etherscan-api-key ENGNSHDPQBMAP5Y7MQV7RK1VZQ1AVDAQ9K -vvv
 
 
 deploy-list-asset-arb-sepolia :; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 421614 --rpc-url arb_sepolia --broadcast --slow --verify -vvv --with-gas-price 200000000  --gas-estimate-multiplier 150 --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63 --delay 5
@@ -50,7 +50,8 @@ deploy-list-asset-plume2 :; forge script scripts/ListAaveV3MarketBatched.sol:Def
 deploy-list-asset-plume3 :; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 98864 --rpc-url plume3 --broadcast --slow --delay 5 --gas-estimate-multiplier 5000
 deploy-list-asset-plume-verify :; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 161221135 --rpc-url plume --broadcast --legacy --slow --verifier blockscout --verifier-url https://plume-testnet.explorer.caldera.xyz/api --gas-estimate-multiplier 150 --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63 --delay 5
 deploy-list-asset-polygon :; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 137 --rpc-url polygon --broadcast --slow --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63 --delay 5 -vvv
-deploy-list-asset-arbitrum :; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 42161 --rpc-url arbitrum --broadcast --slow --verify --legacy --delay 5 -vvv
+deploy-list-asset-arbitrum :; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 42161 --rpc-url arbitrum --broadcast --slow --verify --legacy --delay 5 --verifier etherscan --etherscan-api-key ENGNSHDPQBMAP5Y7MQV7RK1VZQ1AVDAQ9K -vvv
+deploy-list-asset-arbitrum-resume:; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 42161 --rpc-url arbitrum --resume --broadcast --slow --verify --legacy --delay 5 --verifier etherscan --etherscan-api-key ENGNSHDPQBMAP5Y7MQV7RK1VZQ1AVDAQ9K -vvv
 
 
 
@@ -58,3 +59,5 @@ deploy-list-asset-arbitrum :; forge script scripts/ListAaveV3MarketBatched.sol:D
 deploy-aave-vault-plume-devnet :; forge script scripts/DeployAaveVault.sol:Default --chain 18230 --rpc-url plume2 --broadcast --slow --legacy --gas-estimate-multiplier 150 --delay 5
 deploy-aave-vault-plume-testnet :; forge script scripts/DeployAaveVault.sol:Default --chain 98864 --rpc-url plume3 --broadcast --slow --legacy --gas-estimate-multiplier 5000 --delay 5
 
+# verification
+verify-pool-arb :; forge verify-contract 0x36Ded1E98d43a74679eF43589c59DBE34AdDc80c --chain 42161 --verifier etherscan --etherscan-api-key ENGNSHDPQBMAP5Y7MQV7RK1VZQ1AVDAQ9K --rpc-url arbitrum src/core/instances/L2PoolInstance.sol:L2PoolInstance --watch --constructor-args $$(cast abi-encode "constructor(address)" 0x233A1AD3Ab31e4459DE93c28c646B547453F70fe) 

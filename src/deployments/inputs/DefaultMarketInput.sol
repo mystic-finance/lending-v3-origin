@@ -30,8 +30,8 @@ contract DefaultMarketInput is MarketInput {
     config.flashLoanPremiumToProtocol = 0.0004e4;
     config.poolType = 0;
     config
-      .marketReferenceCurrencyPriceInUsdProxyAggregator = 0x9B9c98f8D04FeA09e50953187F93b505D2539BE4;
-    config.networkBaseTokenPriceInUsdProxyAggregator = 0x9B9c98f8D04FeA09e50953187F93b505D2539BE4;
+      .marketReferenceCurrencyPriceInUsdProxyAggregator = 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3;
+    config.networkBaseTokenPriceInUsdProxyAggregator = 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3;
     config.wrappedNativeToken = address(0);
 
     subConfig.timelock = address(0);
@@ -51,28 +51,28 @@ contract DefaultMarketInput is MarketInput {
     address debtAsset,
     address collateralAsset
   ) internal view override returns (ListingConfig memory config) {
-    IAaveV3ConfigEngine.Listing[] memory listings = new IAaveV3ConfigEngine.Listing[](4);
+    IAaveV3ConfigEngine.Listing[] memory listings = new IAaveV3ConfigEngine.Listing[](3);
     // IAaveV3ConfigEngine.Listing[] memory listingCollateral = new IAaveV3ConfigEngine.Listing[](1);
 
     listings[0] = IAaveV3ConfigEngine.Listing({
       //borrow asset
-      asset: 0xe644F07B1316f28a7F134998e021eA9f7135F351,
-      assetSymbol: 'PUSD',
-      priceFeed: 0x9B9c98f8D04FeA09e50953187F93b505D2539BE4,
+      asset: 0xaf88d065e77c8cC2239327C5EDb3A432268e5831,
+      assetSymbol: 'USDC',
+      priceFeed: 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3,
       rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
-        optimalUsageRatio: 85_00,
-        baseVariableBorrowRate: 1_75, // 1.75%
-        variableRateSlope1: 15_00,
-        variableRateSlope2: 80_00
+        optimalUsageRatio: 70_00,
+        baseVariableBorrowRate: 1_5, // 1.75%
+        variableRateSlope1: 10_00,
+        variableRateSlope2: 70_00
       }),
       enabledToBorrow: EngineFlags.ENABLED,
       flashloanable: EngineFlags.ENABLED,
       stableRateModeEnabled: EngineFlags.DISABLED,
       borrowableInIsolation: EngineFlags.ENABLED,
       withSiloedBorrowing: EngineFlags.DISABLED,
-      ltv: 88_00, // 90%
-      liqThreshold: 88_50, // 92.5%
-      liqBonus: 10_00, // 5%
+      ltv: 70_00, // 90%
+      liqThreshold: 70_50, // 92.5%
+      liqBonus: 5_00, // 5%
       reserveFactor: 10_00, // 10%
       supplyCap: 50_000_000_000, // 100k AAVE
       borrowCap: 50_000_000_000, // 60k AAVE
@@ -83,13 +83,13 @@ contract DefaultMarketInput is MarketInput {
 
     listings[1] = IAaveV3ConfigEngine.Listing({
       //collateral
-      asset: 0xaA6210015fbf0855F0D9fDA3C415c1B12776Ae74,
-      assetSymbol: 'WETH',
-      priceFeed: 0xB8931c33404B9524E607883912ABe1E635662B25,
+      asset: 0x0000206329b97DB379d5E1Bf586BbDB969C63274,
+      assetSymbol: 'USDA',
+      priceFeed: 0x3f3f5dF88dC9F13eac63DF89EC16ef6e7E25DdE7, //USDT
       rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
-        optimalUsageRatio: 85_00,
-        baseVariableBorrowRate: 1_50, // 1.25%
-        variableRateSlope1: 4_00,
+        optimalUsageRatio: 70_00,
+        baseVariableBorrowRate: 1_5, // 1.75%
+        variableRateSlope1: 10_00,
         variableRateSlope2: 70_00
       }),
       enabledToBorrow: EngineFlags.ENABLED,
@@ -97,10 +97,10 @@ contract DefaultMarketInput is MarketInput {
       stableRateModeEnabled: EngineFlags.DISABLED,
       borrowableInIsolation: EngineFlags.ENABLED,
       withSiloedBorrowing: EngineFlags.DISABLED,
-      ltv: 88_00, // 90%
-      liqThreshold: 88_50, // 92.5%
-      liqBonus: 10_00, // 5%
-      reserveFactor: 15_00, // 10%
+      ltv: 70_00, // 90%
+      liqThreshold: 70_50, // 92.5%
+      liqBonus: 5_00, // 5%
+      reserveFactor: 10_00, // 10%
       supplyCap: 50_000_000_000, // 100k AAVE
       borrowCap: 50_000_000_000, // 60k AAVE
       debtCeiling: 0, //0, // 100k USD
@@ -110,24 +110,24 @@ contract DefaultMarketInput is MarketInput {
 
     listings[2] = IAaveV3ConfigEngine.Listing({
       //collateral
-      asset: 0x2413b8C79Ce60045882559f63d308aE3DFE0903d,
-      assetSymbol: 'USDT',
-      priceFeed: 0x9B9c98f8D04FeA09e50953187F93b505D2539BE4,
+      asset: 0x1e2C4fb7eDE391d116E6B41cD0608260e8801D59,
+      assetSymbol: 'bCSPX',
+      priceFeed: 0x9BCAb090873aE5f2200DCF1Eb51EE0684D82B27C,
       rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
-        optimalUsageRatio: 85_00,
-        baseVariableBorrowRate: 1_50, // 1.25%
-        variableRateSlope1: 4_00,
+        optimalUsageRatio: 70_00,
+        baseVariableBorrowRate: 1_5,
+        variableRateSlope1: 15_00,
         variableRateSlope2: 70_00
       }),
       enabledToBorrow: EngineFlags.ENABLED,
-      flashloanable: EngineFlags.DISABLED,
+      flashloanable: EngineFlags.ENABLED,
       stableRateModeEnabled: EngineFlags.DISABLED,
       borrowableInIsolation: EngineFlags.ENABLED,
       withSiloedBorrowing: EngineFlags.DISABLED,
-      ltv: 88_00, // 90%
-      liqThreshold: 88_50, // 92.5%
-      liqBonus: 10_00, // 5%
-      reserveFactor: 15_00, // 10%
+      ltv: 70_00, // 90%
+      liqThreshold: 70_50, // 92.5%
+      liqBonus: 5_00, // 5%
+      reserveFactor: 10_00, // 10%
       supplyCap: 50_000_000_000, // 100k AAVE
       borrowCap: 50_000_000_000, // 60k AAVE
       debtCeiling: 0, //0, // 100k USD
@@ -135,32 +135,32 @@ contract DefaultMarketInput is MarketInput {
       eModeCategory: 0 // No category
     });
 
-    listings[3] = IAaveV3ConfigEngine.Listing({
-      //collateral
-      asset: 0x401eCb1D350407f13ba348573E5630B83638E30D,
-      assetSymbol: 'USDC.e',
-      priceFeed: 0x6C174e1D1b2244F45173b0feC10ba218E3f4D073,
-      rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
-        optimalUsageRatio: 85_00,
-        baseVariableBorrowRate: 1_50, // 1.25%
-        variableRateSlope1: 4_00,
-        variableRateSlope2: 70_00
-      }),
-      enabledToBorrow: EngineFlags.ENABLED,
-      flashloanable: EngineFlags.DISABLED,
-      stableRateModeEnabled: EngineFlags.DISABLED,
-      borrowableInIsolation: EngineFlags.ENABLED,
-      withSiloedBorrowing: EngineFlags.DISABLED,
-      ltv: 88_00, // 90%
-      liqThreshold: 88_50, // 92.5%
-      liqBonus: 10_00, // 5%
-      reserveFactor: 15_00, // 10%
-      supplyCap: 50_000_000_000, // 100k AAVE
-      borrowCap: 50_000_000_000, // 60k AAVE
-      debtCeiling: 0, //0, // 100k USD
-      liqProtocolFee: 5_00, // 10%
-      eModeCategory: 0 // No category
-    });
+    // listings[3] = IAaveV3ConfigEngine.Listing({
+    //   //collateral
+    //   asset: 0x401eCb1D350407f13ba348573E5630B83638E30D,
+    //   assetSymbol: 'USDC.e',
+    //   priceFeed: 0x6C174e1D1b2244F45173b0feC10ba218E3f4D073,
+    //   rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
+    //     optimalUsageRatio: 85_00,
+    //     baseVariableBorrowRate: 1_50, // 1.25%
+    //     variableRateSlope1: 4_00,
+    //     variableRateSlope2: 70_00
+    //   }),
+    //   enabledToBorrow: EngineFlags.ENABLED,
+    //   flashloanable: EngineFlags.DISABLED,
+    //   stableRateModeEnabled: EngineFlags.DISABLED,
+    //   borrowableInIsolation: EngineFlags.ENABLED,
+    //   withSiloedBorrowing: EngineFlags.DISABLED,
+    //   ltv: 88_00, // 90%
+    //   liqThreshold: 88_50, // 92.5%
+    //   liqBonus: 10_00, // 5%
+    //   reserveFactor: 15_00, // 10%
+    //   supplyCap: 50_000_000_000, // 100k AAVE
+    //   borrowCap: 50_000_000_000, // 60k AAVE
+    //   debtCeiling: 0, //0, // 100k USD
+    //   liqProtocolFee: 5_00, // 10%
+    //   eModeCategory: 0 // No category
+    // });
 
     // listings[4] = IAaveV3ConfigEngine.Listing({
     //   //collateral
@@ -248,12 +248,12 @@ contract DefaultMarketInput is MarketInput {
       networkAbbreviation: 'ArbMainnet'
     });
     config.listings = listings;
-    config.treasury = 0x792d661d7a80a022215EF897A9781c0dfB9ba0ce;
-    config.interestRateStrategy = 0xa03086874159B2a50A467CE7cA9E90db628A115B;
-    config.poolConfigurator = 0x2e62219A0ce4f4d3088e45b02F014F46E9ce2320;
-    config.rewardsController = 0xDa1dEFf43087ed5116808c2153F4E7c3b6561873;
-    config.poolProxy = 0xd7ecf5312aa4FE7ddcAAFba779494fBC5f5f459A;
-    config.oracle = 0x2a052206FF91290E929385FEDAA2A9455Fdb70e3;
+    config.treasury = 0x16cEEE76D2f114C10a5703b885EBA7cd163A7D3b;
+    config.interestRateStrategy = 0xFB910cD1bA7295B9e03DDE8EfAAF69682F509f7C;
+    config.poolConfigurator = 0xC59bE993108052Aa9cd9b082B28d6C44dA58ae65;
+    config.rewardsController = 0x0F5052665AaC65116864Ef638169A06f3c5a801a;
+    config.poolProxy = 0x504193dBFdEad383ddfE1eC4B3834Ed7Dfd87b44;
+    config.oracle = 0x25aF9EABD5822Fc178Dedd6CfdB94C30AE26c1d7;
     return (config);
   }
 
