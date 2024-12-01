@@ -42,7 +42,7 @@ contract KYCPortal is Ownable {
   event PartnerRemoved(address indexed partner);
   event UserRemoved(address indexed partner, uint8 poolType);
 
-  constructor(address _timelock, address _identity) {
+  constructor(address _timelock, address _identity, address _addressProvider) {
     relayers[msg.sender] = true;
     identity = MysticIdentity(_identity);
     // renounce ownership to timelock contract to avoid multiple ownership
@@ -50,7 +50,9 @@ contract KYCPortal is Ownable {
     timelock = _timelock;
 
     transferOwnership(_timelock);
-    IACLManager(_addressProvider.getACLManager()).addLiquidatorAdmin(_timelock);
+    IACLManager(IPoolAddressesProvider(_addressProvider).getACLManager()).addLiquidatorAdmin(
+      _timelock
+    );
   }
 
   modifier onlyRelayer() {

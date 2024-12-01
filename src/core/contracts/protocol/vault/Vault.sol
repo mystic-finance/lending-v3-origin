@@ -399,14 +399,14 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
 
   function repayWithShares(uint256 shares, address mysticPoolAddress, address onBehalfOf) external {
     require(_isAssetAndPoolSupported(asset(), mysticPoolAddress), 'Asset or pool not supported');
-    uint256 amount = _convertToAssets(shares, Math.Rounding.Ceil);
+    uint256 amount = convertToAssets(shares); //_convertToAssets(shares, Math.Rounding.Ceil);
     totalBorrowed -= amount;
 
     uint256 assets = convertToAssets(shares);
     _burn(msg.sender, shares);
 
     uint256 allowance = IERC20(asset()).allowance(address(this), mysticPoolAddress);
-    if (allowance < assets) {
+    if (allowance < amount) {
       IERC20(asset()).approve(mysticPoolAddress, type(uint256).max);
     }
 

@@ -160,11 +160,11 @@ contract AaveV3SetupProcedure {
       manager.setRoleAdmin(manager.EMERGENCY_ADMIN_ROLE(), roleAdmin);
       manager.setRoleAdmin(manager.ASSET_LISTING_ADMIN_ROLE(), roleAdmin);
       manager.setRoleAdmin(manager.POOL_USER(), roleAdmin);
-      manager.setRoleAdmin(manager.POOL_USER_TREASURY(), roleAdmin);
-      manager.setRoleAdmin(manager.POOL_USER_BOND(), roleAdmin);
+      manager.setRoleAdmin(manager.POOL_USER_INVESTOR(), roleAdmin);
+      manager.setRoleAdmin(manager.POOL_USER_REGULATED(), roleAdmin);
       manager.setRoleAdmin(manager.LIQUIDATOR_ADMIN(), roleAdmin);
-      manager.setRoleAdmin(manager.LIQUIDATOR_TREASURY(), roleAdmin);
-      manager.setRoleAdmin(manager.LIQUIDATOR_BOND(), roleAdmin);
+      manager.setRoleAdmin(manager.LIQUIDATOR_INVESTOR(), roleAdmin);
+      manager.setRoleAdmin(manager.LIQUIDATOR_REGULATED(), roleAdmin);
       manager.setRoleAdmin(manager.LIQUIDATOR(), roleAdmin);
     }
 

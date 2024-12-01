@@ -8,7 +8,7 @@ import {SemiPermissionedPoolInstance} from 'src/core/instances/SemiPermissionedP
 
 import {TimelockInstance} from 'src/core/instances/TimelockInstance.sol';
 
-import {KYCInstance} from 'src/core/instances/KYCInstance.sol';
+// import {KYCInstance} from 'src/core/instances/KYCInstance.sol';
 
 import {IPoolAddressesProvider} from 'src/core/contracts/interfaces/IPoolAddressesProvider.sol';
 import {AaveV3PoolConfigProcedure} from './AaveV3PoolConfigProcedure.sol';

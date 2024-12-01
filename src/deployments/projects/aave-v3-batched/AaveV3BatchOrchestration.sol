@@ -27,7 +27,7 @@ import {TimelockInstance} from 'src/core/instances/TimelockInstance.sol';
 
 import {TimelockController} from 'src/core/contracts/protocol/partner/Timelock.sol';
 
-import {KYCInstance} from 'src/core/instances/KYCInstance.sol';
+import {KYCPortal} from 'src/core/contracts/protocol/partner/KYCPortal.sol';
 import {AavePoolWrapper} from 'src/core/contracts/protocol/partner/AavePoolWrapper.sol';
 
 import {PoolAddressesProviderRegistry} from 'src/core/contracts/protocol/configuration/PoolAddressesProviderRegistry.sol';
@@ -45,6 +45,10 @@ import {IERC20Metadata} from 'lib/solidity-utils/src/contracts/oz-common/interfa
 import {ReserveConfiguration} from 'src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 import {PercentageMath} from 'src/core/contracts/protocol/libraries/math/PercentageMath.sol';
 import {MysticPoolVaultFactory} from 'src/core/contracts/protocol/vault/VaultFactory.sol';
+
+import {MysticIdentity} from 'src/core/contracts/protocol/partner/KYCId.sol';
+import {MysticVaultController} from 'src/core/contracts/protocol/vault/VaultController.sol';
+import {CustodyController} from 'src/core/contracts/protocol/partner/CustodyController.sol';
 
 /**
  * @title AaveV3BatchOrchestration
@@ -105,7 +109,7 @@ library AaveV3BatchOrchestration {
       poolReport = _deploySemiPermissionedPoolImplementations(initialReport.poolAddressesProvider); //3
     }
 
-    poolReport = _setupKycPortal(subConfig, poolReport, deployer);
+    poolReport = _setupKycPortal(subConfig, poolReport, initialReport, deployer);
 
     /*
     The following are done here:
@@ -345,8 +349,29 @@ library AaveV3BatchOrchestration {
     return (bundler);
   }
 
-  function deployAaveVaultFactory() internal returns (address aaveVaultFactory) {
-    aaveVaultFactory = address(new MysticPoolVaultFactory());
+  function deployAaveVaultFactory()
+    internal
+    returns (address aaveVaultFactory, address aaveVaultController)
+  {
+    bytes32 CURATOR_ROLE = keccak256('CURATOR_ROLE');
+    aaveVaultController = address(new MysticVaultController());
+    aaveVaultFactory = address(new MysticPoolVaultFactory(aaveVaultController));
+    MysticVaultController(aaveVaultController).grantRole(CURATOR_ROLE, aaveVaultFactory);
+  }
+
+  function deployAaveVaultController() internal returns (address aaveVaultController) {
+    aaveVaultController = address(new MysticVaultController());
+  }
+
+  function deployAaveCustodyTreasuryController(
+    address _custodyWallet,
+    address _repoLocker,
+    address[] memory _withdrawalOperators,
+    address[] memory _approvedTargets
+  ) internal returns (address aaveCustody) {
+    aaveCustody = address(
+      new CustodyController(_custodyWallet, _repoLocker, _withdrawalOperators, _approvedTargets)
+    );
   }
 
   function deployAaveVault(
@@ -498,10 +523,20 @@ library AaveV3BatchOrchestration {
     return address(timelock);
   }
 
-  function _deployKycPortal(address timelock) internal returns (address) {
-    address kycPortal = address(new KYCInstance(timelock));
+  function _deployKycPortal(
+    address timelock,
+    address kycId,
+    address poolAddressProvider
+  ) internal returns (address) {
+    address kycPortal = address(new KYCPortal(timelock, kycId, poolAddressProvider));
 
     return kycPortal;
+  }
+
+  function _deployKycId(address deployer) internal returns (address) {
+    address kycId = address(new MysticIdentity(deployer));
+
+    return kycId;
   }
 
   function _deployPeripherals(
@@ -610,6 +645,7 @@ library AaveV3BatchOrchestration {
   function _setupKycPortal(
     SubMarketConfig memory subConfig,
     PoolReport memory poolReport,
+    InitialReport memory initialReport,
     address deployer
   ) internal returns (PoolReport memory) {
     /*
@@ -623,7 +659,12 @@ library AaveV3BatchOrchestration {
       }
 
       if (subConfig.kycPortal == address(0)) {
-        subConfig.kycPortal = _deployKycPortal(subConfig.timelock);
+        subConfig.kycId = _deployKycId(deployer);
+        subConfig.kycPortal = _deployKycPortal(
+          subConfig.timelock,
+          subConfig.kycId,
+          initialReport.poolAddressesProvider
+        );
       }
     }
 
@@ -804,6 +845,7 @@ library AaveV3BatchOrchestration {
     report.defaultInterestRateStrategyV2 = peripheryReport.defaultInterestRateStrategyV2;
     report.kycPortal = poolReport.kycPortal;
     report.timelock = poolReport.timelock;
+    report.kycId = poolReport.kycId;
 
     return report;
   }

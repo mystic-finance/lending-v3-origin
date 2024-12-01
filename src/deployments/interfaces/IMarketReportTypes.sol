@@ -86,6 +86,7 @@ struct MarketReport {
   address rewardsControllerProxy;
   address kycPortal;
   address timelock;
+  address kycId;
   address engine;
 }
 
@@ -125,6 +126,7 @@ struct MarketConfig {
 struct SubMarketConfig {
   address timelock;
   address kycPortal;
+  address kycId;
   address underlyingAsset;
   address debtAsset;
   address create2_factory;
@@ -153,6 +155,7 @@ struct PoolReport {
   address poolConfiguratorImplementation;
   address kycPortal;
   address timelock;
+  address kycId;
 }
 
 struct PartnerReport {

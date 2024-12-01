@@ -32,7 +32,7 @@ abstract contract DeployAaveVaultBase is DeployUtils, MarketInput, Script {
     if (vaultFactory == address(0)) {
       vm.startBroadcast(deployerPrivateKey);
 
-      address newVaultFactory = AaveV3BatchOrchestration.deployAaveVaultFactory();
+      (address newVaultFactory, ) = AaveV3BatchOrchestration.deployAaveVaultFactory();
       console.log('vault factory', newVaultFactory);
 
       vm.stopBroadcast();

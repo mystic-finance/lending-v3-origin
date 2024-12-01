@@ -86,7 +86,12 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       flags
     );
 
-    poolReport = AaveV3BatchOrchestration._setupKycPortal(subConfig, poolReport, roles.poolAdmin);
+    poolReport = AaveV3BatchOrchestration._setupKycPortal(
+      subConfig,
+      poolReport,
+      initialReport,
+      roles.poolAdmin
+    );
 
     peripheryReport = AaveV3BatchOrchestration._deployPeripherals(
       roles,

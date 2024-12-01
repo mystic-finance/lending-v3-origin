@@ -2,7 +2,7 @@
 pragma solidity ^0.8.10;
 
 import 'forge-std/Test.sol';
-import 'src/core/contracts/protocol/vault/MysticVault.sol';
+import 'src/core/contracts/protocol/vault/Vault.sol';
 import {MockAggregator} from 'src/core/contracts/mocks/oracle/CLAggregators/MockAggregator.sol';
 import '../mocks/ERC20Mock.sol'; // Mock ERC20 for testing
 import '../../src/core/contracts/interfaces/IPool.sol';
