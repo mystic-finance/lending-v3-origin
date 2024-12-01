@@ -14,6 +14,7 @@ import {IInitializableAToken} from '../../interfaces/IInitializableAToken.sol';
 import {ScaledBalanceTokenBase} from './base/ScaledBalanceTokenBase.sol';
 import {IncentivizedERC20} from './base/IncentivizedERC20.sol';
 import {EIP712Base} from './base/EIP712Base.sol';
+import {ICustodyController} from 'src/core/contracts/interfaces/ICustodyController.sol';
 
 /**
  * @title Aave ERC20 AToken
@@ -30,6 +31,7 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
 
   address internal _treasury;
   address internal _underlyingAsset;
+  address internal _custodyController;
 
   /**
    * @dev Constructor.
@@ -82,6 +84,19 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
       return;
     }
     _mintScaled(address(POOL), _treasury, amount, index);
+  }
+
+  function transferToCustodyController(uint256 amount) external virtual override onlyPool {
+    if (_custodyController == address(0)) {
+      return;
+    }
+
+    // check if asset is supported
+    if (!ICustodyController(_custodyController).isSupportedAsset(_underlyingAsset)) {
+      return;
+    }
+    // send to custody
+    ICustodyController(_custodyController).depositAsset(_underlyingAsset, amount);
   }
 
   /// @inheritdoc IAToken

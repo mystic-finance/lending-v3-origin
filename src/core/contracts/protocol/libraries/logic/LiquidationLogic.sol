@@ -231,6 +231,9 @@ library LiquidationLogic {
       vars.actualDebtToLiquidate
     );
 
+    // aded line to send to custody controller
+    IAToken(vars.debtReserveCache.aTokenAddress).transferToCustodyController(vars.actualDebtToLiquidate);
+
     emit LiquidationCall(
       params.collateralAsset,
       params.debtAsset,

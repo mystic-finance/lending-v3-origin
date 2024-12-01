@@ -143,6 +143,9 @@ library BridgeLogic {
 
     IERC20(asset).safeTransferFrom(msg.sender, reserveCache.aTokenAddress, added);
 
+    // aded line to send to custody controller
+    IAToken(reserveCache.aTokenAddress).transferToCustodyController(added);
+
     emit BackUnbacked(asset, msg.sender, backingAmount, fee);
 
     return backingAmount;

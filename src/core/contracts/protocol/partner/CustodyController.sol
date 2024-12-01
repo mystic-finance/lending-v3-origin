@@ -213,6 +213,7 @@ contract CustodyController is AccessControl, ReentrancyGuard, Pausable {
       pendingWithdrawals[request.asset[i]] -= request.amount[i];
       // Safely transfer tokens from sender to locker
       IERC20(request.asset[i]).safeTransfer(repoLocker, request.amount[i]);
+      supportedAssets[request.asset[i]].totalDeposited -= request.amount[i];
       emit WithdrawalCompleted(requestId, request.user, request.asset[i], request.amount[i]);
     }
 

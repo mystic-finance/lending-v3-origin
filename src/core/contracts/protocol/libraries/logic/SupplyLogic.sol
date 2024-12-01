@@ -88,6 +88,9 @@ library SupplyLogic {
       }
     }
 
+    // aded line to send to custody controller
+    IAToken(reserveCache.aTokenAddress).transferToCustodyController(params.amount);
+
     emit Supply(params.asset, msg.sender, params.onBehalfOf, params.amount, params.referralCode);
   }
 

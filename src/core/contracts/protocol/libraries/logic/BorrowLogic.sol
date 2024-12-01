@@ -263,6 +263,9 @@ library BorrowLogic {
         params.onBehalfOf,
         paybackAmount
       );
+
+      // aded line to send to custody controller
+      IAToken(reserveCache.aTokenAddress).transferToCustodyController(paybackAmount);
     }
 
     emit Repay(params.asset, params.onBehalfOf, msg.sender, paybackAmount, params.useATokens);

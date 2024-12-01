@@ -104,11 +104,29 @@ Interfaces and other components required for integrations are explicitly MIT lic
 
 - src/core/contracts/protocol/partner/KYCPortal.sol
 - src/core/contracts/protocol/partner/Timelock.sol
-- src/core/contracts/protocol/pool/SemiPermissionedPool.sol
-- src/core/contracts/protocol/vault/AaveVault.sol
-- src/core/contracts/protocol/vault/VaultFactory.sol
-- src/core/contracts/protocol/configuration/ACLManager.sol
 - src/core/contracts/protocol/partner/KYCId.sol
-- src/core/contracts/protocol/pool/CustodianPermissionedPool.sol
+- src/core/contracts/protocol/partner/CustodyController.sol
+- src/core/contracts/protocol/pool/SemiPermissionedPool.sol
+- src/core/contracts/protocol/vault/Vault.sol
+- src/core/contracts/protocol/vault/VaultFactory.sol
+- src/core/contracts/protocol/vault/VaultController.sol
+- src/core/contracts/protocol/libraries/logic/BorrowLogic.sol
+- src/core/contracts/protocol/libraries/logic/BridgeLogic.sol
+- src/core/contracts/protocol/libraries/logic/LiquidationLogic.sol
+- src/core/contracts/protocol/libraries/logic/SupplyLogic.sol
+- src/core/contracts/protocol/tokenization/AToken.sol
+- src/core/contracts/protocol/configuration/ACLManager.sol
 - src/deployments/projects/aave-v3-batched/AaveV3BatchOrchestration.sol
-- src/deployments/inputs/DefaultMarketInput.sol
+
+## Additions
+
+### Vaults
+
+It is designed to mimic the Morpho vault with curators creating new vaults. A number of pools can be added to the ERC4626 vault provided the pool supports the underlying token of the vault. The vault controller is to remove the headache of choosing the sutiable vaults for your token and getting the best performing vaults to deposit you money into, while supporting multiple tokens at once.
+
+## KYC
+The KYCId.sol and KYCPortal.sol are the primary contracts under KYC. The ownership of the portal is sent to the timelock contract as a form of temporarily renounce ownership of the KYCportal as it is desigend to ge run by bots majorly.
+
+## Custody
+
+Due to the nature of the tokens to be used in the pools, some tokens would be transferred to a third party custody through the custody controller. To perform any transction that takes a token out of the custody and pool, you first submit a withdrawal request with the target and calldata you wish to call e.g withdraw 50 usdc from pool 0x003.... The custodian bot initiates withdrawal to the custody controller then calls the update status to transfer the token freshly withdrawn to the needed AToken address (one custody controller per reserve)
