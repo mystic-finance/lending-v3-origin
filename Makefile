@@ -50,13 +50,18 @@ deploy-list-asset-plume3 :; forge script scripts/ListAaveV3MarketBatched.sol:Def
 deploy-list-asset-plume-verify :; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 161221135 --rpc-url plume --broadcast --legacy --slow --verifier blockscout --verifier-url https://plume-testnet.explorer.caldera.xyz/api --gas-estimate-multiplier 150 --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63 --delay 5
 deploy-list-asset-polygon :; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 137 --rpc-url polygon --broadcast --slow --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63 --delay 5 -vvv
 
-
 # deploy-aave-bundler-plume :; forge script scripts/DeployAaveBundler.sol:Default --chain 161221135 --rpc-url plume --broadcast --force  -vvvv --gas-estimate-multiplier 150 --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63 -vvv
 deploy-aave-vault-plume-devnet :; forge script scripts/DeployAaveVault.sol:Default --chain 18230 --rpc-url plume2 --broadcast --slow --legacy --gas-estimate-multiplier 150 --delay 5
 deploy-aave-vault-plume-testnet :; forge script scripts/DeployAaveVault.sol:Default --chain 98864 --rpc-url plume3 --broadcast --slow --legacy --gas-estimate-multiplier 5000 --delay 5
+verify-aave-vault-factory-plume-testnet :; forge verify-contract 0x2765968702d8f4839f587Bdc8A3c02697d182d2c src/core/contracts/protocol/vault/VaultFactory.sol:MysticPoolVaultFactory --chain 98864 --rpc-url plume3 --verifier blockscout --verifier-url 'https://test-explorer.plumenetwork.xyz/api?' --watch
+verify-aave-vault-plume-testnet :; forge verify-contract 0x5f1C7c723a2938b837B21Dc1158480098F382128 src/core/contracts/protocol/vault/MysticVault.sol:MysticVault --chain 98864 --rpc-url plume3 --verifier blockscout --verifier-url 'https://test-explorer.plumenetwork.xyz/api?' --watch
 
-plume3-verify-impl :; forge verify-contract 0xEd2D5f8F6bE71F740c89dEf37c6535f7A07B6F83  --chain 98864 --verifier blockscout src/core/instances/L2PoolInstance.sol:L2PoolInstance  --rpc-url plume3 --verifier-url 'https://test-explorer.plumenetwork.xyz/api?' --watch --constructor-args 0x00000000000000000000000036ded1e98d43a74679ef43589c59dbe34addc80c
+
+plume3-verify-impl :; forge verify-contract 0xEd2D5f8F6bE71F740c89dEf37c6535f7A07B6F83 --chain 98864 --verifier blockscout src/core/instances/L2PoolInstance.sol:L2PoolInstance  --rpc-url plume3 --verifier-url 'https://test-explorer.plumenetwork.xyz/api?' --watch
 # --show-standard-json-input > etherscan.json
-plume3-verify :; forge verify-contract 0xd7ecf5312aa4FE7ddcAAFba779494fBC5f5f459A src/core/contracts/protocol/libraries/aave-upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol:InitializableImmutableAdminUpgradeabilityProxy --rpc-url plume3 --verifier blockscout --verifier-url 'https://test-explorer.plumenetwork.xyz/api/'
+plume3-verify :; forge verify-contract 0xd7ecf5312aa4FE7ddcAAFba779494fBC5f5f459A src/core/contracts/protocol/libraries/aave-upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol:InitializableImmutableAdminUpgradeabilityProxy --rpc-url plume3 --verifier blockscout --verifier-url 'https://test-explorer.plumenetwork.xyz/api?'
+plume3-verify-uipool :; forge verify-contract 0x9652674BFc6Be8C2508822DC979b3244AC28f04b  --chain 98864 --verifier blockscout src/periphery/contracts/misc/UiPoolDataProviderV3.sol:UiPoolDataProviderV3  --rpc-url plume3 --verifier-url 'https://test-explorer.plumenetwork.xyz/api?' --watch
 
 verify-oracle :; forge verify-contract 0x59AB56F7285e723CD417aFf63EEea800fD037995 --chain 137 --verifier etherscan --etherscan-api-key XTQMYH2JDHAMKD4CQW8TV3QPR2RUAP8M6M --rpc-url polygon src/EmergencyEACProxy.sol:EEACAggregatorProxy --watch --constructor-args 0x00000000000000000000000036da71ccad7a67053f0a4d9d5f55b725c9a25a3e000000000000000000000000000000000000000000000000000000000000000021c4f9a7edaefc4d28ba07193e0a7f13858fc363002378434608f3296ae1c676
+
+plume3-verify-standard :; forge verify-contract 0xEd2D5f8F6bE71F740c89dEf37c6535f7A07B6F83  --chain 98864 --verifier blockscout src/core/instances/L2PoolInstance.sol:L2PoolInstance  --rpc-url plume3 --verifier-url 'https://test-explorer.plumenetwork.xyz/api?' --watch --constructor-args 0x00000000000000000000000036Ded1E98d43a74679eF43589c59DBE34AdDc80c --show-standard-json-input > etherscan.json
