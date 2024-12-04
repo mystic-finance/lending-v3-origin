@@ -103,7 +103,6 @@ Interfaces and other components required for integrations are explicitly MIT lic
 ## Contracts in scope
 
 - src/core/contracts/protocol/partner/KYCPortal.sol
-- src/core/contracts/protocol/partner/Timelock.sol
 - src/core/contracts/protocol/partner/KYCId.sol
 - src/core/contracts/protocol/partner/CustodyController.sol
 - src/core/contracts/protocol/pool/SemiPermissionedPool.sol
@@ -116,7 +115,6 @@ Interfaces and other components required for integrations are explicitly MIT lic
 - src/core/contracts/protocol/libraries/logic/SupplyLogic.sol
 - src/core/contracts/protocol/tokenization/AToken.sol
 - src/core/contracts/protocol/configuration/ACLManager.sol
-- src/deployments/projects/aave-v3-batched/AaveV3BatchOrchestration.sol
 
 ## Additions
 
