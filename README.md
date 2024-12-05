@@ -134,7 +134,8 @@ This project implements a sophisticated DeFi protocol with advanced features inc
 
 The vault is designed to mimic the Morpho vault, allowing curators to create new vaults. Multiple pools can be added to the ERC4626 vault, provided the pool supports the underlying token. The vault controller simplifies vault selection by helping users find the most performing vaults for their tokens, while supporting multiple tokens simultaneously.
 
-## KYC
+### KYC
+
 The KYCId and KYCPortal form the core infrastructure for Know Your Customer (KYC) compliance in the protocol. To enhance security and decentralization, the ownership of the KYC Portal is transferred to a timelock contract. This strategic move allows for a controlled, automated management approach, as the portal is primarily designed to be operated by autonomous bots.
 The transfer to a timelock contract serves multiple purposes:
 
@@ -150,7 +151,7 @@ By leveraging bot-driven operations, the KYC system can:
 - Minimize manual administrative overhead
 - Provide real-time access control for the protocol
 
-## Custody
+### Custody
 
 The protocol's unique custody mechanism addresses token security by transferring certain tokens to a third-party custodian through a dedicated custody controller. For withdrawing tokens from custody and pools, users must:
 
