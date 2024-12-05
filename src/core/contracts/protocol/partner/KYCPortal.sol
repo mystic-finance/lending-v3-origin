@@ -50,9 +50,9 @@ contract KYCPortal is Ownable {
     timelock = _timelock;
 
     transferOwnership(_timelock);
-    IACLManager(IPoolAddressesProvider(_addressProvider).getACLManager()).addLiquidatorAdmin(
-      _timelock
-    );
+    // IACLManager(IPoolAddressesProvider(_addressProvider).getACLManager()).addLiquidatorAdmin(
+    //   _timelock
+    // );
   }
 
   modifier onlyRelayer() {

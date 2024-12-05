@@ -93,14 +93,17 @@ This repository will be subjected to [this bug bounty](https://immunefi.com/boun
 
 <br>
 
-## License
+## Project Overview
 
-Copyright © 2024, Aave DAO, represented by its governance smart contracts.
+This project implements a sophisticated DeFi protocol with advanced features including:
 
-The [BUSL1.1](./LICENSE) license of this repository allows for any usage of the software, if respecting the Additional Use Grant limitations, forbidding any use case damaging anyhow the Aave DAO's interests.
-Interfaces and other components required for integrations are explicitly MIT licensed.
+- KYC (Know Your Customer) integration
+- Semi-permissioned pools
+- Vault management
+- Custody control
+- Multi-token support
 
-## Contracts in scope
+## Files in scope
 
 - src/core/contracts/protocol/partner/KYCPortal.sol
 - src/core/contracts/protocol/partner/KYCId.sol
@@ -116,15 +119,60 @@ Interfaces and other components required for integrations are explicitly MIT lic
 - src/core/contracts/protocol/tokenization/AToken.sol
 - src/core/contracts/protocol/configuration/ACLManager.sol
 
+## Potential Security Focus Areas
+
+- KYC bypass for SemiPermissioned Pools
+- DOS on SemiPermissioned Pools despite having KYC Id and approved on KYC portal
+- DOS due to custodian logic especially on withdraw
+- Access control
+- Loss of funds especially in Vault
+- Vault sort issue in Vault controller
+
 ## Additions
 
 ### Vaults
 
-It is designed to mimic the Morpho vault with curators creating new vaults. A number of pools can be added to the ERC4626 vault provided the pool supports the underlying token of the vault. The vault controller is to remove the headache of choosing the sutiable vaults for your token and getting the best performing vaults to deposit you money into, while supporting multiple tokens at once.
+The vault is designed to mimic the Morpho vault, allowing curators to create new vaults. Multiple pools can be added to the ERC4626 vault, provided the pool supports the underlying token. The vault controller simplifies vault selection by helping users find the most performing vaults for their tokens, while supporting multiple tokens simultaneously.
 
 ## KYC
-The KYCId.sol and KYCPortal.sol are the primary contracts under KYC. The ownership of the portal is sent to the timelock contract as a form of temporarily renounce ownership of the KYCportal as it is desigend to ge run by bots majorly.
+The KYCId and KYCPortal form the core infrastructure for Know Your Customer (KYC) compliance in the protocol. To enhance security and decentralization, the ownership of the KYC Portal is transferred to a timelock contract. This strategic move allows for a controlled, automated management approach, as the portal is primarily designed to be operated by autonomous bots.
+The transfer to a timelock contract serves multiple purposes:
+
+- Introduces a time-delayed governance mechanism
+- Prevents immediate, unilateral changes to KYC settings
+- Enables programmatic and predictable portal management
+- Reduces human intervention while maintaining system integrity
+
+By leveraging bot-driven operations, the KYC system can:
+
+- Process identity verifications efficiently
+- Maintain consistent compliance checks
+- Minimize manual administrative overhead
+- Provide real-time access control for the protocol
 
 ## Custody
 
-Due to the nature of the tokens to be used in the pools, some tokens would be transferred to a third party custody through the custody controller. To perform any transction that takes a token out of the custody and pool, you first submit a withdrawal request with the target and calldata you wish to call e.g withdraw 50 usdc from pool 0x003.... The custodian bot initiates withdrawal to the custody controller then calls the update status to transfer the token freshly withdrawn to the needed AToken address (one custody controller per reserve)
+The protocol's unique custody mechanism addresses token security by transferring certain tokens to a third-party custodian through a dedicated custody controller. For withdrawing tokens from custody and pools, users must:
+
+- Submit a withdrawal request specifying:
+  - Target address
+  - Calldata (e.g., withdraw 50 USDC from pool 0x003)
+- Custodian bot process:
+  - Initiate withdrawal to custody controller
+  - Call update status function
+  - Transfer freshly withdrawn tokens to the corresponding AToken address
+
+Each reserve has a dedicated custody controller, ensuring granular and secure token management. This approach provides an additional layer of security and controlled token movement within the protocol.
+Key benefits:
+
+- Enhanced token security
+- Controlled withdrawal mechanisms
+- Automated, bot-driven processes
+- Per-reserve custody management
+
+## License
+
+Copyright © 2024, Aave DAO, represented by its governance smart contracts.
+
+The [BUSL1.1](./LICENSE) license of this repository allows for any usage of the software, if respecting the Additional Use Grant limitations, forbidding any use case damaging anyhow the Aave DAO's interests.
+Interfaces and other components required for integrations are explicitly MIT licensed.

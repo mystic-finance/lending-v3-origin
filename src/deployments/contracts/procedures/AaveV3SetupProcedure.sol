@@ -154,24 +154,23 @@ contract AaveV3SetupProcedure {
     manager.addEmergencyAdmin(roles.emergencyAdmin);
 
     // Setup roles
-    if (kycPortal != address(0)) {
-      // set all needed roles here
-      manager.setRoleAdmin(manager.POOL_ADMIN_ROLE(), roleAdmin);
-      manager.setRoleAdmin(manager.EMERGENCY_ADMIN_ROLE(), roleAdmin);
-      manager.setRoleAdmin(manager.ASSET_LISTING_ADMIN_ROLE(), roleAdmin);
-      manager.setRoleAdmin(manager.POOL_USER(), roleAdmin);
-      manager.setRoleAdmin(manager.POOL_USER_INVESTOR(), roleAdmin);
-      manager.setRoleAdmin(manager.POOL_USER_REGULATED(), roleAdmin);
-      manager.setRoleAdmin(manager.LIQUIDATOR_ADMIN(), roleAdmin);
-      manager.setRoleAdmin(manager.LIQUIDATOR_INVESTOR(), roleAdmin);
-      manager.setRoleAdmin(manager.LIQUIDATOR_REGULATED(), roleAdmin);
-      manager.setRoleAdmin(manager.LIQUIDATOR(), roleAdmin);
-    }
+    // if (kycPortal != address(0)) {
+    // set all needed roles here
+    manager.setRoleAdmin(manager.POOL_ADMIN_ROLE(), roleAdmin);
+    manager.setRoleAdmin(manager.EMERGENCY_ADMIN_ROLE(), roleAdmin);
+    manager.setRoleAdmin(manager.ASSET_LISTING_ADMIN_ROLE(), roleAdmin);
+    manager.setRoleAdmin(manager.POOL_USER(), roleAdmin);
+    manager.setRoleAdmin(manager.POOL_USER_INVESTOR(), roleAdmin);
+    manager.setRoleAdmin(manager.POOL_USER_REGULATED(), roleAdmin);
+    manager.setRoleAdmin(manager.LIQUIDATOR_ADMIN(), roleAdmin);
+    manager.setRoleAdmin(manager.LIQUIDATOR_INVESTOR(), roleAdmin);
+    manager.setRoleAdmin(manager.LIQUIDATOR_REGULATED(), roleAdmin);
+    manager.setRoleAdmin(manager.LIQUIDATOR(), roleAdmin);
+    // }
 
     // provider.setACLAdmin(roles.marketOwner);
     manager.grantRole(manager.DEFAULT_ADMIN_ROLE(), roles.marketOwner);
     manager.grantRole(manager.DEFAULT_ADMIN_ROLE(), roles.poolAdmin);
-    manager.grantRole(manager.DEFAULT_ADMIN_ROLE(), kycPortal);
     manager.revokeRole(manager.DEFAULT_ADMIN_ROLE(), address(this));
 
     return aclManager;

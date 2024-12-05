@@ -112,6 +112,11 @@ contract MysticVaultController is AccessControl {
     }
   }
 
+  function rankVaults(address token) external view returns (VaultRanking[] memory rankedVaults) {
+    address[] memory suitableVaults = getSuitableVaultsForToken(token);
+    VaultRanking[] memory rankedVaults = _rankVaults(suitableVaults);
+  }
+
   /**
    * @dev Internal method to split deposits across top performing vaults
    * @param token Token to deposit
@@ -225,11 +230,11 @@ contract MysticVaultController is AccessControl {
   ) private pure returns (int256) {
     // Primary sort by supply APR (descending)
     if (a.supplyAPR != b.supplyAPR) {
-      return int256(b.supplyAPR) - int256(a.supplyAPR);
+      return int256(a.supplyAPR) - int256(b.supplyAPR);
     }
 
     // Secondary sort by total deposited (descending)
-    return int256(b.totalDeposited) - int256(a.totalDeposited);
+    return int256(a.totalDeposited) - int256(b.totalDeposited);
   }
 
   /**

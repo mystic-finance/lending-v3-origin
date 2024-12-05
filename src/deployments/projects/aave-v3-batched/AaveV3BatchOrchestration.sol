@@ -12,7 +12,7 @@ import {AaveV3PermissionedPoolBatch} from './batches/AaveV3PermPoolBatch.sol';
 import {AaveV3ConfigEngine} from 'src/periphery/contracts/v3-config-engine/AaveV3ConfigEngine.sol';
 
 import {AaveV3SemiPermissionedPoolBatch} from './batches/AaveV3SemiPermPoolBatch.sol';
-
+import {ACLManager} from 'src/core/contracts/protocol/configuration/ACLManager.sol';
 import {AaveV3GettersBatchOne} from './batches/AaveV3GettersBatchOne.sol';
 import {AaveV3GettersBatchTwo} from './batches/AaveV3GettersBatchTwo.sol';
 import {AaveV3GettersProcedureTwo} from '../../contracts/procedures/AaveV3GettersProcedureTwo.sol';
@@ -109,8 +109,6 @@ library AaveV3BatchOrchestration {
       poolReport = _deploySemiPermissionedPoolImplementations(initialReport.poolAddressesProvider); //3
     }
 
-    poolReport = _setupKycPortal(subConfig, poolReport, initialReport, deployer);
-
     /*
     The following are done here:
     1. Aave Treasury deployment
@@ -143,6 +141,11 @@ library AaveV3BatchOrchestration {
       peripheryReport.rewardsControllerImplementation,
       poolReport.kycPortal
     ); //5
+
+    _setupKycPortal(subConfig, initialReport.poolAddressesProvider, deployer);
+
+    poolReport.kycPortal = subConfig.kycPortal;
+    poolReport.timelock = subConfig.timelock;
 
     // ParaswapReport memory paraswapReport = _deployParaswapAdapters(
     //   roles,
@@ -644,10 +647,9 @@ library AaveV3BatchOrchestration {
 
   function _setupKycPortal(
     SubMarketConfig memory subConfig,
-    PoolReport memory poolReport,
-    InitialReport memory initialReport,
+    address poolAddressesProvider,
     address deployer
-  ) internal returns (PoolReport memory) {
+  ) internal {
     /*
     The following are done here:
     1. Timelock deployment
@@ -663,15 +665,13 @@ library AaveV3BatchOrchestration {
         subConfig.kycPortal = _deployKycPortal(
           subConfig.timelock,
           subConfig.kycId,
-          initialReport.poolAddressesProvider
+          poolAddressesProvider
         );
       }
     }
 
-    poolReport.kycPortal = subConfig.kycPortal;
-    poolReport.timelock = subConfig.timelock;
-
-    return poolReport;
+    ACLManager manager = ACLManager(IPoolAddressesProvider(poolAddressesProvider).getACLManager());
+    manager.grantRole(manager.DEFAULT_ADMIN_ROLE(), subConfig.kycPortal);
   }
 
   function _configBorrowSide(
