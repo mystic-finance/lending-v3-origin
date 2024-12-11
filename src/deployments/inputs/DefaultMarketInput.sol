@@ -23,15 +23,15 @@ contract DefaultMarketInput is MarketInput {
     roles.emergencyAdmin = deployer;
     roles.poolAdmin = deployer;
 
-    config.marketId = 'Aave V3 Mystic Sepolia Market';
+    config.marketId = 'Aave V3 Mystic Plume Mainnet Market';
     config.providerId = 8088;
     config.oracleDecimals = 8;
     config.flashLoanPremiumTotal = 0.0005e4;
     config.flashLoanPremiumToProtocol = 0.0004e4;
     config.poolType = 0;
     config
-      .marketReferenceCurrencyPriceInUsdProxyAggregator = 0xeA3B617b74C2cEc6Aa6DE6527f04c1528e3C6503;
-    config.networkBaseTokenPriceInUsdProxyAggregator = 0xeA3B617b74C2cEc6Aa6DE6527f04c1528e3C6503;
+      .marketReferenceCurrencyPriceInUsdProxyAggregator = 0xE067A9905fD0d5760F747329DBd6CA175a6677f2;
+    config.networkBaseTokenPriceInUsdProxyAggregator = 0xE067A9905fD0d5760F747329DBd6CA175a6677f2;
     config.wrappedNativeToken = address(0);
 
     subConfig.timelock = address(0);
