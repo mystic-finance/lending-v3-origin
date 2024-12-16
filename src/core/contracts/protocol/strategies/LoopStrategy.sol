@@ -1,238 +1,341 @@
-// // SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
 
-// pragma solidity ^0.8.10;
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
+import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import '@openzeppelin/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
+import {IPool} from '../../interfaces/IPool.sol';
+import {DataTypes} from '../libraries/types/DataTypes.sol';
 
-// import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
-// import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-// import '@openzeppelin/contracts/utils/Address.sol';
-// import '../../interfaces/ILoopStrategy.sol';
-// import {Ownable} from '../../dependencies/openzeppelin/contracts/Ownable.sol';
+// Interfaces for external protocols
+interface ILendingPool {
+  function deposit(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external;
+  function borrow(
+    address asset,
+    uint256 amount,
+    uint256 interestRateMode,
+    uint16 referralCode,
+    address onBehalfOf
+  ) external;
+  function withdraw(address asset, uint256 amount, address to) external returns (uint256);
+  function repay(
+    address asset,
+    uint256 amount,
+    uint256 rateMode,
+    address onBehalfOf
+  ) external returns (uint256);
+  function getUserAccountData(
+    address user
+  )
+    external
+    view
+    returns (
+      uint256 totalCollateralETH,
+      uint256 totalDebtETH,
+      uint256 availableBorrowsETH,
+      uint256 currentLiquidationThreshold,
+      uint256 ltv,
+      uint256 healthFactor
+    );
+}
 
-// /**
-//  * Single asset leveraged reborrowing strategy on AAVE, chain agnostic.
-//  * Position managed by this contract, with full ownership and control by Owner.
-//  * Monitor position health to avoid liquidation.
-//  */
-// contract LoopStrategy is Ownable {
-//   using SafeERC20 for ERC20;
+interface IAaveOracle {
+  function getAssetPrice(address asset) external view returns (uint256);
+}
 
-//   uint256 public constant USE_VARIABLE_DEBT = 2;
-//   uint256 public constant SAFE_BUFFER = 10; // wei
+interface ISwapController {
+  function swap(
+    address tokenIn,
+    address tokenOut,
+    uint256 amountIn,
+    uint256 amountOutMinimum,
+    uint24 poolFee
+  ) external returns (uint256 amountOut);
 
-//   ERC20 public immutable ASSET; // solhint-disable-line
-//   ILendingPool public immutable LENDING_POOL; // solhint-disable-line
-//   IAaveIncentivesController public immutable INCENTIVES; // solhint-disable-line
+  function getQuote(
+    address tokenIn,
+    address tokenOut,
+    uint256 amountIn,
+    uint24 poolFee
+  ) external view returns (uint256 expectedAmountOut);
+}
 
-//   /**
-//    * @param owner The contract owner, has complete ownership, immutable
-//    * @param asset The target underlying asset ex. USDC
-//    * @param lendingPool The deployed AAVE ILendingPool
-//    * @param incentives The deployed AAVE IAaveIncentivesController
-//    */
-//   constructor(
-//     address owner,
-//     address asset,
-//     address lendingPool,
-//     address incentives
-//   ) Ownable(owner) {
-//     require(
-//       asset != address(0) && lendingPool != address(0) && incentives != address(0),
-//       'address 0'
-//     );
+/**
+ * @title Advanced Multi-Asset Leveraged Loop Strategy
+ * @notice Implements a flexible leveraged strategy with multi-asset support and swap capabilities
+ */
+contract AdvancedLoopStrategy is Ownable, ReentrancyGuard {
+  using SafeERC20 for IERC20;
 
-//     ASSET = ERC20(asset);
-//     LENDING_POOL = ILendingPool(lendingPool);
-//     INCENTIVES = IAaveIncentivesController(incentives);
-//   }
+  // Configuration constants
+  uint256 public constant SAFE_BUFFER = 10; // wei buffer for calculations
+  uint256 public constant VARIABLE_RATE_MODE = 2;
+  uint256 public constant BASIS_POINTS = 10000; // For percentage calculations
 
-//   // ---- views ----
+  // Protocol interfaces
+  IPool public immutable lendingPool;
+  ISwapController public swapController;
 
-//   function getSupplyAndBorrowAssets() public view returns (address[] memory assets) {
-//     DataTypes.ReserveData memory data = LENDING_POOL.getReserveData(address(ASSET));
-//     assets = new address[](2);
-//     assets[0] = data.aTokenAddress;
-//     assets[1] = data.variableDebtTokenAddress;
-//   }
+  // Strategy parameters
+  uint256 public targetLeverageMultiplier;
+  uint24 public swapPoolFee;
+  uint256 public maxIterations = 15;
 
-//   /**
-//    * @return The ASSET price in ETH according to Aave PriceOracle, used internally for all ASSET amounts calculations
-//    */
-//   function getAssetPrice() public view returns (uint256) {
-//     return
-//       IAavePriceOracle(LENDING_POOL.getAddressesProvider().getPriceOracle()).getAssetPrice(
-//         address(ASSET)
-//       );
-//   }
+  // Events
+  event PositionEntered(uint256 initialCollateral, uint256 iterations);
+  event PositionExited(uint256 withdrawnAmount);
+  event LeverageParametersUpdated(uint256 leverage, uint256 maxLTV);
+  event AssetSwapped(address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut);
 
-//   /**
-//    * @return total supply balance in ASSET
-//    */
-//   function getSupplyBalance() public view returns (uint256) {
-//     (uint256 totalCollateralETH, , , , , ) = getPositionData();
-//     return (totalCollateralETH * (10 ** ASSET.decimals())) / getAssetPrice();
-//   }
+  constructor(
+    address _owner,
+    address _lendingPool,
+    address _swapController,
+    uint24 _swapPoolFee
+  ) Ownable(_owner) {
+    require(_lendingPool != address(0), 'Invalid lending pool');
+    // require(_priceOracle != address(0), 'Invalid price oracle');
+    require(_swapController != address(0), 'Invalid swap controller');
 
-//   /**
-//    * @return total borrow balance in ASSET
-//    */
-//   function getBorrowBalance() public view returns (uint256) {
-//     (, uint256 totalDebtETH, , , , ) = getPositionData();
-//     return (totalDebtETH * (10 ** ASSET.decimals())) / getAssetPrice();
-//   }
+    lendingPool = IPool(_lendingPool);
+    // priceOracle = IAaveOracle(_priceOracle);
+    swapController = ISwapController(_swapController);
 
-//   /**
-//    * @return available liquidity in ASSET
-//    */
-//   function getLiquidity() public view returns (uint256) {
-//     (, , uint256 availableBorrowsETH, , , ) = getPositionData();
-//     return (availableBorrowsETH * (10 ** ASSET.decimals())) / getAssetPrice();
-//   }
+    targetLeverageMultiplier = 1;
+    swapPoolFee = _swapPoolFee;
+  }
 
-//   /**
-//    * @return ASSET balanceOf(this)
-//    */
-//   function getAssetBalance() public view returns (uint256) {
-//     return ASSET.balanceOf(address(this));
-//   }
+  /**
+   * @notice Calculate max safe iterations based on protocol LTV constraints
+   * @return Optimal number of leverage iterations
+   */
+  function calculateMaxSafeIterations(address collateralAsset) public view returns (uint256) {
+    uint256 maxLTV = _getMaxLTVForAsset(address(collateralAsset));
+    uint256 currentLTV = getCurrentLTV();
+    uint256 iterationBuffer = 500; // 5% buffer
 
-//   /**
-//    * @return Pending rewards
-//    */
-//   function getPendingRewards() public view returns (uint256) {
-//     return INCENTIVES.getRewardsBalance(getSupplyAndBorrowAssets(), address(this));
-//   }
+    // Prevent division by zero and ensure we can leverage
+    if (maxLTV <= currentLTV || targetLeverageMultiplier == 0) return 0;
 
-//   /**
-//    * Position data from Aave
-//    */
-//   function getPositionData()
-//     public
-//     view
-//     returns (
-//       uint256 totalCollateralETH,
-//       uint256 totalDebtETH,
-//       uint256 availableBorrowsETH,
-//       uint256 currentLiquidationThreshold,
-//       uint256 ltv,
-//       uint256 healthFactor
-//     )
-//   {
-//     return LENDING_POOL.getUserAccountData(address(this));
-//   }
+    uint256 remainingLTV = maxLTV - currentLTV - iterationBuffer;
+    uint256 leverageStep = (currentLTV * targetLeverageMultiplier) / BASIS_POINTS;
 
-//   /**
-//    * @return LTV of ASSET in 4 decimals ex. 82.5% == 8250
-//    */
-//   function getLTV() public view returns (uint256) {
-//     DataTypes.ReserveConfigurationMap memory config = LENDING_POOL.getConfiguration(address(ASSET));
-//     return config.data & 0xffff; // bits 0-15 in BE
-//   }
+    uint256 maxCalculatedIterations = remainingLTV / leverageStep;
+    return maxCalculatedIterations > maxIterations ? maxIterations : maxCalculatedIterations; // Use new variable name
+  }
 
-//   // ---- unrestricted ----
+  /**
+   * @notice Enter leveraged position with advanced multi-asset strategy
+   * @param initialCollateral Initial collateral amount
+   * @param iterations Number of leverage iterations
+   */
+  function enterPosition(
+    address collateralAsset,
+    address borrowAsset,
+    address priceOracle,
+    uint256 initialCollateral,
+    uint256 iterations
+  ) external nonReentrant onlyOwner {
+    require(iterations <= maxIterations, 'Exceeded max iterations');
 
-//   /**
-//    * Claims and transfers all pending rewards to owner
-//    */
-//   function claimRewardsToOwner() external {
-//     INCENTIVES.claimRewards(getSupplyAndBorrowAssets(), type(uint256).max, owner);
-//   }
+    // Transfer initial collateral
+    IERC20(collateralAsset).safeTransferFrom(msg.sender, address(this), initialCollateral);
 
-//   // ---- main ----
+    // Initial deposit
+    _depositCollateral(collateralAsset, initialCollateral);
 
-//   /**
-//    * @param iterations - Loop count
-//    * @return Liquidity at end of the loop
-//    */
-//   function enterPositionFully(uint256 iterations) external onlyOwner returns (uint256) {
-//     return enterPosition(ASSET.balanceOf(msg.sender), iterations);
-//   }
+    // Leverage loop
+    for (uint256 i = 0; i < iterations; i++) {
+      uint256 borrowAmount = _calculateOptimalBorrowAmount(
+        collateralAsset,
+        borrowAsset,
+        priceOracle
+      );
+      _borrowAndSwap(collateralAsset, borrowAsset, priceOracle, borrowAmount);
+    }
 
-//   /**
-//    * @param principal - ASSET transferFrom sender amount, can be 0
-//    * @param iterations - Loop count
-//    * @return Liquidity at end of the loop
-//    */
-//   function enterPosition(uint256 principal, uint256 iterations) public onlyOwner returns (uint256) {
-//     if (principal > 0) {
-//       ASSET.safeTransferFrom(msg.sender, address(this), principal);
-//     }
+    emit PositionEntered(initialCollateral, iterations);
+  }
 
-//     if (getAssetBalance() > 0) {
-//       _supply(getAssetBalance());
-//     }
+  /**
+   * @notice Calculate optimal borrow amount based on current position
+   * @return Optimal borrow amount
+   */
+  function _calculateOptimalBorrowAmount(
+    address collateralAsset,
+    address borrowAsset,
+    address priceOracle
+  ) internal view returns (uint256) {
+    (, , uint256 availableBorrowsETH, , , ) = lendingPool.getUserAccountData(address(this));
+    uint256 assetPrice = IAaveOracle(priceOracle).getAssetPrice(address(borrowAsset));
 
-//     for (uint256 i = 0; i < iterations; i++) {
-//       _borrow(getLiquidity() - SAFE_BUFFER);
-//       _supply(getAssetBalance());
-//     }
+    return (availableBorrowsETH * (10 ** ERC20(borrowAsset).decimals())) / assetPrice;
+  }
 
-//     return getLiquidity();
-//   }
+  /**
+   * @notice Borrow and swap borrowed assets
+   * @param borrowAmount Amount to borrow
+   */
+  function _borrowAndSwap(
+    address collateralAsset,
+    address borrowAsset,
+    address priceOracle,
+    uint256 borrowAmount
+  ) internal {
+    // Borrow assets
+    lendingPool.borrow(address(borrowAsset), borrowAmount, VARIABLE_RATE_MODE, 0, address(this));
 
-//   /**
-//    * @param iterations - MAX loop count
-//    * @return Withdrawn amount of ASSET to owner
-//    */
-//   function exitPosition(uint256 iterations) external onlyOwner returns (uint256) {
-//     (, , , , uint256 ltv, ) = getPositionData(); // 4 decimals
+    // Swap borrowed assets back to collateral
+    uint256 amountOut = swapController.swap(
+      address(borrowAsset),
+      address(collateralAsset),
+      borrowAmount,
+      (9500 * borrowAmount) / BASIS_POINTS, //5% slippage
+      swapPoolFee
+    );
 
-//     for (uint256 i = 0; i < iterations && getBorrowBalance() > 0; i++) {
-//       _redeemSupply(((getLiquidity() * 1e4) / ltv) - SAFE_BUFFER);
-//       _repayBorrow(getAssetBalance());
-//     }
+    // Deposit swapped assets
+    _depositCollateral(collateralAsset, amountOut);
 
-//     if (getBorrowBalance() == 0) {
-//       _redeemSupply(type(uint256).max);
-//     }
+    emit AssetSwapped(address(borrowAsset), address(collateralAsset), borrowAmount, amountOut);
+  }
 
-//     return _withdrawToOwner(address(ASSET));
-//   }
+  /**
+   * @notice Deposit collateral to lending pool
+   * @param amount Collateral amount to deposit
+   */
+  function _depositCollateral(address collateralAsset, uint256 amount) internal {
+    IERC20(collateralAsset).safeIncreaseAllowance(address(lendingPool), amount);
+    lendingPool.deposit(address(collateralAsset), amount, address(this), 0);
+  }
 
-//   // ---- internals, public onlyOwner in case of emergency ----
+  /**
+   * @notice Exit entire position
+   */
+  function exitPosition(
+    address collateralAsset,
+    address borrowAsset,
+    address priceOracle
+  ) external nonReentrant onlyOwner {
+    uint256 totalWithdrawn = _unwindPosition(collateralAsset, borrowAsset, priceOracle);
+    emit PositionExited(totalWithdrawn);
+  }
 
-//   /**
-//    * amount in ASSET
-//    */
-//   function _supply(uint256 amount) public onlyOwner {
-//     ASSET.safeIncreaseAllowance(address(LENDING_POOL), amount);
-//     LENDING_POOL.deposit(address(ASSET), amount, address(this), 0);
-//   }
+  /**
+   * @notice Unwind entire leveraged position
+   * @return Total amount withdrawn
+   */
+  function _unwindPosition(
+    address collateralAsset,
+    address borrowAsset,
+    address priceOracle
+  ) internal returns (uint256) {
+    uint256 totalWithdrawn;
 
-//   /**
-//    * amount in ASSET
-//    */
-//   function _borrow(uint256 amount) public onlyOwner {
-//     LENDING_POOL.borrow(address(ASSET), amount, USE_VARIABLE_DEBT, 0, address(this));
-//   }
+    // Repay and withdraw loop
+    while (getCurrentLTV() > 0) {
+      uint256 borrowBalance = getCurrentBorrowBalance(borrowAsset, priceOracle);
+      uint256 withdrawAmount = _calculateWithdrawalAmount(borrowBalance);
 
-//   /**
-//    * amount in ASSET
-//    */
-//   function _redeemSupply(uint256 amount) public onlyOwner {
-//     LENDING_POOL.withdraw(address(ASSET), amount, address(this));
-//   }
+      // Withdraw collateral
+      lendingPool.withdraw(address(collateralAsset), withdrawAmount, address(this));
 
-//   /**
-//    * amount in ASSET
-//    */
-//   function _repayBorrow(uint256 amount) public onlyOwner {
-//     ASSET.safeIncreaseAllowance(address(LENDING_POOL), amount);
-//     LENDING_POOL.repay(address(ASSET), amount, USE_VARIABLE_DEBT, address(this));
-//   }
+      // Swap back to borrow asset if needed
+      if (address(collateralAsset) != address(borrowAsset)) {
+        swapController.swap(
+          address(collateralAsset),
+          address(borrowAsset),
+          withdrawAmount,
+          (9500 * withdrawAmount) / BASIS_POINTS, // 5% slippage
+          // 0,
+          swapPoolFee
+        );
+      }
 
-//   function _withdrawToOwner(address asset) public onlyOwner returns (uint256) {
-//     uint256 balance = ERC20(asset).balanceOf(address(this));
-//     ERC20(asset).safeTransfer(owner, balance);
-//     return balance;
-//   }
+      // Repay borrow
+      IERC20(borrowAsset).safeIncreaseAllowance(address(lendingPool), borrowBalance);
+      lendingPool.repay(address(borrowAsset), borrowBalance, VARIABLE_RATE_MODE, address(this));
 
-//   // ---- emergency ----
+      totalWithdrawn += withdrawAmount;
+    }
 
-//   function emergencyFunctionCall(address target, bytes memory data) external onlyOwner {
-//     Address.functionCall(target, data);
-//   }
+    // Final withdrawal of any remaining balance
+    uint256 finalBalance = IERC20(collateralAsset).balanceOf(address(this));
+    IERC20(collateralAsset).safeTransfer(owner(), finalBalance);
+    totalWithdrawn += finalBalance;
 
-//   function emergencyFunctionDelegateCall(address target, bytes memory data) external onlyOwner {
-//     Address.functionDelegateCall(target, data);
-//   }
-// }
+    return totalWithdrawn;
+  }
+
+  /**
+   * @notice Calculate withdrawal amount based on current borrow balance
+   * @param borrowBalance Current borrow balance
+   * @return Amount to withdraw
+   */
+  function _calculateWithdrawalAmount(uint256 borrowBalance) internal view returns (uint256) {
+    return (borrowBalance * (BASIS_POINTS + 100)) / BASIS_POINTS; // Add small buffer
+  }
+
+  /**
+   * @notice Extract max LTV from reserve configuration
+   * @param asset Asset address to check
+   * @return Max LTV in basis points
+   */
+  function _getMaxLTVForAsset(address asset) internal view returns (uint256) {
+    DataTypes.ReserveConfigurationMap memory configuration = lendingPool.getConfiguration(asset);
+
+    // Correctly extract LTV using bit manipulation
+    uint256 ltv = (configuration.data >> 16) & 0xffff;
+    return ltv;
+  }
+
+  /**
+   * @notice Get current Loan-to-Value ratio
+   * @return Current LTV percentage
+   */
+  function getCurrentLTV() public view returns (uint256) {
+    (, , , , uint256 ltv, ) = lendingPool.getUserAccountData(address(this));
+    return ltv;
+  }
+
+  /**
+   * @notice Get current borrow balance
+   * @return Current borrow balance
+   */
+  function getCurrentBorrowBalance(
+    address borrowAsset,
+    address priceOracle
+  ) public view returns (uint256) {
+    (, uint256 totalDebtETH, , , , ) = lendingPool.getUserAccountData(address(this));
+    uint256 assetPrice = IAaveOracle(priceOracle).getAssetPrice(address(borrowAsset));
+    return (totalDebtETH * (10 ** ERC20(borrowAsset).decimals())) / assetPrice;
+  }
+
+  /**
+   * @notice Update leverage parameters
+   * @param _newLeverageMultiplier New leverage multiplier
+   * @param _newMaxIteration New maximum leverage
+   */
+  function updateLeverageParameters(
+    uint256 _newLeverageMultiplier,
+    uint256 _newMaxIteration
+  ) external onlyOwner {
+    require(_newLeverageMultiplier > 0, 'Invalid leverage');
+
+    targetLeverageMultiplier = _newLeverageMultiplier;
+    maxIterations = _newMaxIteration;
+
+    emit LeverageParametersUpdated(_newLeverageMultiplier, _newMaxIteration);
+  }
+
+  /**
+   * @notice Update swap controller
+   * @param _newSwapController New swap controller address
+   */
+  function updateSwapController(address _newSwapController) external onlyOwner {
+    require(_newSwapController != address(0), 'Invalid swap controller');
+    swapController = ISwapController(_newSwapController);
+  }
+}
