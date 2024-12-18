@@ -20,7 +20,7 @@ interface ICrocSwapRouter {
   ) external payable returns (int128 baseFlow, int128 quoteFlow);
 }
 
-contract AmbientSwapp is Ownable {
+contract AmbientSwap is Ownable {
   using SafeERC20 for IERC20;
 
   // Croc Swap Router
@@ -65,7 +65,7 @@ contract AmbientSwapp is Ownable {
     require(base != address(0) && quote != address(0), 'Invalid token address');
 
     // Determine which token is being swapped based on isBuy
-    bool isBuy = false;
+    bool isBuy = true;
     address inputToken = base;
     // address inputToken = isBuy ? quote : base;
 
@@ -81,7 +81,7 @@ contract AmbientSwapp is Ownable {
       base,
       quote,
       DEFAULT_POOL_INDEX,
-      false,
+      true,
       true, // inBaseQty - false means qty is in quote token
       uint128(amountIn),
       0, // tip

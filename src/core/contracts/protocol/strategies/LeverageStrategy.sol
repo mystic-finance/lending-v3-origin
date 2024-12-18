@@ -73,6 +73,16 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     bool isActive;
   }
 
+  struct OperationParams {
+    address user;
+    address collateralToken;
+    address borrowToken;
+    uint256 initialCollateral;
+    uint256 leverageMultiplier;
+    address flashLoanController;
+    address strategy;
+  }
+
   // Constants
   uint256 public constant MAX_LEVERAGE = 20;
   uint256 public constant SLIPPAGE_TOLERANCE = 50; // 0.5%
@@ -162,68 +172,72 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     require(msg.sender == address(flashLoanController), 'Unauthorized flash loan');
 
     // Decode and validate params
-    (
-      address user,
-      address collateralToken,
-      address borrowToken,
-      uint256 initialCollateral,
-      uint256 leverageMultiplier,
-      ,
-      address strategy
-    ) = abi.decode(params, (address, address, address, uint256, uint256, address, address));
+    OperationParams memory operationParams = abi.decode(params, (OperationParams));
 
     // Additional validation
-    require(assets[0] == borrowToken, 'Invalid flash loan asset');
+    require(assets[0] == operationParams.borrowToken, 'Invalid flash loan asset');
     require(amounts[0] > 0, 'Invalid borrow amount');
-    IERC20(borrowToken).approve(address(swapController), amounts[0]);
+    IERC20(operationParams.borrowToken).approve(address(swapController), amounts[0]);
 
     // Swap borrowed tokens to collateral
     uint256 minAmountOut = _calculateMinAmountOut(amounts[0]);
     uint256 swappedAmount = swapController.swap(
-      borrowToken,
-      collateralToken,
+      operationParams.borrowToken,
+      operationParams.collateralToken,
       amounts[0],
       minAmountOut,
       DEFAULT_POOL_FEE
     );
 
-    IERC20(collateralToken).transferFrom(address(swapController), address(this), swappedAmount);
+    IERC20(operationParams.collateralToken).transferFrom(
+      address(swapController),
+      address(this),
+      swappedAmount
+    );
 
     // Deposit total collateral to lending pool
-    uint256 totalCollateral = initialCollateral + swappedAmount;
-    IERC20(collateralToken).approve(address(lendingPool), totalCollateral);
-    lendingPool.deposit(collateralToken, totalCollateral, address(this), REFERRAL_CODE);
+    uint256 totalCollateral = operationParams.initialCollateral + swappedAmount;
+    IERC20(operationParams.collateralToken).approve(address(lendingPool), totalCollateral);
+    lendingPool.deposit(
+      operationParams.collateralToken,
+      totalCollateral,
+      address(this),
+      REFERRAL_CODE
+    );
 
     // Calculate and borrow up to LTV
     uint256 borrowAmount = _calculateMaxBorrowAmount(
-      collateralToken,
+      operationParams.collateralToken,
       totalCollateral,
-      leverageMultiplier
+      operationParams.leverageMultiplier
     );
-    lendingPool.borrow(borrowToken, borrowAmount, 2, REFERRAL_CODE, address(this));
+    lendingPool.borrow(operationParams.borrowToken, borrowAmount, 2, REFERRAL_CODE, address(this));
 
     // Prepare to repay flash loan
     uint256 amountOwed = amounts[0] + premiums[0];
-    IERC20(borrowToken).approve(address(flashLoanController), amountOwed);
+    IERC20(operationParams.borrowToken).approve(
+      address(operationParams.flashLoanController),
+      amountOwed
+    );
 
     // Store user position
-    userPositions[user] = UserPosition({
-      user: user,
-      collateralToken: collateralToken,
-      borrowToken: borrowToken,
-      initialCollateral: initialCollateral,
+    userPositions[operationParams.user] = UserPosition({
+      user: operationParams.user,
+      collateralToken: operationParams.collateralToken,
+      borrowToken: operationParams.borrowToken,
+      initialCollateral: operationParams.initialCollateral,
       totalCollateral: totalCollateral,
       totalBorrowed: borrowAmount,
-      leverageMultiplier: leverageMultiplier,
+      leverageMultiplier: operationParams.leverageMultiplier,
       isActive: true
     });
 
     emit LeveragePositionOpened(
-      user,
-      collateralToken,
-      borrowToken,
-      initialCollateral,
-      leverageMultiplier
+      operationParams.user,
+      operationParams.collateralToken,
+      operationParams.borrowToken,
+      operationParams.initialCollateral,
+      operationParams.leverageMultiplier
     );
 
     return true;

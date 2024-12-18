@@ -37,6 +37,8 @@ gnosis = "${RPC_GNOSIS}"
 base = "${RPC_BASE}"
 plume="${RPC_PLUME}"
 plume2="${RPC_PLUME_TEST2}"
+plume3="${RPC_PLUME_TEST3}"
+plum_mainnet="${RPC_PLUME_MAINNET}"
 arb_sepolia="${RPC_ARBITRUM_SEPOLIA}"
 
 [etherscan]
