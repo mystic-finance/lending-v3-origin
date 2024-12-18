@@ -72,3 +72,11 @@ contract DeployStrategies is DeployUtils, DefaultMarketInput, Script {
   }
 }
 // 0x783fDF6b9494e6e9DAcFF1f938904Fc47642271F - partial,  0x738eFcb730050f508B6778D49024A7Cd1481B36F - full
+
+// devnet
+// ambientSwapper 0xd411131B1Efc61006fc249D67C7BDD61fcd368F4
+// flashLoaner 0x69b8Fcb74a5FbcCddE7bDb9b7Ec59a8Cb1AA5e2C
+// swapController 0x42D4bf80e77114eBB049CBea29E1AB5A0727e9CA
+// flashloanController 0x8De37B451C353AA6EEAc39dc28B6Ee82554BBa55
+// loopStrategy 0x2B32bdf75e62f5f630b27af2F4c4CbBe6c2a69e2
+// leverageStrategy 0xA504112baeCbA016DF1c22Da4Be6FA0be865F528
