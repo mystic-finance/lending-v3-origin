@@ -44,6 +44,9 @@ deploy-script-plume-devnet3-resume :; forge script scripts/DeployAaveV3MarketBat
 deploy-script-plume-devnet :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 18230 --rpc-url plume2 --broadcast --slow --legacy --gas-estimate-multiplier 150 --delay 5
 deploy-script-test-polygon :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 137 --rpc-url polygon --broadcast --slow --verify --legacy --delay 5 --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63 -vvv
 deploy-script-plume-mainnet :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 98865 --rpc-url plume_mainnet --broadcast --slow --verifier blockscout --verifier-url https://phoenix-explorer.plumenetwork.xyz/api? --legacy --gas-estimate-multiplier 5000 --delay 5
+deploy-script-plume-mainnet-gateway :; forge script scripts/DeployAaveWToken.sol:DeployGateway --chain 98865 --rpc-url plume_mainnet --broadcast --slow --verifier blockscout --verifier-url https://phoenix-explorer.plumenetwork.xyz/api? --legacy --gas-estimate-multiplier 5000 --delay 5
+deploy-script-plume3-gateway :; forge script scripts/DeployAaveWToken.sol:DeployGateway --chain 98864 --rpc-url plume3 --broadcast --slow --verifier blockscout --verifier-url https://test-explorer.plumenetwork.xyz/api? --legacy --gas-estimate-multiplier 5000 --delay 5
+
 
 
 ## list tokens on pool
@@ -69,7 +72,7 @@ plume-verify-impl :; forge verify-contract 0x4Bf36e9E7c3F007849f1340034e95876B31
 # --show-standard-json-input > etherscan.json
 plume-verify-poolproxy :; forge verify-contract 0xd5b3495C5e059a23Bea726166E3C46b0Cb3b42Ab src/core/contracts/protocol/libraries/aave-upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol:InitializableImmutableAdminUpgradeabilityProxy --rpc-url plume_mainnet --verifier blockscout --verifier-url 'https://phoenix-explorer.plumenetwork.xyz/api?'
 plume-verify-pool-provider :; forge verify-contract 0xB3E7087077452305436F81391d4948025786e0c8 src/core/contracts/protocol/configuration/PoolAddressesProvider.sol:PoolAddressesProvider --rpc-url plume_mainnet --verifier blockscout --verifier-url 'https://phoenix-explorer.plumenetwork.xyz/api?' --constructor-args 0x000000000000000000000000000000000000000000000000000000000000004000000000000000000000000037081c7c25284cee72947af90a13b7402f2eb6fb000000000000000000000000000000000000000000000000000000000000002341617665205633204d797374696320506c756d65204d61696e6e6574204d61726b65740000000000000000000000000000000000000000000000000000000000
-
+plume-verify-token-gateway :; forge verify-contract 0xeed79850EBfA660132b3619f5388B9f57859D71D src/periphery/contracts/misc/WrappedTokenGatewayV3.sol:WrappedTokenGatewayV3 --watch --rpc-url plume_mainnet --verifier blockscout --verifier-url 'https://phoenix-explorer.plumenetwork.xyz/api?' --constructor-args 0x00000000000000000000000011476323d8dfcbafac942588e2f38823d2dd308e00000000000000000000000037081c7c25284cee72947af90a13b7402f2eb6fb000000000000000000000000d5b3495c5e059a23bea726166e3c46b0cb3b42ab
 plume-verify-uipool :; forge verify-contract 0x9652674BFc6Be8C2508822DC979b3244AC28f04b  --chain 98864 --verifier blockscout src/periphery/contracts/misc/UiPoolDataProviderV3.sol:UiPoolDataProviderV3  --rpc-url plume3 --verifier-url 'https://test-explorer.plumenetwork.xyz/api?' --watch
 
 verify-oracle :; forge verify-contract 0x59AB56F7285e723CD417aFf63EEea800fD037995 --chain 137 --verifier etherscan --etherscan-api-key XTQMYH2JDHAMKD4CQW8TV3QPR2RUAP8M6M --rpc-url polygon src/EmergencyEACProxy.sol:EEACAggregatorProxy --watch --constructor-args 0x00000000000000000000000036da71ccad7a67053f0a4d9d5f55b725c9a25a3e000000000000000000000000000000000000000000000000000000000000000021c4f9a7edaefc4d28ba07193e0a7f13858fc363002378434608f3296ae1c676
