@@ -49,7 +49,9 @@ import {MysticPoolVaultFactory} from 'src/core/contracts/protocol/vault/VaultFac
 import {MysticIdentity} from 'src/core/contracts/protocol/partner/KYCId.sol';
 import {MysticVaultController} from 'src/core/contracts/protocol/vault/VaultController.sol';
 import {CustodyController} from 'src/core/contracts/protocol/partner/CustodyController.sol';
+import 'src/core/contracts/protocol/libraries/aave-upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol';
 
+import {IPoolAddressesProvider} from 'src/core/contracts/interfaces/IPoolAddressesProvider.sol';
 /**
  * @title AaveV3BatchOrchestration
  * @author BGD
@@ -225,6 +227,34 @@ library AaveV3BatchOrchestration {
     PoolAddressesProviderRegistry(poolAddressesProviderRegistry).registerAddressesProvider(
       poolAddressesProvider,
       providerId
+    );
+    return true;
+  }
+
+  function updatePool(
+    address poolProvider,
+    MarketConfig memory config,
+    DeployFlags memory flags
+  ) internal returns (bool) {
+    PoolReport memory poolReport;
+
+    if (config.poolType == 0) {
+      poolReport = _deployPoolImplementations(
+        poolProvider,
+        flags
+      ); //3
+    } else if (config.poolType == 1) {
+      poolReport = _deployPermissionedPoolImplementations(
+        poolProvider
+      ); //3
+    } else if (config.poolType == 2) {
+      poolReport = _deploySemiPermissionedPoolImplementations(
+        poolProvider
+      ); //3
+    }
+
+    IPoolAddressesProvider(poolProvider).setPoolImpl(
+      address(poolReport.poolImplementation)
     );
     return true;
   }
