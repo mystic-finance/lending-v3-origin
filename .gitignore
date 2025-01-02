@@ -34,3 +34,5 @@ broadcast/
 certora-logs
 certora_debug_log.txt
 resource_errors.json
+
+.codegpt

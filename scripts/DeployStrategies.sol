@@ -47,7 +47,7 @@ contract DeployStrategies is DeployUtils, DefaultMarketInput, Script {
       msg.sender,
       lendingPool,
       address(swapController),
-      3000
+      40
     );
     LeveragedBorrowingVault leverageStrategy = new LeveragedBorrowingVault(
       lendingPool,
@@ -80,3 +80,25 @@ contract DeployStrategies is DeployUtils, DefaultMarketInput, Script {
 // flashloanController 0x8De37B451C353AA6EEAc39dc28B6Ee82554BBa55
 // loopStrategy 0x2B32bdf75e62f5f630b27af2F4c4CbBe6c2a69e2
 // leverageStrategy 0xA504112baeCbA016DF1c22Da4Be6FA0be865F528
+
+// devnet 2
+// == Logs ==
+//   Aave V3 Batch Listing
+//   sender 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38
+//   ambientSwapper 0x9025Ea91308E0A55980e8cA6339026d3d662EB00
+//   flashLoaner 0x8A38ae9D745D34c593FffaA8217168Ba18b13FC8
+//   swapController 0x776Be3b64757e4143BCEd0be63060F38e80c873A
+//   flashloanController 0xA2B05F84130Ee6a6F324BFFaA7FF9fA32305c21e
+//   loopStrategy 0xA1874853E9a18631420F64e348DE00F0eF9bf5D5
+//   leverageStrategy 0xB6cEEB7A3C17F0EE676DFA08566f8006a0b563cB
+
+// mainnet 1
+// == Logs ==
+//   Aave V3 Batch Listing
+//   sender 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38
+//   ambientSwapper 0x75FaCE9583A037bf0870Ef6D24f08e207D2CCdDc
+//   flashLoaner 0x46b27CD4d8502F62DDa86F75a8087d226a90A776
+//   swapController 0x0Cea2a4EAD71c1B2c1CB4D3D0114f34620222114
+//   flashloanController 0x3748a6dE1B9EFC6D9584655d2aaDF498f53A918C
+//   loopStrategy 0xdd43642EcbC09a5B0A89B032F19d5976fE31d024
+//   leverageStrategy 0x620dc81757f9795213Ca88c6d6790A68ceB0a153

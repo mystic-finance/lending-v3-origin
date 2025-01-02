@@ -102,6 +102,8 @@ contract AaveV3Flashloaner is ReentrancyGuard {
       (address, address, address, uint256, uint256, address, address)
     );
 
+    IERC20(borrowToken).transfer(flashLoanController, amounts[0]);
+
     IFlashLoanController(flashLoanController).executeOperation(
       assets,
       amounts,
@@ -111,7 +113,7 @@ contract AaveV3Flashloaner is ReentrancyGuard {
     );
 
     uint256 amountOwed = amounts[0] + premiums[0];
-    IERC20(borrowToken).transferFrom(msg.sender, address(this), amountOwed);
+    IERC20(borrowToken).transferFrom(flashLoanController, address(this), amountOwed);
   }
 
   /**

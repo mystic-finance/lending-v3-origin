@@ -399,7 +399,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
     bytes calldata params,
     uint16 referralCode
   ) public virtual override {
-    require(false, Errors.FLASHLOAN_DISABLED);
     DataTypes.FlashloanParams memory flashParams = DataTypes.FlashloanParams({
       receiverAddress: receiverAddress,
       assets: assets,
@@ -437,7 +436,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
     bytes calldata params,
     uint16 referralCode
   ) public virtual override {
-    require(false, Errors.FLASHLOAN_DISABLED);
     DataTypes.FlashloanSimpleParams memory flashParams = DataTypes.FlashloanSimpleParams({
       receiverAddress: receiverAddress,
       asset: asset,

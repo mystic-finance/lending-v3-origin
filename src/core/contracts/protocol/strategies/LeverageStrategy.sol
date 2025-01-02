@@ -4,9 +4,12 @@ pragma solidity ^0.8.20;
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
-
+import {IERC20Metadata} from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {IPool} from '../../interfaces/IPool.sol';
 import {Math} from '@openzeppelin/contracts/utils/math/Math.sol';
+import {ReserveConfiguration} from 'src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
+import {DataTypes} from 'src/core/contracts/protocol/libraries/types/DataTypes.sol';
+import {IAaveOracle} from 'src/core/contracts/interfaces/IAaveOracle.sol';
 
 // Interfaces for Controllers
 interface ISwapController {
@@ -17,6 +20,12 @@ interface ISwapController {
     uint256 amountOutMinimum,
     uint24 poolFee
   ) external returns (uint256 amountOut);
+  function getQuote(
+    address tokenIn,
+    address tokenOut,
+    uint256 amountIn,
+    uint24 poolFee
+  ) external view returns (uint256 expectedAmountOut);
 }
 
 interface IFlashLoanController {
@@ -61,6 +70,7 @@ interface IFlashLoanReceiver {
 }
 
 contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver {
+  using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
   // Structs
   struct UserPosition {
     address user;
@@ -81,21 +91,23 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     uint256 leverageMultiplier;
     address flashLoanController;
     address strategy;
+    bool openPosition;
   }
 
   // Constants
   uint256 public constant MAX_LEVERAGE = 20;
-  uint256 public constant SLIPPAGE_TOLERANCE = 50; // 0.5%
+  uint256 public constant SLIPPAGE_TOLERANCE = 100; // 0.5%
   uint16 public constant REFERRAL_CODE = 0;
-  uint24 public constant DEFAULT_POOL_FEE = 3000; // 0.3% pool fee
+  uint24 public DEFAULT_POOL_FEE = 30; // 0.3% pool fee
 
   // External Contracts
   IPool public lendingPool;
   ISwapController public swapController;
   IFlashLoanController public flashLoanController;
+  IAaveOracle aaveOracle;
 
   // Mappings
-  mapping(address => UserPosition) public userPositions;
+  mapping(address => mapping(address => UserPosition)) public userPositions; // caller -> borrowToken -> position
   mapping(address => bool) public allowedCollateralTokens;
   mapping(address => bool) public allowedBorrowTokens;
 
@@ -117,6 +129,7 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     lendingPool = IPool(_lendingPool);
     swapController = ISwapController(_swapController);
     flashLoanController = IFlashLoanController(_flashLoanController);
+    aaveOracle = IAaveOracle((lendingPool.ADDRESSES_PROVIDER()).getPriceOracle());
   }
 
   modifier onlyAllowedTokens(address collateralToken, address borrowToken) {
@@ -134,6 +147,7 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
   ) external nonReentrant {
     require(allowedCollateralTokens[collateralToken], 'Collateral token not allowed');
     require(allowedBorrowTokens[borrowToken], 'Borrow token not allowed');
+    require(!userPositions[msg.sender][borrowToken].isActive, 'Existing position found');
     require(leverageMultiplier > 1 && leverageMultiplier <= MAX_LEVERAGE, 'Invalid leverage');
 
     // Transfer initial collateral from user
@@ -141,26 +155,30 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
 
     // Encode additional params for flash loan operation
     bytes memory params = abi.encode(
-      msg.sender,
-      collateralToken,
-      borrowToken,
-      initialCollateral,
-      leverageMultiplier,
-      flashLoanController,
-      address(this)
+      OperationParams({
+        user: msg.sender,
+        collateralToken: collateralToken,
+        borrowToken: borrowToken,
+        initialCollateral: initialCollateral,
+        leverageMultiplier: leverageMultiplier,
+        flashLoanController: address(flashLoanController),
+        strategy: address(this),
+        openPosition: true
+      })
     );
 
     // Initiate flash loan
     uint256 borrowAmount = _calculateMaxBorrowAmount(
+      borrowToken,
       collateralToken,
       initialCollateral,
-      leverageMultiplier
+      leverageMultiplier - 1
+      // you need to have initialCollateral + (leverage-1) * flashLoan = leverage * initialcollateral
     );
 
     flashLoanController.executeFlashLoan(borrowToken, borrowAmount, params);
   }
 
-  // Flash Loan Callback
   function executeOperation(
     address[] calldata assets,
     uint256[] calldata amounts,
@@ -168,77 +186,144 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     address initiator,
     bytes calldata params
   ) external override returns (bool) {
-    // Verify caller is the flash loan controller
-    require(msg.sender == address(flashLoanController), 'Unauthorized flash loan');
+    require(msg.sender == address(flashLoanController), 'Unauthorized');
+    require(assets.length == 1 && amounts.length == 1 && premiums.length == 1, 'Invalid arrays');
 
-    // Decode and validate params
     OperationParams memory operationParams = abi.decode(params, (OperationParams));
 
-    // Additional validation
-    require(assets[0] == operationParams.borrowToken, 'Invalid flash loan asset');
-    require(amounts[0] > 0, 'Invalid borrow amount');
-    IERC20(operationParams.borrowToken).approve(address(swapController), amounts[0]);
+    if (operationParams.openPosition) {
+      return _executeOpenPosition(assets[0], amounts[0], premiums[0], operationParams);
+    } else {
+      return _executeClosePosition(assets[0], amounts[0], premiums[0], operationParams);
+    }
+  }
 
-    // Swap borrowed tokens to collateral
-    uint256 minAmountOut = _calculateMinAmountOut(amounts[0]);
+  function _executeOpenPosition(
+    address asset,
+    uint256 amount,
+    uint256 premium,
+    OperationParams memory params
+  ) internal returns (bool) {
+    require(asset == params.borrowToken, 'Invalid asset');
+    require(amount > 0, 'Invalid borrow amount');
+
+    // Approve and swap borrowed tokens
+    IERC20(params.borrowToken).approve(address(swapController), amount);
+    uint256 minAmountOut = _calculateMinAmountOut(amount);
+
     uint256 swappedAmount = swapController.swap(
-      operationParams.borrowToken,
-      operationParams.collateralToken,
-      amounts[0],
+      params.borrowToken,
+      params.collateralToken,
+      amount,
       minAmountOut,
       DEFAULT_POOL_FEE
     );
 
-    IERC20(operationParams.collateralToken).transferFrom(
-      address(swapController),
-      address(this),
-      swappedAmount
-    );
+    // Deposit total collateral
+    uint256 totalCollateral = params.initialCollateral + swappedAmount;
+    IERC20(params.collateralToken).approve(address(lendingPool), totalCollateral);
+    lendingPool.deposit(params.collateralToken, totalCollateral, params.user, REFERRAL_CODE);
 
-    // Deposit total collateral to lending pool
-    uint256 totalCollateral = operationParams.initialCollateral + swappedAmount;
-    IERC20(operationParams.collateralToken).approve(address(lendingPool), totalCollateral);
-    lendingPool.deposit(
-      operationParams.collateralToken,
-      totalCollateral,
-      address(this),
-      REFERRAL_CODE
-    );
+    // Borrow to repay flash loan
+    uint256 amountOwed = amount + premium;
+    lendingPool.borrow(params.borrowToken, amountOwed, 2, REFERRAL_CODE, params.user);
 
-    // Calculate and borrow up to LTV
-    uint256 borrowAmount = _calculateMaxBorrowAmount(
-      operationParams.collateralToken,
-      totalCollateral,
-      operationParams.leverageMultiplier
-    );
-    lendingPool.borrow(operationParams.borrowToken, borrowAmount, 2, REFERRAL_CODE, address(this));
+    // Approve flash loan repayment
+    IERC20(params.borrowToken).approve(address(params.flashLoanController), amountOwed);
 
-    // Prepare to repay flash loan
-    uint256 amountOwed = amounts[0] + premiums[0];
-    IERC20(operationParams.borrowToken).approve(
-      address(operationParams.flashLoanController),
-      amountOwed
-    );
-
-    // Store user position
-    userPositions[operationParams.user] = UserPosition({
-      user: operationParams.user,
-      collateralToken: operationParams.collateralToken,
-      borrowToken: operationParams.borrowToken,
-      initialCollateral: operationParams.initialCollateral,
+    // Update user position
+    userPositions[params.user][params.borrowToken] = UserPosition({
+      user: params.user,
+      collateralToken: params.collateralToken,
+      borrowToken: params.borrowToken,
+      initialCollateral: params.initialCollateral,
       totalCollateral: totalCollateral,
-      totalBorrowed: borrowAmount,
-      leverageMultiplier: operationParams.leverageMultiplier,
+      totalBorrowed: amountOwed,
+      leverageMultiplier: params.leverageMultiplier,
       isActive: true
     });
 
     emit LeveragePositionOpened(
-      operationParams.user,
-      operationParams.collateralToken,
-      operationParams.borrowToken,
-      operationParams.initialCollateral,
-      operationParams.leverageMultiplier
+      params.user,
+      params.collateralToken,
+      params.borrowToken,
+      params.initialCollateral,
+      params.leverageMultiplier
     );
+
+    return true;
+  }
+
+  function _executeClosePosition(
+    address asset,
+    uint256 amount,
+    uint256 premium,
+    OperationParams memory params
+  ) internal returns (bool) {
+    UserPosition storage position = userPositions[params.user][params.borrowToken];
+    require(position.isActive, 'No active position');
+    require(asset == position.borrowToken, 'Invalid asset');
+
+    // Repay borrowed amount
+    IERC20(position.borrowToken).approve(address(lendingPool), amount);
+    lendingPool.repay(position.borrowToken, amount, 2, params.user);
+
+    // Withdraw collateral
+    DataTypes.ReserveDataLegacy memory reserveData = lendingPool.getReserveData(
+      position.collateralToken
+    );
+    uint256 aTokenBalance = IERC20(reserveData.aTokenAddress).balanceOf(params.user);
+    require(aTokenBalance >= position.totalCollateral, 'Insufficient aToken balance');
+
+    IERC20(reserveData.aTokenAddress).transferFrom(
+      params.user,
+      address(this),
+      position.totalCollateral
+    );
+    uint256 withdrawnAmount = lendingPool.withdraw(
+      position.collateralToken,
+      position.totalCollateral,
+      address(this)
+    );
+
+    // Swap collateral to repay flash loan
+    uint256 amountOwed = amount + premium;
+    uint256 expectedAmountIn = swapController.getQuote(
+      position.borrowToken,
+      position.collateralToken,
+      amountOwed,
+      DEFAULT_POOL_FEE
+    );
+    require(expectedAmountIn > 0, 'Invalid swap quote');
+    uint256 maxAmountIn = (expectedAmountIn * (10000)) / (10000 - SLIPPAGE_TOLERANCE);
+    require(withdrawnAmount > maxAmountIn, 'invalid position');
+
+    IERC20(position.collateralToken).approve(address(swapController), maxAmountIn);
+    uint256 swappedAmount = swapController.swap(
+      position.collateralToken,
+      position.borrowToken,
+      maxAmountIn,
+      amountOwed,
+      DEFAULT_POOL_FEE
+    );
+
+    // Repay flash loan
+    IERC20(position.borrowToken).approve(address(params.flashLoanController), amountOwed);
+
+    // Return remaining collateral to user
+    uint256 remainingCollateral = withdrawnAmount - maxAmountIn;
+    if (remainingCollateral > 0) {
+      IERC20(position.collateralToken).transfer(params.user, remainingCollateral);
+    }
+
+    // Return excess borrowed tokens if any
+    uint256 excessBorrowed = swappedAmount - amountOwed;
+    if (excessBorrowed > 0) {
+      IERC20(position.borrowToken).transfer(params.user, excessBorrowed);
+    }
+
+    emit LeveragePositionClosed(params.user, withdrawnAmount);
+    delete userPositions[params.user][position.borrowToken];
 
     return true;
   }
@@ -248,52 +333,84 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     return (amountIn * (10000 - SLIPPAGE_TOLERANCE)) / 10000;
   }
 
-  // Calculate Max Borrow Amount Based on Current LTV
+  function _calculateMaxAmountOut(uint256 amountIn) internal view returns (uint256) {
+    return (amountIn * (10000 + DEFAULT_POOL_FEE + SLIPPAGE_TOLERANCE)) / 10000;
+  }
+
+  // Calculate Max Borrow Amount Based on Current LTV, outputs value of borrow token
   function _calculateMaxBorrowAmount(
+    address borrowToken,
     address collateralToken,
     uint256 totalCollateral,
     uint256 leverageMultiplier
   ) internal view returns (uint256) {
-    // Get current LTV from lending pool
-    (, , , , uint256 ltv, ) = lendingPool.getUserAccountData(address(this));
+    // Get reserve configuration data to get the max LTV
+    DataTypes.ReserveConfigurationMap memory config = lendingPool.getConfiguration(collateralToken);
+    uint256 maxLTV = config.getLtv(); // This gets the maximum LTV for the asset (in basis points)
+
+    // Get prices and decimals for both tokens
+    uint256 collateralPrice = aaveOracle.getAssetPrice(collateralToken);
+    uint256 borrowPrice = aaveOracle.getAssetPrice(borrowToken);
+    uint256 collateralDecimals = IERC20Metadata(collateralToken).decimals();
+    uint256 borrowDecimals = IERC20Metadata(borrowToken).decimals();
+
+    // Convert collateral to USD value (8 decimals precision from Aave Oracle)
+    uint256 collateralValueInUsd = (totalCollateral * collateralPrice) / 10 ** collateralDecimals;
 
     // Calculate max borrow based on LTV and leverage
-    uint256 maxBorrowPercentage = (ltv * leverageMultiplier) / 100;
-    return (totalCollateral * maxBorrowPercentage) / 100;
+    uint256 maxBorrowValueInUsd = (collateralValueInUsd * maxLTV * leverageMultiplier) / 10000; // ltv in basis points (100% = 10000)
+
+    // Convert USD value back to borrow token amount, accounting for decimals
+    return (maxBorrowValueInUsd * 10 ** borrowDecimals) / borrowPrice;
+  }
+
+  function _calculateRepayAmount(
+    address borrowToken,
+    uint256 borrowed
+  ) internal view returns (uint256) {
+    uint256 borrowPrice = aaveOracle.getAssetPrice(borrowToken);
+    // Add small buffer for additional interest during flash loan (0.1%)
+    return (borrowed * 1e8) / borrowPrice;
   }
 
   // Close Leverage Position
-  function closeLeveragePosition() external nonReentrant {
-    UserPosition storage position = userPositions[msg.sender];
+  function closeLeveragePosition(address _borrowToken) external nonReentrant {
+    UserPosition storage position = userPositions[msg.sender][_borrowToken];
     require(position.isActive, 'No active position');
 
     // Validate the user trying to close their own position
     require(position.user == msg.sender, 'Unauthorized to close position');
 
     // Check current health factor before closing
-    (, , , , , uint256 healthFactor) = lendingPool.getUserAccountData(address(this));
+    (, , , , , uint256 healthFactor) = lendingPool.getUserAccountData(msg.sender);
     require(healthFactor > 1, 'Position health is too low');
+    uint repayAmount = position.totalBorrowed; //_calculateRepayAmount(position.borrowToken, position.totalBorrowed);
 
-    // Repay borrowed amount
-    uint256 repayAmount = Math.min(
-      position.totalBorrowed,
-      IERC20(position.borrowToken).balanceOf(address(this))
+    // bytes memory params = abi.encode(
+    //   msg.sender,
+    //   position.borrowToken,
+    //   position.collateralToken,
+    //   repayAmount,
+    //   1,
+    //   address(flashLoanController),
+    //   address(this),
+    //   false
+    // );
+
+    bytes memory params = abi.encode(
+      OperationParams({
+        user: msg.sender,
+        collateralToken: position.collateralToken,
+        borrowToken: position.borrowToken,
+        initialCollateral: repayAmount,
+        leverageMultiplier: 1,
+        flashLoanController: address(flashLoanController),
+        strategy: address(this),
+        openPosition: false
+      })
     );
 
-    IERC20(position.borrowToken).approve(address(lendingPool), repayAmount);
-    lendingPool.repay(position.borrowToken, repayAmount, 2, address(this));
-
-    // Withdraw collateral
-    uint256 withdrawAmount = Math.min(
-      position.totalCollateral,
-      IERC20(position.collateralToken).balanceOf(address(this))
-    );
-    lendingPool.withdraw(position.collateralToken, withdrawAmount, msg.sender);
-
-    emit LeveragePositionClosed(msg.sender, withdrawAmount);
-
-    // Reset position
-    delete userPositions[msg.sender];
+    flashLoanController.executeFlashLoan(position.borrowToken, repayAmount, params);
   }
 
   // Admin Functions
@@ -311,6 +428,10 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
 
   function removeAllowedBorrowToken(address token) external onlyOwner {
     allowedBorrowTokens[token] = false;
+  }
+
+  function updateSwapFee(uint24 _swapFee) external onlyOwner {
+    DEFAULT_POOL_FEE = _swapFee;
   }
 
   // Fallback

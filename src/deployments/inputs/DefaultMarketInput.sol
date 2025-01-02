@@ -66,7 +66,7 @@ contract DefaultMarketInput is MarketInput {
         variableRateSlope2: 70_00
       }),
       enabledToBorrow: EngineFlags.ENABLED,
-      flashloanable: EngineFlags.DISABLED,
+      flashloanable: EngineFlags.ENABLED,
       stableRateModeEnabled: EngineFlags.DISABLED,
       borrowableInIsolation: EngineFlags.ENABLED,
       withSiloedBorrowing: EngineFlags.DISABLED,
@@ -93,7 +93,7 @@ contract DefaultMarketInput is MarketInput {
         variableRateSlope2: 70_00
       }),
       enabledToBorrow: EngineFlags.ENABLED,
-      flashloanable: EngineFlags.DISABLED,
+      flashloanable: EngineFlags.ENABLED,
       stableRateModeEnabled: EngineFlags.DISABLED,
       borrowableInIsolation: EngineFlags.ENABLED,
       withSiloedBorrowing: EngineFlags.DISABLED,

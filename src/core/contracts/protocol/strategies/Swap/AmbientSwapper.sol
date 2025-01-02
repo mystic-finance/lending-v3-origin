@@ -58,7 +58,8 @@ contract AmbientSwap is Ownable {
     address base,
     address quote,
     uint256 amountIn,
-    uint256 amountOutMinimum
+    uint256 amountOutMinimum,
+    uint24
   ) external returns (int256 amountOut) {
     // Validate inputs
     require(amountIn >= MIN_SWAP_AMOUNT, 'Swap amount too low');
@@ -66,14 +67,14 @@ contract AmbientSwap is Ownable {
 
     // Determine which token is being swapped based on isBuy
     bool isBuy = true;
-    address inputToken = base;
+    // address inputToken = base;
     // address inputToken = isBuy ? quote : base;
 
     // Transfer tokens from sender to contract
-    IERC20(inputToken).safeTransferFrom(msg.sender, address(this), amountIn);
+    IERC20(base).safeTransferFrom(msg.sender, address(this), amountIn);
 
     // Approve router to spend tokens
-    IERC20(inputToken).approve(address(swapRouter), amountIn);
+    IERC20(base).approve(address(swapRouter), amountIn);
 
     // Prepare swap parameters
     // Use default pool index, no tip, no limit price, default settle flags
