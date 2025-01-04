@@ -84,6 +84,7 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
   }
 
   struct OperationParams {
+    uint256 positionId;
     address user;
     address collateralToken;
     address borrowToken;
@@ -99,6 +100,7 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
   uint256 public constant SLIPPAGE_TOLERANCE = 100; // 0.5%
   uint16 public constant REFERRAL_CODE = 0;
   uint24 public DEFAULT_POOL_FEE = 30; // 0.3% pool fee
+  uint256 private nextPositionId = 1;
 
   // External Contracts
   IPool public lendingPool;
@@ -107,19 +109,26 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
   IAaveOracle aaveOracle;
 
   // Mappings
-  mapping(address => mapping(address => UserPosition)) public userPositions; // caller -> borrowToken -> position
+  // mapping(address => mapping(address => UserPosition)) public userPositions; // caller -> borrowToken -> position
+  mapping(uint256 => UserPosition) public positions; // positionId -> position
+  mapping(address => uint256[]) public userPositions; // user -> array of position IDs
   mapping(address => bool) public allowedCollateralTokens;
   mapping(address => bool) public allowedBorrowTokens;
 
   // Events
   event LeveragePositionOpened(
+    uint256 indexed positionId,
     address indexed user,
     address collateralToken,
     address borrowToken,
     uint256 initialAmount,
     uint256 leverageMultiplier
   );
-  event LeveragePositionClosed(address indexed user, uint256 collateralReturned);
+  event LeveragePositionClosed(
+    uint256 indexed positionId,
+    address indexed user,
+    uint256 collateralReturned
+  );
 
   constructor(
     address _lendingPool,
@@ -147,15 +156,16 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
   ) external nonReentrant {
     require(allowedCollateralTokens[collateralToken], 'Collateral token not allowed');
     require(allowedBorrowTokens[borrowToken], 'Borrow token not allowed');
-    require(!userPositions[msg.sender][borrowToken].isActive, 'Existing position found');
     require(leverageMultiplier > 1 && leverageMultiplier <= MAX_LEVERAGE, 'Invalid leverage');
 
     // Transfer initial collateral from user
     IERC20(collateralToken).transferFrom(msg.sender, address(this), initialCollateral);
+    uint256 positionId = nextPositionId++;
 
     // Encode additional params for flash loan operation
     bytes memory params = abi.encode(
       OperationParams({
+        positionId: positionId,
         user: msg.sender,
         collateralToken: collateralToken,
         borrowToken: borrowToken,
@@ -232,7 +242,7 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     IERC20(params.borrowToken).approve(address(params.flashLoanController), amountOwed);
 
     // Update user position
-    userPositions[params.user][params.borrowToken] = UserPosition({
+    positions[params.positionId] = UserPosition({
       user: params.user,
       collateralToken: params.collateralToken,
       borrowToken: params.borrowToken,
@@ -243,7 +253,10 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
       isActive: true
     });
 
+    userPositions[params.user].push(params.positionId);
+
     emit LeveragePositionOpened(
+      params.positionId,
       params.user,
       params.collateralToken,
       params.borrowToken,
@@ -260,7 +273,7 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     uint256 premium,
     OperationParams memory params
   ) internal returns (bool) {
-    UserPosition storage position = userPositions[params.user][params.borrowToken];
+    UserPosition storage position = positions[params.positionId];
     require(position.isActive, 'No active position');
     require(asset == position.borrowToken, 'Invalid asset');
 
@@ -322,10 +335,22 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
       IERC20(position.borrowToken).transfer(params.user, excessBorrowed);
     }
 
-    emit LeveragePositionClosed(params.user, withdrawnAmount);
-    delete userPositions[params.user][position.borrowToken];
+    emit LeveragePositionClosed(params.positionId, params.user, withdrawnAmount);
+    delete positions[params.positionId];
+    _removeUserPosition(params.user, params.positionId);
 
     return true;
+  }
+
+  function _removeUserPosition(address user, uint256 positionId) internal {
+    uint256[] storage userPos = userPositions[user];
+    for (uint256 i = 0; i < userPos.length; i++) {
+      if (userPos[i] == positionId) {
+        userPos[i] = userPos[userPos.length - 1];
+        userPos.pop();
+        break;
+      }
+    }
   }
 
   // Calculate Minimum Amount Out with Slippage
@@ -374,10 +399,9 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
   }
 
   // Close Leverage Position
-  function closeLeveragePosition(address _borrowToken) external nonReentrant {
-    UserPosition storage position = userPositions[msg.sender][_borrowToken];
+  function closeLeveragePosition(uint256 positionId) external nonReentrant {
+    UserPosition storage position = positions[positionId];
     require(position.isActive, 'No active position');
-
     // Validate the user trying to close their own position
     require(position.user == msg.sender, 'Unauthorized to close position');
 
@@ -386,19 +410,9 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     require(healthFactor > 1, 'Position health is too low');
     uint repayAmount = position.totalBorrowed; //_calculateRepayAmount(position.borrowToken, position.totalBorrowed);
 
-    // bytes memory params = abi.encode(
-    //   msg.sender,
-    //   position.borrowToken,
-    //   position.collateralToken,
-    //   repayAmount,
-    //   1,
-    //   address(flashLoanController),
-    //   address(this),
-    //   false
-    // );
-
     bytes memory params = abi.encode(
       OperationParams({
+        positionId: positionId,
         user: msg.sender,
         collateralToken: position.collateralToken,
         borrowToken: position.borrowToken,
@@ -411,6 +425,35 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     );
 
     flashLoanController.executeFlashLoan(position.borrowToken, repayAmount, params);
+  }
+
+  function getUserPositions(address user) external view returns (uint256[] memory) {
+    return userPositions[user];
+  }
+
+  function getUserActivePositions(address user) external view returns (UserPosition[] memory) {
+    uint256[] memory positionIds = userPositions[user];
+    uint256 activeCount = 0;
+
+    // Count active positions
+    for (uint256 i = 0; i < positionIds.length; i++) {
+      if (positions[positionIds[i]].isActive) {
+        activeCount++;
+      }
+    }
+
+    // Create array of active positions
+    UserPosition[] memory activePositions = new UserPosition[](activeCount);
+    uint256 currentIndex = 0;
+
+    for (uint256 i = 0; i < positionIds.length; i++) {
+      if (positions[positionIds[i]].isActive) {
+        activePositions[currentIndex] = positions[positionIds[i]];
+        currentIndex++;
+      }
+    }
+
+    return activePositions;
   }
 
   // Admin Functions

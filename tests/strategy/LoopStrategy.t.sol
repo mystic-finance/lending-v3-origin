@@ -130,7 +130,8 @@ contract AdvancedLoopStrategyTest is TestnetProcedures {
 
     // Exit position
     vm.startPrank(bob);
-    strategy.exitPosition(address(collateralToken), address(borrowToken));
+    uint256[] memory positions = strategy.getUserPositions(bob);
+    strategy.exitPosition(positions[0]);
   }
 
   function testRevertDoubleExitPosition() public {
@@ -139,10 +140,11 @@ contract AdvancedLoopStrategyTest is TestnetProcedures {
 
     // Exit position
     vm.startPrank(bob);
-    strategy.exitPosition(address(collateralToken), address(borrowToken));
+    uint256[] memory positions = strategy.getUserPositions(bob);
+    strategy.exitPosition(positions[0]);
 
-    vm.expectRevert(bytes('position exited already'));
-    strategy.exitPosition(address(collateralToken), address(borrowToken));
+    vm.expectRevert(bytes('Position not active'));
+    strategy.exitPosition(positions[0]);
   }
 
   function testUpdateLeverageParameters() public {
@@ -260,7 +262,8 @@ contract AdvancedLoopStrategyTest is TestnetProcedures {
     uint256 aTokenBeforeExit = IERC20(reserveData.aTokenAddress).balanceOf(bob);
 
     // Exit position
-    strategy.exitPosition(address(collateralToken), address(borrowToken));
+    uint256[] memory positions = strategy.getUserPositions(bob);
+    strategy.exitPosition(positions[0]);
 
     // Check final state
     uint256 finalDebt = IERC20(borrowData.variableDebtTokenAddress).balanceOf(bob);

@@ -38,6 +38,16 @@ contract AdvancedLoopStrategy is Ownable, ReentrancyGuard {
   using SafeERC20 for IERC20;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
+  // structs
+  struct Position {
+    address user;
+    address collateralAsset;
+    address borrowAsset;
+    uint256 collateralBalance;
+    uint256 borrowBalance;
+    bool isActive;
+  }
+
   // Configuration constants
   uint256 public constant SAFE_BUFFER = 50; // 0.5% safety margin
   uint256 public constant VARIABLE_RATE_MODE = 2;
@@ -54,13 +64,15 @@ contract AdvancedLoopStrategy is Ownable, ReentrancyGuard {
   uint256 public targetLeverageMultiplier;
   uint24 public swapPoolFee;
   uint256 public maxIterations = 15;
+  uint256 private nextPositionId = 1;
 
   // User position tracking
-  mapping(address => mapping(address => uint256)) public userCollateralBalance;
-  mapping(address => mapping(address => uint256)) public userBorrowBalance;
+  mapping(uint256 => Position) public positions;
+  mapping(address => uint256[]) private userPositions;
 
   // Events
   event PositionEntered(
+    uint256 indexed positionId,
     address indexed user,
     address collateralAsset,
     address borrowAsset,
@@ -68,6 +80,7 @@ contract AdvancedLoopStrategy is Ownable, ReentrancyGuard {
     uint256 iterations
   );
   event PositionExited(
+    uint256 indexed positionId,
     address indexed user,
     address collateralAsset,
     address borrowAsset,
@@ -133,15 +146,27 @@ contract AdvancedLoopStrategy is Ownable, ReentrancyGuard {
 
     uint256 maxSafeIterations = calculateMaxSafeIterations(collateralAsset, borrowAsset);
     require(iterations <= maxSafeIterations, 'Exceeds safe iterations');
+    uint256 positionId = nextPositionId++;
 
     // Transfer initial collateral
     IERC20(collateralAsset).safeTransferFrom(msg.sender, address(this), initialCollateral);
-    userCollateralBalance[msg.sender][collateralAsset] += initialCollateral;
 
     // Initial deposit
     _depositCollateral(collateralAsset, initialCollateral);
 
+    positions[positionId] = Position({
+      user: msg.sender,
+      collateralAsset: collateralAsset,
+      borrowAsset: borrowAsset,
+      collateralBalance: initialCollateral,
+      borrowBalance: 0,
+      isActive: true
+    });
+    userPositions[msg.sender].push(positionId);
+
     uint256 totalBorrowed = 0;
+    Position storage position = positions[positionId];
+
     for (uint256 i = 0; i < iterations; ) {
       (, , , , , uint256 healthFactor) = lendingPool.getUserAccountData(msg.sender);
       require(healthFactor >= MIN_HEALTH_FACTOR, 'Health factor too low');
@@ -152,8 +177,8 @@ contract AdvancedLoopStrategy is Ownable, ReentrancyGuard {
       uint256 swappedAmount = _borrowAndSwap(collateralAsset, borrowAsset, borrowAmount);
 
       totalBorrowed += borrowAmount;
-      userBorrowBalance[msg.sender][borrowAsset] += borrowAmount;
-      userCollateralBalance[msg.sender][collateralAsset] += swappedAmount;
+      position.borrowBalance += borrowAmount;
+      position.collateralBalance += swappedAmount;
 
       unchecked {
         ++i;
@@ -161,6 +186,7 @@ contract AdvancedLoopStrategy is Ownable, ReentrancyGuard {
     }
 
     emit PositionEntered(
+      positionId,
       msg.sender,
       collateralAsset,
       borrowAsset,
@@ -226,19 +252,38 @@ contract AdvancedLoopStrategy is Ownable, ReentrancyGuard {
     lendingPool.deposit(collateralAsset, amount, msg.sender, 0);
   }
 
-  function exitPosition(address collateralAsset, address borrowAsset) external nonReentrant {
+  function exitPosition(uint256 positionId) external nonReentrant {
+    Position storage position = positions[positionId];
+    require(position.isActive, 'Position not active');
+    require(position.user == msg.sender, 'Not position owner');
     require(
-      userCollateralBalance[msg.sender][collateralAsset] > 0 &&
-        userBorrowBalance[msg.sender][borrowAsset] > 0,
+      position.collateralBalance > 0 && position.borrowBalance > 0,
       'position exited already'
     );
-    uint256 totalWithdrawn = _unwindPosition(collateralAsset, borrowAsset);
+    uint256 totalWithdrawn = _unwindPosition(positionId);
 
     // Clear user balances
-    userCollateralBalance[msg.sender][collateralAsset] = 0;
-    userBorrowBalance[msg.sender][borrowAsset] = 0;
+    position.isActive = false;
+    _removeUserPosition(position.user, positionId);
 
-    emit PositionExited(msg.sender, collateralAsset, borrowAsset, totalWithdrawn);
+    emit PositionExited(
+      positionId,
+      msg.sender,
+      position.collateralAsset,
+      position.borrowAsset,
+      totalWithdrawn
+    );
+  }
+
+  function _removeUserPosition(address user, uint256 positionId) internal {
+    uint256[] storage userPos = userPositions[user];
+    for (uint256 i = 0; i < userPos.length; i++) {
+      if (userPos[i] == positionId) {
+        userPos[i] = userPos[userPos.length - 1];
+        userPos.pop();
+        break;
+      }
+    }
   }
 
   function calculateWithdrawableCollateral(
@@ -263,12 +308,11 @@ contract AdvancedLoopStrategy is Ownable, ReentrancyGuard {
     return maxWithdrawCollateral; //amountToWithdraw > maxWithdrawCollateral ? maxWithdrawCollateral : amountToWithdraw;
   }
 
-  function _unwindPosition(
-    address collateralAsset,
-    address borrowAsset
-  ) internal returns (uint256) {
+  function _unwindPosition(uint256 positionId) internal returns (uint256) {
     uint256 totalWithdrawn = 0;
-
+    Position storage position = positions[positionId];
+    address collateralAsset = position.collateralAsset;
+    address borrowAsset = position.borrowAsset;
     DataTypes.ReserveDataLegacy memory reserveData = lendingPool.getReserveData(collateralAsset);
 
     while (true) {
@@ -314,17 +358,12 @@ contract AdvancedLoopStrategy is Ownable, ReentrancyGuard {
       totalWithdrawn += actualWithdrawn;
 
       // Update user balances
-      userCollateralBalance[msg.sender][collateralAsset] = (
-        userCollateralBalance[msg.sender][collateralAsset] > actualWithdrawn
-          ? userCollateralBalance[msg.sender][collateralAsset] - actualWithdrawn
-          : 0
-      );
-
-      userBorrowBalance[msg.sender][borrowAsset] = (
-        userBorrowBalance[msg.sender][borrowAsset] > repayAmount
-          ? userBorrowBalance[msg.sender][borrowAsset] - repayAmount
-          : 0
-      );
+      position.collateralBalance = position.collateralBalance > actualWithdrawn
+        ? position.collateralBalance - actualWithdrawn
+        : 0;
+      position.borrowBalance = position.borrowBalance > repayAmount
+        ? position.borrowBalance - repayAmount
+        : 0;
     }
 
     // Withdraw any remaining collateral
@@ -402,5 +441,32 @@ contract AdvancedLoopStrategy is Ownable, ReentrancyGuard {
 
   function updateSwapFee(uint24 _swapFee) external onlyOwner {
     swapPoolFee = _swapFee;
+  }
+
+  function getUserPositions(address user) external view returns (uint256[] memory) {
+    return userPositions[user];
+  }
+
+  function getUserActivePositions(address user) external view returns (Position[] memory) {
+    uint256[] memory positionIds = userPositions[user];
+    uint256 activeCount = 0;
+
+    for (uint256 i = 0; i < positionIds.length; i++) {
+      if (positions[positionIds[i]].isActive) {
+        activeCount++;
+      }
+    }
+
+    Position[] memory activePositions = new Position[](activeCount);
+    uint256 currentIndex = 0;
+
+    for (uint256 i = 0; i < positionIds.length; i++) {
+      if (positions[positionIds[i]].isActive) {
+        activePositions[currentIndex] = positions[positionIds[i]];
+        currentIndex++;
+      }
+    }
+
+    return activePositions;
   }
 }

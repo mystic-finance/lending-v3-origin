@@ -82,9 +82,9 @@ contract FlashLoanController is Ownable, ReentrancyGuard {
     // Verify caller is the flash loan controller
     require(msg.sender == address(currentProvider), 'Unauthorized flash loan');
     // Decode and validate params
-    (, , address borrowToken, , , , address strategy) = abi.decode(
+    (, , , address borrowToken, , , , address strategy) = abi.decode(
       params,
-      (address, address, address, uint256, uint256, address, address)
+      (uint256, address, address, address, uint256, uint256, address, address)
     );
 
     IERC20(borrowToken).transfer(strategy, amounts[0]);

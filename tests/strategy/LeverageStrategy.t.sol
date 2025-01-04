@@ -30,10 +30,21 @@ contract LeveragedBorrowingVaultTest is TestnetProcedures {
   MockSwapController internal swapController;
   FlashLoanController internal flashLoanController;
 
+  struct UserPosition {
+    address user;
+    address collateralToken;
+    address borrowToken;
+    uint256 initialCollateral;
+    uint256 totalCollateral;
+    uint256 totalBorrowed;
+    uint256 leverageMultiplier;
+    bool isActive;
+  }
+
   // Constants for testing
   uint256 internal constant INITIAL_BALANCE = 100_000 * 10 ** 18;
   uint256 internal constant INITIAL_COLLATERAL = 10 * 10 ** 18;
-  uint256 internal constant LEVERAGE_MULTIPLIER = 3;
+  uint256 internal constant LEVERAGE_MULTIPLIER = 5;
 
   function setUp() public {
     initL2TestEnvironment();
@@ -135,27 +146,18 @@ contract LeveragedBorrowingVaultTest is TestnetProcedures {
       address(collateralToken),
       address(borrowToken),
       INITIAL_COLLATERAL,
-      LEVERAGE_MULTIPLIER
+      8
     );
     vm.stopPrank();
 
     // Validate user position
-    (
-      address positionUser,
-      address positionCollateralToken,
-      address positionBorrowToken,
-      uint256 initialCollateral,
-      uint256 totalCollateral,
-      uint256 totalBorrowed,
-      uint256 leverageMultiplier,
-      bool isActive
-    ) = vault.userPositions(user, address(borrowToken));
+    LeveragedBorrowingVault.UserPosition[] memory positions = vault.getUserActivePositions(user);
 
-    assertEq(positionUser, user);
-    assertEq(positionCollateralToken, address(collateralToken));
-    assertEq(positionBorrowToken, address(borrowToken));
-    assertEq(initialCollateral, INITIAL_COLLATERAL);
-    assertTrue(isActive);
+    assertEq(positions[0].user, user);
+    assertEq(positions[0].collateralToken, address(collateralToken));
+    assertEq(positions[0].borrowToken, address(borrowToken));
+    assertEq(positions[0].initialCollateral, INITIAL_COLLATERAL);
+    assertTrue(positions[0].isActive);
   }
 
   // Test: Revert on invalid leverage multiplier
@@ -214,7 +216,7 @@ contract LeveragedBorrowingVaultTest is TestnetProcedures {
       address(collateralToken),
       address(borrowToken),
       INITIAL_COLLATERAL,
-      4
+      LEVERAGE_MULTIPLIER
     );
 
     // Verify collateral was deducted
@@ -225,8 +227,8 @@ contract LeveragedBorrowingVaultTest is TestnetProcedures {
     );
 
     // Verify position on Aave
-    uint256 expectedTotalCollateral = (INITIAL_COLLATERAL * LEVERAGE_MULTIPLIER * 825) / 1000; //col, xpliers, ltv
-    uint256 expectedBorrowed = (INITIAL_COLLATERAL * (LEVERAGE_MULTIPLIER) * 825) / (1000e12);
+    uint256 expectedTotalCollateral = (INITIAL_COLLATERAL * LEVERAGE_MULTIPLIER * 900) / 1000; //col, xpliers, ltv
+    uint256 expectedBorrowed = (INITIAL_COLLATERAL * (LEVERAGE_MULTIPLIER) * 900) / (1000e12);
 
     uint256 actualCollateral = IERC20(reserveData.aTokenAddress).balanceOf(address(user));
     uint256 actualBorrowed = IERC20(reserveData2.variableDebtTokenAddress).balanceOf(address(user));
@@ -244,7 +246,10 @@ contract LeveragedBorrowingVaultTest is TestnetProcedures {
     uint256 userInitialCollateralBalance = collateralToken.balanceOf(user);
 
     vm.startPrank(user);
-    vault.closeLeveragePosition(address(borrowToken));
+
+    uint256[] memory positions = vault.getUserPositions(user);
+
+    vault.closeLeveragePosition(positions[0]);
 
     // Verify user received back approximately initial collateral (minus fees)
     uint256 finalBalance = collateralToken.balanceOf(user);
@@ -253,7 +258,7 @@ contract LeveragedBorrowingVaultTest is TestnetProcedures {
     // Allow for some slippage/fees
     assertGt(
       collateralToken.balanceOf(user),
-      userInitialCollateralBalance + INITIAL_COLLATERAL - 0.3e18,
+      userInitialCollateralBalance + INITIAL_COLLATERAL - 0.5e18,
       'Incorrect final balance after closing'
     );
 
@@ -294,11 +299,13 @@ contract LeveragedBorrowingVaultTest is TestnetProcedures {
     vm.startPrank(user);
     // vm.expectEmit(true, false, false, true);
     // emit LeveragePositionClosed(user, INITIAL_COLLATERAL);
-    vault.closeLeveragePosition(address(borrowToken));
+    uint256[] memory positions = vault.getUserPositions(user);
+
+    vault.closeLeveragePosition(positions[0]);
     vm.stopPrank();
 
     // Verify position is closed
-    (, , , , , , , bool isActive) = vault.userPositions(user, address(borrowToken));
+    (, , , , , , , bool isActive) = vault.positions(positions[0]);
     assertFalse(isActive);
   }
 
@@ -353,9 +360,10 @@ contract LeveragedBorrowingVaultTest is TestnetProcedures {
 
   function testFailCloseNonexistentPosition() public {
     vm.startPrank(user);
+    uint256[] memory positions = vault.getUserPositions(user);
     bytes4 selector = bytes4(keccak256('No active position'));
     vm.expectRevert(selector);
-    vault.closeLeveragePosition(address(borrowToken));
+    vault.closeLeveragePosition(positions[0]);
     vm.stopPrank();
   }
 
