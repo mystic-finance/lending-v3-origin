@@ -239,23 +239,14 @@ library AaveV3BatchOrchestration {
     PoolReport memory poolReport;
 
     if (config.poolType == 0) {
-      poolReport = _deployPoolImplementations(
-        poolProvider,
-        flags
-      ); //3
+      poolReport = _deployPoolImplementations(poolProvider, flags); //3
     } else if (config.poolType == 1) {
-      poolReport = _deployPermissionedPoolImplementations(
-        poolProvider
-      ); //3
+      poolReport = _deployPermissionedPoolImplementations(poolProvider); //3
     } else if (config.poolType == 2) {
-      poolReport = _deploySemiPermissionedPoolImplementations(
-        poolProvider
-      ); //3
+      poolReport = _deploySemiPermissionedPoolImplementations(poolProvider); //3
     }
 
-    IPoolAddressesProvider(poolProvider).setPoolImpl(
-      address(poolReport.poolImplementation)
-    );
+    IPoolAddressesProvider(poolProvider).setPoolImpl(address(poolReport.poolImplementation));
     return true;
   }
 
