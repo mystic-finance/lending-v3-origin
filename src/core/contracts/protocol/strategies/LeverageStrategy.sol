@@ -431,7 +431,32 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     return userPositions[user];
   }
 
-  function getUserActivePositions(address user) external view returns (UserPosition[] memory) {
+  // function getUserActivePositions(address user) external view returns (UserPosition[] memory) {
+  //   uint256[] memory positionIds = userPositions[user];
+  //   uint256 activeCount = 0;
+
+  //   // Count active positions
+  //   for (uint256 i = 0; i < positionIds.length; i++) {
+  //     if (positions[positionIds[i]].isActive) {
+  //       activeCount++;
+  //     }
+  //   }
+
+  //   // Create array of active positions
+  //   UserPosition[] memory activePositions = new UserPosition[](activeCount);
+  //   uint256 currentIndex = 0;
+
+  //   for (uint256 i = 0; i < positionIds.length; i++) {
+  //     if (positions[positionIds[i]].isActive) {
+  //       activePositions[currentIndex] = positions[positionIds[i]];
+  //       currentIndex++;
+  //     }
+  //   }
+
+  //   return activePositions;
+  // }
+
+  function getUserActivePositionIds(address user) external view returns (uint256[] memory) {
     uint256[] memory positionIds = userPositions[user];
     uint256 activeCount = 0;
 
@@ -443,12 +468,12 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     }
 
     // Create array of active positions
-    UserPosition[] memory activePositions = new UserPosition[](activeCount);
+    uint256[] memory activePositions = new uint256[](activeCount);
     uint256 currentIndex = 0;
 
     for (uint256 i = 0; i < positionIds.length; i++) {
       if (positions[positionIds[i]].isActive) {
-        activePositions[currentIndex] = positions[positionIds[i]];
+        activePositions[currentIndex] = positionIds[i];
         currentIndex++;
       }
     }
@@ -478,5 +503,5 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
   }
 
   // Fallback
-  receive() external payable {}
+  // receive() external payable {}
 }

@@ -227,7 +227,16 @@ contract AdvancedLoopStrategyTest is TestnetProcedures {
       'Incorrect collateral deduction'
     );
     assertEq(strategyCollateral, 0, 'Strategy should not hold tokens');
-    assertTrue(aTokenBalance > initialCollateral, 'Should have more aTokens than initial deposit');
+    assertTrue(
+      aTokenBalance >= initialCollateral * (iterations - 1),
+      'Should have more aTokens than initial deposit'
+    );
+    assertGt(
+      aTokenBalance,
+      initialCollateral * (iterations - 1),
+      'Incorrect final balance after closing'
+    );
+    assertGt(debtBalance, initialCollateral * (iterations - 2), 'Should have debt position');
     assertTrue(debtBalance > 0, 'Should have debt position');
   }
 
@@ -260,6 +269,7 @@ contract AdvancedLoopStrategyTest is TestnetProcedures {
     );
     uint256 debtBeforeExit = IERC20(borrowData.variableDebtTokenAddress).balanceOf(bob);
     uint256 aTokenBeforeExit = IERC20(reserveData.aTokenAddress).balanceOf(bob);
+    uint256 userInitialCollateralBalance = collateralToken.balanceOf(bob);
 
     // Exit position
     uint256[] memory positions = strategy.getUserPositions(bob);
@@ -269,10 +279,19 @@ contract AdvancedLoopStrategyTest is TestnetProcedures {
     uint256 finalDebt = IERC20(borrowData.variableDebtTokenAddress).balanceOf(bob);
     uint256 finalATokens = IERC20(reserveData.aTokenAddress).balanceOf(bob);
     uint256 finalCollateral = collateralToken.balanceOf(bob);
+    uint256 stratCollateral = collateralToken.balanceOf(address(strategy));
+    uint256 stratAsset = borrowToken.balanceOf(address(strategy));
 
     assertEq(finalDebt, 0, 'Should have no remaining debt');
     assertTrue(finalATokens < aTokenBeforeExit, 'Should have less aTokens after exit');
-    assertTrue(finalCollateral > 0, 'Should receive remaining collateral');
+    assertTrue(stratCollateral <= 0, 'no collateral asset should remain in strategy');
+    assertTrue(stratAsset <= 0, 'no borrow asset should remain in strategy');
+
+    assertGt(
+      finalCollateral,
+      userInitialCollateralBalance + initialCollateral - 0.025e18,
+      'Incorrect final balance after closing'
+    );
   }
 
   // function testPartialExitPosition() public {

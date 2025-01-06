@@ -172,7 +172,7 @@ contract AdvancedLoopStrategy is Ownable, ReentrancyGuard {
       require(healthFactor >= MIN_HEALTH_FACTOR, 'Health factor too low');
 
       uint256 borrowAmount = _calculateOptimalBorrowAmount(collateralAsset, borrowAsset);
-      if (borrowAmount == 0) break;
+      // if (borrowAmount == 0) break;
 
       uint256 swappedAmount = _borrowAndSwap(collateralAsset, borrowAsset, borrowAmount);
 
@@ -206,8 +206,8 @@ contract AdvancedLoopStrategy is Ownable, ReentrancyGuard {
     uint256 borrowDecimals = IERC20Metadata(borrowAsset).decimals();
     require(assetPrice > 0, 'Invalid asset price');
 
-    return (availableBorrowsETH * 10 ** borrowDecimals * 1e8) / (assetPrice * 1e18);
-    // return (availableBorrowsETH * 10 ** borrowDecimals) / (assetPrice);
+    // return (availableBorrowsETH) / (assetPrice * 1e8);
+    return (availableBorrowsETH * 10 ** borrowDecimals * 1e8) / (assetPrice * 1e8);
   }
 
   function _borrowAndSwap(
@@ -291,19 +291,27 @@ contract AdvancedLoopStrategy is Ownable, ReentrancyGuard {
     address collateralAsset,
     address borrowAsset
   ) public view returns (uint256) {
-    (uint256 totalCollateralETH, uint256 totalDebtETH, , , , uint256 healthFactor) = lendingPool
-      .getUserAccountData(user);
+    (
+      uint256 totalCollateralETH,
+      uint256 totalDebtETH,
+      uint256 availableBorrowsETH,
+      ,
+      ,
+      uint256 healthFactor
+    ) = lendingPool.getUserAccountData(user);
     require(healthFactor > MIN_HEALTH_FACTOR, 'Health factor too low to withdraw');
 
     uint256 assetPrice = aaveOracle.getAssetPrice(collateralAsset);
     require(assetPrice > 0, 'Invalid asset price');
 
-    totalDebtETH =
-      (totalDebtETH * (10 ** ERC20(collateralAsset).decimals())) /
-      (10 ** ERC20(borrowAsset).decimals());
+    // totalDebtETH =
+    //   (totalDebtETH * (10 ** ERC20(collateralAsset).decimals())) /
+    //   (10 ** ERC20(borrowAsset).decimals());
 
-    uint256 maxWithdrawETH = totalCollateralETH - totalDebtETH - SAFE_BUFFER;
-    uint256 maxWithdrawCollateral = (maxWithdrawETH * 1e8) / assetPrice;
+    // uint256 maxWithdrawETH = totalCollateralETH - totalDebtETH - SAFE_BUFFER;
+    uint256 maxWithdrawCollateral = (availableBorrowsETH *
+      10 ** (ERC20(collateralAsset).decimals()) *
+      1e8) / (assetPrice * 1e8);
 
     return maxWithdrawCollateral; //amountToWithdraw > maxWithdrawCollateral ? maxWithdrawCollateral : amountToWithdraw;
   }
@@ -353,7 +361,12 @@ contract AdvancedLoopStrategy is Ownable, ReentrancyGuard {
 
       // Repay debt
       IERC20(borrowAsset).approve(address(lendingPool), repayAmount);
-      lendingPool.repay(borrowAsset, repayAmount, VARIABLE_RATE_MODE, msg.sender);
+      uint repaidAmount = lendingPool.repay(
+        borrowAsset,
+        repayAmount,
+        VARIABLE_RATE_MODE,
+        msg.sender
+      );
 
       totalWithdrawn += actualWithdrawn;
 
@@ -374,14 +387,22 @@ contract AdvancedLoopStrategy is Ownable, ReentrancyGuard {
         address(this),
         finalCollateralBalance
       );
-      lendingPool.withdraw(collateralAsset, type(uint256).max, msg.sender);
       totalWithdrawn += finalCollateralBalance;
     }
 
+    // withdraw max possible collateral
+    lendingPool.withdraw(collateralAsset, type(uint256).max, address(this));
+
+    uint256 finalAssetBalance = IERC20(borrowAsset).balanceOf(address(this));
+    if (finalAssetBalance > 0) {
+      IERC20(borrowAsset).approve(address(swapController), finalAssetBalance);
+      swapController.swap(borrowAsset, collateralAsset, finalAssetBalance, 0, swapPoolFee);
+    }
+
+    // collateral asset could still be left after final repay and needs swapp and withdrawal
     uint256 finalBalance = IERC20(collateralAsset).balanceOf(address(this));
     if (finalBalance > 0) {
       IERC20(collateralAsset).safeTransfer(msg.sender, finalBalance);
-      totalWithdrawn += finalBalance;
     }
 
     return totalWithdrawn;
@@ -406,9 +427,8 @@ contract AdvancedLoopStrategy is Ownable, ReentrancyGuard {
     );
     uint256 assetPrice = IAaveOracle(aaveOracle).getAssetPrice(borrowAsset);
     require(assetPrice > 0, 'Invalid asset price');
-    return
-      (availableBorrowsETH * (10 ** ERC20(borrowAsset).decimals()) * 1e8) / (assetPrice * 1e18);
-    // return (availableBorrowsETH * (10 ** ERC20(borrowAsset).decimals())) / assetPrice;
+    return (availableBorrowsETH * (10 ** ERC20(borrowAsset).decimals()) * 1e8) / (assetPrice * 1e8); // borrow base * decimal power / (assetPriceOracle/1e8) / 1e8 (oracle from base)
+    // return (availableBorrowsETH ) / (assetPrice * 1e8);
   }
 
   function getCurrentDebtBalance(address borrowAsset) public view returns (uint256) {
@@ -417,7 +437,7 @@ contract AdvancedLoopStrategy is Ownable, ReentrancyGuard {
     );
     uint256 assetPrice = IAaveOracle(aaveOracle).getAssetPrice(borrowAsset);
     require(assetPrice > 0, 'Invalid asset price');
-    return (totalDebtETH * 1e8) / (assetPrice);
+    return (totalDebtETH * (10 ** ERC20(borrowAsset).decimals()) * 1e8) / (assetPrice * 1e8);
     // return (availableBorrowsETH * (10 ** ERC20(borrowAsset).decimals())) / assetPrice;
   }
 
@@ -447,22 +467,47 @@ contract AdvancedLoopStrategy is Ownable, ReentrancyGuard {
     return userPositions[user];
   }
 
-  function getUserActivePositions(address user) external view returns (Position[] memory) {
+  // function getUserActivePositions(address user) external view returns (Position[] memory) {
+  //   uint256[] memory positionIds = userPositions[user];
+  //   uint256 activeCount = 0;
+
+  //   for (uint256 i = 0; i < positionIds.length; i++) {
+  //     if (positions[positionIds[i]].isActive) {
+  //       activeCount++;
+  //     }
+  //   }
+
+  //   Position[] memory activePositions = new Position[](activeCount);
+  //   uint256 currentIndex = 0;
+
+  //   for (uint256 i = 0; i < positionIds.length; i++) {
+  //     if (positions[positionIds[i]].isActive) {
+  //       activePositions[currentIndex] = positions[positionIds[i]];
+  //       currentIndex++;
+  //     }
+  //   }
+
+  //   return activePositions;
+  // }
+
+  function getUserActivePositionIds(address user) external view returns (uint256[] memory) {
     uint256[] memory positionIds = userPositions[user];
     uint256 activeCount = 0;
 
+    // Count active positions
     for (uint256 i = 0; i < positionIds.length; i++) {
       if (positions[positionIds[i]].isActive) {
         activeCount++;
       }
     }
 
-    Position[] memory activePositions = new Position[](activeCount);
+    // Create array of active positions
+    uint256[] memory activePositions = new uint256[](activeCount);
     uint256 currentIndex = 0;
 
     for (uint256 i = 0; i < positionIds.length; i++) {
       if (positions[positionIds[i]].isActive) {
-        activePositions[currentIndex] = positions[positionIds[i]];
+        activePositions[currentIndex] = positionIds[i];
         currentIndex++;
       }
     }
