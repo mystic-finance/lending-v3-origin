@@ -339,6 +339,11 @@ library AaveV3BatchOrchestration {
 
     // 6. configure caps, borrow side, collateral and assets emode
     for (uint256 i = 0; i < config.listings.length; i++) {
+      // _configureRateParams(
+      //   configurator,
+      //   config.listings[i].asset,
+      //   abi.encode(config.listings[i].rateStrategyParams)
+      // );
       _configureCaps(configurator, config.listings[i]);
       _configBorrowSide(configurator, config.listings[i], IPool(config.poolProxy));
       _configCollateralSide(configurator, config.listings[i], IPool(config.poolProxy));
@@ -358,6 +363,11 @@ library AaveV3BatchOrchestration {
 
     // 6. configure caps, borrow side, collateral and assets emode
     for (uint256 i = 0; i < config.listings.length; i++) {
+      _configureRateParams(
+        configurator,
+        config.listings[i].asset,
+        abi.encode(config.listings[i].rateStrategyParams)
+      );
       _configureCaps(configurator, config.listings[i]);
       _configBorrowSide(configurator, config.listings[i], IPool(config.poolProxy));
       _configCollateralSide(configurator, config.listings[i], IPool(config.poolProxy));
@@ -655,6 +665,15 @@ library AaveV3BatchOrchestration {
     if (listing.borrowCap != EngineFlags.KEEP_CURRENT) {
       poolConfigurator.setBorrowCap(listing.asset, listing.borrowCap);
     }
+  }
+
+  function _configureRateParams(
+    IPoolConfigurator poolConfigurator,
+    address asset,
+    bytes memory rateData
+  ) internal {
+    // setReserveInterestRateData
+    poolConfigurator.setReserveInterestRateData(asset, rateData);
   }
 
   function _configAssetsEMode(
