@@ -77,7 +77,7 @@ contract SwapController is Ownable {
 
     // pull swapped token from swapper and allow sender take token
     IERC20(tokenOut).transferFrom(address(currentSwapper), address(this), amountOut);
-    IERC20(tokenOut).approve(msg.sender, amountOut);
+    IERC20(tokenOut).transfer(msg.sender, amountOut);
 
     emit SwapExecuted(tokenIn, tokenOut, amountIn, amountOut);
 

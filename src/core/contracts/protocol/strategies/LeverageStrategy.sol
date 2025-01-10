@@ -97,9 +97,9 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
 
   // Constants
   uint256 public constant MAX_LEVERAGE = 20;
-  uint256 public constant SLIPPAGE_TOLERANCE = 100; // 0.5%
+  uint256 public constant SLIPPAGE_TOLERANCE = 50; // 0.5%
   uint16 public constant REFERRAL_CODE = 0;
-  uint24 public DEFAULT_POOL_FEE = 30; // 0.3% pool fee
+  uint24 public DEFAULT_POOL_FEE = 500; // 5% pool fee
   uint256 private nextPositionId = 1;
 
   // External Contracts
@@ -178,15 +178,15 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     );
 
     // Initiate flash loan
-    uint256 borrowAmount = _calculateMaxBorrowAmount(
-      borrowToken,
+    uint256 expectedAmountIn = swapController.getQuote(
       collateralToken,
-      initialCollateral,
-      leverageMultiplier - 1
-      // you need to have initialCollateral + (leverage-1) * flashLoan = leverage * initialcollateral
+      borrowToken,
+      initialCollateral * (leverageMultiplier - 1),
+      0 // 0% buffer cause of flashloan
     );
+    require(expectedAmountIn > 0, 'Invalid swap quote');
 
-    flashLoanController.executeFlashLoan(borrowToken, borrowAmount, params);
+    flashLoanController.executeFlashLoan(borrowToken, expectedAmountIn, params);
   }
 
   function executeOperation(
@@ -219,7 +219,13 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
 
     // Approve and swap borrowed tokens
     IERC20(params.borrowToken).approve(address(swapController), amount);
-    uint256 minAmountOut = _calculateMinAmountOut(amount);
+    uint256 expectedAmountOut = swapController.getQuote(
+      params.borrowToken,
+      params.collateralToken,
+      amount,
+      DEFAULT_POOL_FEE
+    );
+    uint256 minAmountOut = _calculateMinAmountOut(expectedAmountOut);
 
     uint256 swappedAmount = swapController.swap(
       params.borrowToken,
@@ -308,7 +314,7 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
       DEFAULT_POOL_FEE
     );
     require(expectedAmountIn > 0, 'Invalid swap quote');
-    uint256 maxAmountIn = (expectedAmountIn * (10000)) / (10000 - SLIPPAGE_TOLERANCE);
+    uint256 maxAmountIn = (expectedAmountIn * (10000)) / (10000 - DEFAULT_POOL_FEE);
     require(withdrawnAmount > maxAmountIn, 'invalid position');
 
     IERC20(position.collateralToken).approve(address(swapController), maxAmountIn);

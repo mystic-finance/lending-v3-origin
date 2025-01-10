@@ -4,6 +4,12 @@ pragma solidity 0.8.20;
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import {IPool} from 'src/core/contracts/interfaces/IPool.sol';
+import {IERC20Metadata} from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
+
+interface IAaveOracle {
+  function getAssetPrice(address asset) external view returns (uint256);
+}
 
 interface ICrocSwapRouter {
   function swap(
@@ -23,14 +29,25 @@ interface ICrocSwapRouter {
 contract AmbientSwap is Ownable {
   using SafeERC20 for IERC20;
 
+  struct SwapParams {
+    address base;
+    address quote;
+    uint256 amountIn;
+    uint256 amountOutMinimum;
+    bool isBuy;
+    uint24 fee;
+  }
+
   // Croc Swap Router
   ICrocSwapRouter public immutable swapRouter;
+  IAaveOracle public immutable aaveOracle;
 
   // Minimum swap amount to prevent dust transactions
   uint256 public constant MIN_SWAP_AMOUNT = 1;
 
   // Default pool index
   uint256 public constant DEFAULT_POOL_INDEX = 420;
+  uint128 MAX_PRICE = 21267430153580247136652501917186561137;
 
   // Events for tracking swaps
   event TokensSwapped(
@@ -43,8 +60,9 @@ contract AmbientSwap is Ownable {
 
   event QuoteReceived(address base, address quote, uint256 amountIn, uint256 expectedAmountOut);
 
-  constructor(address _swapRouterAddress) Ownable(msg.sender) {
+  constructor(address _swapRouterAddress, address _pool) Ownable(msg.sender) {
     swapRouter = ICrocSwapRouter(_swapRouterAddress);
+    aaveOracle = IAaveOracle(IPool(_pool).ADDRESSES_PROVIDER().getPriceOracle());
   }
 
   /**
@@ -54,80 +72,136 @@ contract AmbientSwap is Ownable {
    * @param amountIn Amount of input tokens to swap
    * @param amountOutMinimum Minimum amount of output tokens expected
    */
+
   function swap(
     address base,
     address quote,
     uint256 amountIn,
     uint256 amountOutMinimum,
-    uint24
+    uint24 fee
   ) external returns (int256 amountOut) {
+    // Pack parameters into struct to save stack space
+    SwapParams memory params = SwapParams({
+      base: base,
+      quote: quote,
+      amountIn: amountIn,
+      amountOutMinimum: amountOutMinimum,
+      isBuy: base < quote,
+      fee: fee
+    });
+
     // Validate inputs
-    require(amountIn >= MIN_SWAP_AMOUNT, 'Swap amount too low');
-    require(base != address(0) && quote != address(0), 'Invalid token address');
+    _validateInputs(params);
 
-    // Determine which token is being swapped based on isBuy
-    bool isBuy = true;
-    // address inputToken = base;
-    // address inputToken = isBuy ? quote : base;
+    // Handle token transfers and approvals
+    _handleTokens(params);
 
-    // Transfer tokens from sender to contract
-    IERC20(base).safeTransferFrom(msg.sender, address(this), amountIn);
+    // Perform the swap
+    amountOut = _performSwap(params);
 
-    // Approve router to spend tokens
-    IERC20(base).approve(address(swapRouter), amountIn);
-
-    // Prepare swap parameters
-    // Use default pool index, no tip, no limit price, default settle flags
-    (int128 baseFlow, int128 quoteFlow) = swapRouter.swap(
-      base,
-      quote,
-      DEFAULT_POOL_INDEX,
-      true,
-      true, // inBaseQty - false means qty is in quote token
-      uint128(amountIn),
-      0, // tip
-      0, // limitPrice (0 means no limit)
-      uint128(amountOutMinimum),
-      0 // settleFlags
-    );
-
-    // Determine amount out based on flow
-    amountOut = isBuy
-      ? int256(baseFlow > 0 ? baseFlow : -baseFlow)
-      : int256(quoteFlow > 0 ? quoteFlow : -quoteFlow);
-
-    IERC20(quote).approve(msg.sender, uint256(amountOut));
-
-    // Emit swap event
-    emit TokensSwapped(base, quote, amountIn, amountOut, isBuy);
+    // Handle final approvals and emit event
+    _finalizeSwap(params, amountOut);
 
     return amountOut;
   }
 
+  function _validateInputs(SwapParams memory params) internal pure {
+    require(params.amountIn >= MIN_SWAP_AMOUNT, 'Swap amount too low');
+    require(params.base != address(0) && params.quote != address(0), 'Invalid token address');
+  }
+
+  function _handleTokens(SwapParams memory params) internal {
+    IERC20(params.base).safeTransferFrom(msg.sender, address(this), params.amountIn);
+    IERC20(params.base).approve(address(swapRouter), params.amountIn);
+  }
+
+  function _performSwap(SwapParams memory params) internal returns (int256) {
+    try
+      swapRouter.swap(
+        params.isBuy ? params.base : params.quote,
+        params.isBuy ? params.quote : params.base,
+        DEFAULT_POOL_INDEX,
+        params.isBuy,
+        params.isBuy ? true : false,
+        uint128(params.amountIn),
+        0, // tip
+        params.isBuy ? MAX_PRICE : 0, // limitPrice
+        uint128(params.amountOutMinimum),
+        0 // settleFlags
+      )
+    returns (int128 baseFlow, int128 quoteFlow) {
+      // uint128(params.isBuy ? aaveOracle.getAssetPrice(params.base) : 0)
+      return
+        !params.isBuy
+          ? int256(baseFlow > 0 ? baseFlow : -baseFlow)
+          : int256(quoteFlow > 0 ? quoteFlow : -quoteFlow);
+    } catch Error(string memory) {
+      // Catch standard errors
+      return _oppSwap(params);
+    } catch Panic(uint) {
+      // Catch panics
+      return _oppSwap(params);
+    } catch (bytes memory) {
+      // Catch low-level errors
+      return _oppSwap(params);
+    }
+  }
+
+  function _oppSwap(SwapParams memory params) internal returns (int256) {
+    (int128 baseFlow, int128 quoteFlow) = swapRouter.swap(
+      !params.isBuy ? params.base : params.quote,
+      !params.isBuy ? params.quote : params.base,
+      DEFAULT_POOL_INDEX,
+      !params.isBuy,
+      !params.isBuy ? false : true,
+      uint128(params.amountIn),
+      0,
+      !params.isBuy ? 0 : MAX_PRICE,
+      uint128(params.amountOutMinimum),
+      0
+    );
+
+    return
+      params.isBuy
+        ? int256(baseFlow > 0 ? baseFlow : -baseFlow)
+        : int256(quoteFlow > 0 ? quoteFlow : -quoteFlow);
+  }
+
+  function _finalizeSwap(SwapParams memory params, int256 amountOut) internal {
+    IERC20(params.quote).approve(msg.sender, uint256(amountOut));
+    emit TokensSwapped(params.base, params.quote, params.amountIn, amountOut, params.isBuy);
+  }
+
   /**
    * @dev Retrieves a simulated quote for a potential swap
-   * @param base Address of the base token
-   * @param quote Address of the quote token
+   * @param tokenIn Address of the base token
+   * @param tokenOut Address of the quote token
    * @param amountIn Amount of input tokens to swap
    * @return expectedAmountOut Expected output amount
    */
   function getQuote(
-    address base,
-    address quote,
+    address tokenIn,
+    address tokenOut,
     uint256 amountIn,
-    uint256
+    uint24 poolFee
   ) external view returns (uint256 expectedAmountOut) {
-    // Validate inputs
-    require(amountIn >= MIN_SWAP_AMOUNT, 'Swap amount too low');
-    require(base != address(0) && quote != address(0), 'Invalid token address');
+    // uint  poolFee = 500;
+    // Get token prices and decimals
+    uint256 tokenInPrice = aaveOracle.getAssetPrice(tokenIn);
+    uint256 tokenOutPrice = aaveOracle.getAssetPrice(tokenOut);
+    uint256 tokenInDecimals = IERC20Metadata(tokenIn).decimals();
+    uint256 tokenOutDecimals = IERC20Metadata(tokenOut).decimals();
 
-    // Placeholder quote simulation - in a real implementation,
-    // you would use an on-chain quoter or oracle
-    expectedAmountOut = _simulateQuote(base, quote, amountIn, false);
+    // Calculate USD value of input amount (8 decimals precision from Aave Oracle)
+    uint256 inputValueInUsd = (amountIn * tokenInPrice) / 10 ** tokenInDecimals;
 
-    // emit QuoteReceived(base, quote, amountIn, expectedAmountOut);
+    // Apply 0.3% slippage to USD value
+    uint256 outputValueInUsd = (inputValueInUsd * (10000 - poolFee)) / 10000;
 
-    return expectedAmountOut;
+    // Convert USD value to output token amount
+    uint256 amountOut = (outputValueInUsd * 10 ** tokenOutDecimals) / tokenOutPrice;
+
+    return amountOut;
   }
 
   /**
