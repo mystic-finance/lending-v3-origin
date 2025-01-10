@@ -85,7 +85,7 @@ contract DefaultMarketInput is MarketInput {
       //collateral
       asset: 0xD630fb6A07c9c723cf709d2DaA9B63325d0E0B73,
       assetSymbol: 'pETH',
-      priceFeed: 0x9025Ea91308E0A55980e8cA6339026d3d662EB00,
+      priceFeed: 0xE5B27092Ecea9870345910924d12616367F58a8f,
       rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
         optimalUsageRatio: 45_00,
         baseVariableBorrowRate: 0, // 1.25%
