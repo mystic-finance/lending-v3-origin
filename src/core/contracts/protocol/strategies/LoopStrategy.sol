@@ -467,29 +467,6 @@ contract AdvancedLoopStrategy is Ownable, ReentrancyGuard {
     return userPositions[user];
   }
 
-  // function getUserActivePositions(address user) external view returns (Position[] memory) {
-  //   uint256[] memory positionIds = userPositions[user];
-  //   uint256 activeCount = 0;
-
-  //   for (uint256 i = 0; i < positionIds.length; i++) {
-  //     if (positions[positionIds[i]].isActive) {
-  //       activeCount++;
-  //     }
-  //   }
-
-  //   Position[] memory activePositions = new Position[](activeCount);
-  //   uint256 currentIndex = 0;
-
-  //   for (uint256 i = 0; i < positionIds.length; i++) {
-  //     if (positions[positionIds[i]].isActive) {
-  //       activePositions[currentIndex] = positions[positionIds[i]];
-  //       currentIndex++;
-  //     }
-  //   }
-
-  //   return activePositions;
-  // }
-
   function getUserActivePositionIds(address user) external view returns (uint256[] memory) {
     uint256[] memory positionIds = userPositions[user];
     uint256 activeCount = 0;

@@ -44,6 +44,7 @@ contract AmbientSwap is Ownable {
 
   // Minimum swap amount to prevent dust transactions
   uint256 public constant MIN_SWAP_AMOUNT = 1;
+  uint256 public constant SLIPPAGE_BUFFER = 1000; // 2%
 
   // Default pool index
   uint256 public constant DEFAULT_POOL_INDEX = 420;
@@ -126,7 +127,7 @@ contract AmbientSwap is Ownable {
         uint128(params.amountIn),
         0, // tip
         params.isBuy ? MAX_PRICE : 0, // limitPrice
-        uint128(params.amountOutMinimum),
+        uint128((params.amountOutMinimum * (10000 - SLIPPAGE_BUFFER)) / 10000), // min amount should be much lower to avoid SL issues due to oracle difference
         0 // settleFlags
       )
     returns (int128 baseFlow, int128 quoteFlow) {
@@ -157,7 +158,7 @@ contract AmbientSwap is Ownable {
       uint128(params.amountIn),
       0,
       !params.isBuy ? 0 : MAX_PRICE,
-      uint128(params.amountOutMinimum),
+      uint128((params.amountOutMinimum * (10000 - SLIPPAGE_BUFFER)) / 10000),
       0
     );
 

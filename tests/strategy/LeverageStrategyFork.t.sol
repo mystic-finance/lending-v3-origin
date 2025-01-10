@@ -64,10 +64,11 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
     //   flashloanController 0x5fA6836e652d7d43089EAc7df3a8360b5ccdCf9A
     //   loopStrategy 0x0ffbaF1Fb8De90DdA77feb3963feFE5204091Cb0
     //   leverageStrategy 0x94F92CdA0f9017f4B8daab1a6b681C04a4871140
+    // peth-pusd. peth-usdc, pusd-usdc, - 0xD630fb6A07c9c723cf709d2DaA9B63325d0E0B73 - peth, 0xdddD73F5Df1F0DC31373357beAC77545dC5A6f3F - pusd, 0x3938A812c54304fEffD266C7E2E70B48F9475aD6 - usdc
 
     // Deploy mock tokens
     collateralToken = IERC20(0xD630fb6A07c9c723cf709d2DaA9B63325d0E0B73); //new MockERC20('CollateralToken', 'CLT', 18);
-    borrowToken = IERC20(0xdddD73F5Df1F0DC31373357beAC77545dC5A6f3F); //new MockERC20('BorrowToken', 'BRT', 18);
+    borrowToken = IERC20(0x3938A812c54304fEffD266C7E2E70B48F9475aD6); //new MockERC20('BorrowToken', 'BRT', 18);
 
     // Deploy mock controllers
     lendingPool = IPool(0xd5b3495C5e059a23Bea726166E3C46b0Cb3b42Ab);
@@ -84,6 +85,7 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
     );
 
     swapController = new SwapController(address(ambientSwapper));
+    // swapController = SwapController(0x0f8d9480ca937441c166E39e2d9f90a7A6031194);
     // swapController.updateSwapper(address(ambientSwapper));
 
     vault = new LeveragedBorrowingVault(
@@ -91,7 +93,7 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
       address(swapController),
       address(flashLoanController)
     );
-    // LeveragedBorrowingVault(0x94F92CdA0f9017f4B8daab1a6b681C04a4871140);
+    // vault = LeveragedBorrowingVault(0x5C4DdF6b3d65E7cfF4A6b0B1Ee4DcF45b4A08246);
 
     vault.addAllowedBorrowToken(0x3938A812c54304fEffD266C7E2E70B48F9475aD6);
     vault.addAllowedBorrowToken(0xdddD73F5Df1F0DC31373357beAC77545dC5A6f3F);
@@ -160,7 +162,7 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
       address(borrowToken)
     );
     IERC20(reserveData.aTokenAddress).approve(address(vault), INITIAL_COLLATERAL * 100_000);
-    IERC20(reserveData.aTokenAddress).approve(address(lendingPool), INITIAL_COLLATERAL * 100_000);
+    // IERC20(reserveData.aTokenAddress).approve(address(lendingPool), INITIAL_COLLATERAL * 100_000);
     ICreditDelegationToken(reserveData2.variableDebtTokenAddress).approveDelegation(
       address(vault),
       INITIAL_COLLATERAL * 100_000
@@ -269,7 +271,7 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
     uint256 actualCollateral = collateral2 - collateral1;
     uint256 actualBorrowed = borrow2 - borrow1;
 
-    assertGt(actualCollateral, expectedTotalCollateral - 0.05e14, 'Incorrect collateral amount');
+    assertGt(actualCollateral, expectedTotalCollateral - 0.1e14, 'Incorrect collateral amount');
     assertGt(actualBorrowed, 0, 'Incorrect borrowed amount');
 
     vm.stopPrank();
@@ -291,20 +293,20 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
     uint256 finalBalance = collateralToken.balanceOf(user);
     assertGt(
       finalBalance,
-      userMainCollateralBalance - 0.18e14,
+      userMainCollateralBalance - 0.3e14,
       'User should receive collateral back'
     );
 
     // Allow for some slippage/fees
     assertGt(
       collateralToken.balanceOf(user),
-      userInitialCollateralBalance + INITIAL_COLLATERAL - 0.18e14,
+      userInitialCollateralBalance + INITIAL_COLLATERAL - 0.3e14,
       'Incorrect final balance after closing'
     );
 
     assertGt(
       finalBalance - userInitialCollateralBalance,
-      INITIAL_COLLATERAL - 0.18e14,
+      INITIAL_COLLATERAL - 0.3e14,
       'Incorrect final collateral balance after closing'
     );
 

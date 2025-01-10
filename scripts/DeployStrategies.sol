@@ -43,6 +43,9 @@ contract DeployStrategies is DeployUtils, DefaultMarketInput, Script {
     SwapController swapController = new SwapController(address(ambientSwapper));
     FlashLoanController flashloanController = new FlashLoanController(address(flashLoaner));
 
+    // SwapController swapController = SwapController(0x0f8d9480ca937441c166E39e2d9f90a7A6031194);
+    // swapController.updateSwapper(address(ambientSwapper));
+
     AdvancedLoopStrategy loopStrategy = new AdvancedLoopStrategy(
       msg.sender,
       lendingPool,
@@ -148,9 +151,9 @@ contract DeployStrategies is DeployUtils, DefaultMarketInput, Script {
 // == Logs ==
 //   Aave V3 Batch Listing
 //   sender 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38
-//   ambientSwapper 0xa8A18e3C1B5c51bcC64332f23FC4B1BB0ab64cCa
+//   ambientSwapper 0x6A9Bcc9107C52C50E9b096daC7268BE9F0d028f8  old - 0xa8A18e3C1B5c51bcC64332f23FC4B1BB0ab64cCa
 //   flashLoaner 0xA3954b212F70C41c2f54fe6E5684BAa09FF775b3
 //   swapController 0x0f8d9480ca937441c166E39e2d9f90a7A6031194
 //   flashloanController 0x5fA6836e652d7d43089EAc7df3a8360b5ccdCf9A
 //   loopStrategy 0x1EdF7b468731b2a15A48fcA02D6949fcb7f3D8f6
-//   leverageStrategy 0x5C4DdF6b3d65E7cfF4A6b0B1Ee4DcF45b4A08246
+//   leverageStrategy 0x5E71B0de6c8B71997941fbF15E399ab8dcd125AE  old - 0x5C4DdF6b3d65E7cfF4A6b0B1Ee4DcF45b4A08246

@@ -28,8 +28,16 @@ interface ISwapController {
   ) external view returns (uint256 expectedAmountOut);
 }
 
+interface IFlashLoanProvider {
+  function executeFlashLoan(address asset, uint256 amount, bytes memory params) external;
+
+  function getMaxFlashLoanAmount(address asset) external view returns (uint256);
+  function getFlashLoanFee(address asset, uint256 amount) external view returns (uint256);
+}
+
 interface IFlashLoanController {
   function executeFlashLoan(address asset, uint256 amount, bytes memory params) external;
+  function currentProvider() external returns (IFlashLoanProvider provider);
 }
 
 // Existing interfaces
@@ -139,6 +147,7 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     swapController = ISwapController(_swapController);
     flashLoanController = IFlashLoanController(_flashLoanController);
     aaveOracle = IAaveOracle((lendingPool.ADDRESSES_PROVIDER()).getPriceOracle());
+    require(address(aaveOracle) != address(0), 'Invalid oracle address');
   }
 
   modifier onlyAllowedTokens(address collateralToken, address borrowToken) {
@@ -198,6 +207,7 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
   ) external override returns (bool) {
     require(msg.sender == address(flashLoanController), 'Unauthorized');
     require(assets.length == 1 && amounts.length == 1 && premiums.length == 1, 'Invalid arrays');
+    require(initiator == address(flashLoanController.currentProvider()), 'Invalid initiator');
 
     OperationParams memory operationParams = abi.decode(params, (OperationParams));
 
@@ -314,7 +324,9 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
       DEFAULT_POOL_FEE
     );
     require(expectedAmountIn > 0, 'Invalid swap quote');
-    uint256 maxAmountIn = (expectedAmountIn * (10000)) / (10000 - DEFAULT_POOL_FEE);
+    // uint256 maxAmountIn = (expectedAmountIn * (10000)) / (10000 - DEFAULT_POOL_FEE);
+    uint256 maxAmountIn = (expectedAmountIn * (10000 + DEFAULT_POOL_FEE + SLIPPAGE_TOLERANCE)) /
+      10000;
     require(withdrawnAmount > maxAmountIn, 'invalid position');
 
     IERC20(position.collateralToken).approve(address(swapController), maxAmountIn);
@@ -413,7 +425,7 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
 
     // Check current health factor before closing
     (, , , , , uint256 healthFactor) = lendingPool.getUserAccountData(msg.sender);
-    require(healthFactor > 1, 'Position health is too low');
+    require(healthFactor > 1.05e18, 'Position health is too low');
     uint repayAmount = position.totalBorrowed; //_calculateRepayAmount(position.borrowToken, position.totalBorrowed);
 
     bytes memory params = abi.encode(
@@ -436,31 +448,6 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
   function getUserPositions(address user) external view returns (uint256[] memory) {
     return userPositions[user];
   }
-
-  // function getUserActivePositions(address user) external view returns (UserPosition[] memory) {
-  //   uint256[] memory positionIds = userPositions[user];
-  //   uint256 activeCount = 0;
-
-  //   // Count active positions
-  //   for (uint256 i = 0; i < positionIds.length; i++) {
-  //     if (positions[positionIds[i]].isActive) {
-  //       activeCount++;
-  //     }
-  //   }
-
-  //   // Create array of active positions
-  //   UserPosition[] memory activePositions = new UserPosition[](activeCount);
-  //   uint256 currentIndex = 0;
-
-  //   for (uint256 i = 0; i < positionIds.length; i++) {
-  //     if (positions[positionIds[i]].isActive) {
-  //       activePositions[currentIndex] = positions[positionIds[i]];
-  //       currentIndex++;
-  //     }
-  //   }
-
-  //   return activePositions;
-  // }
 
   function getUserActivePositionIds(address user) external view returns (uint256[] memory) {
     uint256[] memory positionIds = userPositions[user];
@@ -508,6 +495,12 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     DEFAULT_POOL_FEE = _swapFee;
   }
 
-  // Fallback
-  // receive() external payable {}
+  function updateSwapController(address _newSwapController) external onlyOwner {
+    require(_newSwapController != address(0), 'Invalid address');
+    swapController = ISwapController(_newSwapController);
+  }
+  function updateFlashLoanController(address _newFlashLoanController) external onlyOwner {
+    require(_newFlashLoanController != address(0), 'Invalid address');
+    flashLoanController = IFlashLoanController(_newFlashLoanController);
+  }
 }
