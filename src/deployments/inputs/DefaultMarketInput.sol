@@ -51,7 +51,7 @@ contract DefaultMarketInput is MarketInput {
     address debtAsset,
     address collateralAsset
   ) internal view override returns (ListingConfig memory config) {
-    IAaveV3ConfigEngine.Listing[] memory listings = new IAaveV3ConfigEngine.Listing[](4);
+    IAaveV3ConfigEngine.Listing[] memory listings = new IAaveV3ConfigEngine.Listing[](6);
     IAaveV3ConfigEngine.Listing[] memory listingCollateral = new IAaveV3ConfigEngine.Listing[](1);
 
     listings[0] = IAaveV3ConfigEngine.Listing({
@@ -97,8 +97,8 @@ contract DefaultMarketInput is MarketInput {
       stableRateModeEnabled: EngineFlags.DISABLED,
       borrowableInIsolation: EngineFlags.ENABLED,
       withSiloedBorrowing: EngineFlags.DISABLED,
-      ltv: 77_50, // 90%
-      liqThreshold: 80_00, // 92.5%
+      ltv: 78_50, // 90%
+      liqThreshold: 81_00, // 92.5%
       liqBonus: 7_00, // 5%
       reserveFactor: 10_00, // 10%
       supplyCap: 1_000_000_000, // 100k AAVE
@@ -116,7 +116,7 @@ contract DefaultMarketInput is MarketInput {
       rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
         optimalUsageRatio: 90_00,
         baseVariableBorrowRate: 1, // 1%
-        variableRateSlope1: 7_00,
+        variableRateSlope1: 11_70,
         variableRateSlope2: 50_00
       }),
       enabledToBorrow: EngineFlags.ENABLED,
@@ -143,7 +143,7 @@ contract DefaultMarketInput is MarketInput {
       rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
         optimalUsageRatio: 90_00,
         baseVariableBorrowRate: 1, // 1%
-        variableRateSlope1: 7_00,
+        variableRateSlope1: 11_70,
         variableRateSlope2: 50_00
       }),
       enabledToBorrow: EngineFlags.ENABLED,
@@ -154,6 +154,60 @@ contract DefaultMarketInput is MarketInput {
       ltv: 80_00, // 90%
       liqThreshold: 83_00, // 92.5%
       liqBonus: 5_00, // 5%
+      reserveFactor: 10_00, // 10%
+      supplyCap: 1_000_000_000, // 100k AAVE
+      borrowCap: 1_000_000_000, // 60k AAVE
+      debtCeiling: EngineFlags.KEEP_CURRENT, // 100k USD
+      liqProtocolFee: 10_00, // 10%
+      eModeCategory: 0 // No category
+    });
+
+    listings[4] = IAaveV3ConfigEngine.Listing({
+      //collateral
+      asset: 0x626613B473F7eF65747967017C11225436EFaEd7,
+      assetSymbol: 'WETH',
+      priceFeed: 0xE5B27092Ecea9870345910924d12616367F58a8f,
+      rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
+        optimalUsageRatio: 90_00,
+        baseVariableBorrowRate: 0, // 1.25%
+        variableRateSlope1: 3_17,
+        variableRateSlope2: 82_70
+      }),
+      enabledToBorrow: EngineFlags.ENABLED,
+      flashloanable: EngineFlags.ENABLED,
+      stableRateModeEnabled: EngineFlags.DISABLED,
+      borrowableInIsolation: EngineFlags.ENABLED,
+      withSiloedBorrowing: EngineFlags.DISABLED,
+      ltv: 80_50, // 90%
+      liqThreshold: 83_00, // 92.5%
+      liqBonus: 5_00, // 5%
+      reserveFactor: 10_00, // 10%
+      supplyCap: 1_000_000_000, // 100k AAVE
+      borrowCap: 1_000_000_000, // 60k AAVE
+      debtCeiling: EngineFlags.KEEP_CURRENT, // 100k USD
+      liqProtocolFee: 10_00, // 10%
+      eModeCategory: 0 // No category
+    });
+
+    listings[5] = IAaveV3ConfigEngine.Listing({
+      //collateral
+      asset: 0x974e9596F02d1169Fb6AD524304fb8122893Ce4E,
+      assetSymbol: 'STONE',
+      priceFeed: 0x7f527879a534055C788d00dC4fa41715b9Cf1546,
+      rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
+        optimalUsageRatio: 45_00,
+        baseVariableBorrowRate: 0, // 1.25%
+        variableRateSlope1: 5_00,
+        variableRateSlope2: 304_27
+      }),
+      enabledToBorrow: EngineFlags.ENABLED,
+      flashloanable: EngineFlags.ENABLED,
+      stableRateModeEnabled: EngineFlags.DISABLED,
+      borrowableInIsolation: EngineFlags.ENABLED,
+      withSiloedBorrowing: EngineFlags.DISABLED,
+      ltv: 60_00, // 90%
+      liqThreshold: 80_00, // 92.5%
+      liqBonus: 10_00, // 5%
       reserveFactor: 10_00, // 10%
       supplyCap: 1_000_000_000, // 100k AAVE
       borrowCap: 1_000_000_000, // 60k AAVE
@@ -344,6 +398,14 @@ contract DefaultMarketInput is MarketInput {
 // 0xC04fCCeB028F8374d3E8a7A6f57d640D71DDa43A
 // 0x582A20792a77edD6C16eE74a10535C612f3DE7Bb
 // 0x7678D08a3b1f95b1e2Bbfdba16A8bf7Dc46d97bd
+
+// WETH and STONE
+// 0x6079cA8F2da1025A7c456a7bD8D75dad8003bC09
+//   0x4036C2f02a9643358Bc6963093235728dFCb8dC6
+//   0x3e395a2F4D7aEf7D265338c1bf1099fd336164AC
+//   0xc713E69427d72Ef7df5fdf60D6566abDa8F5E7ca
+//   0xEa834B3D0C350DA8f846D6A35F27Cdd4bAdBb3F0
+//   0x407B025c809AB4060E196fA06C0dCEFf2531D1B2
 
 // USDC.e - 0x3938A812c54304fEffD266C7E2E70B48F9475aD6
 // pUSD - 0xdddD73F5Df1F0DC31373357beAC77545dC5A6f3F

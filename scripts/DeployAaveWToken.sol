@@ -26,14 +26,14 @@ contract DeployGateway is DeployUtils, DefaultMarketInput, Script {
     vm.startBroadcast(deployerPrivateKey);
 
     WrappedTokenGatewayV3 tokenGateway = new WrappedTokenGatewayV3(
-      0xaA6210015fbf0855F0D9fDA3C415c1B12776Ae74,
+      0x626613B473F7eF65747967017C11225436EFaEd7,
       msg.sender,
-      IPool(0xd7ecf5312aa4FE7ddcAAFba779494fBC5f5f459A)
+      IPool(0xd5b3495C5e059a23Bea726166E3C46b0Cb3b42Ab)
     );
 
     console.log('tokenGateway', address(tokenGateway));
     vm.stopBroadcast();
   }
 }
-// mainnet - 0xeed79850EBfA660132b3619f5388B9f57859D71D
+// mainnet - 0xA58d82221825B88e90F2Dd35008dA1546E84e7D5  0xeed79850EBfA660132b3619f5388B9f57859D71D - old
 // devnet - 0x9811870984C7B8f1a5548dF80223368ECde24f26
