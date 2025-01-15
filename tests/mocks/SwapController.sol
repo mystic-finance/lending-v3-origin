@@ -32,7 +32,7 @@ contract MockSwapController {
     uint256 inputValueInUsd = (amountIn * tokenInPrice) / 10 ** tokenInDecimals;
 
     // Apply 0.3% slippage to USD value
-    uint256 outputValueInUsd = (inputValueInUsd * (10000 - poolFee - 500)) / 10000;
+    uint256 outputValueInUsd = (inputValueInUsd * (10000 - poolFee / 2 - 100)) / 10000;
 
     // Convert USD value to output token amount
     uint256 amountOut = (outputValueInUsd * 10 ** tokenOutDecimals) / tokenOutPrice;

@@ -97,9 +97,9 @@ contract AaveV3Flashloaner is ReentrancyGuard {
   ) internal {
     // TODO: add processing data
     // Decode and validate params
-    (, , , address borrowToken, , , address flashLoanController, ) = abi.decode(
+    (, , , address borrowToken, , , address flashLoanController, , ) = abi.decode(
       params,
-      (uint256, address, address, address, uint256, uint256, address, address)
+      (uint256, address, address, address, uint256, uint256, address, address, bool)
     );
 
     IERC20(borrowToken).transfer(flashLoanController, amounts[0]);

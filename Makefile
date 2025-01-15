@@ -81,3 +81,6 @@ test-loop :; forge test --mc AdvancedLoopStrategyTest  -vvv
 test-leverage-fork :; forge test --fork-url https://phoenix-rpc.plumenetwork.xyz --mc LeveragedBorrowingVaultForkTest  -vvvv
 test-open-leverage-fork :; forge test --fork-url https://phoenix-rpc.plumenetwork.xyz --mc LeveragedBorrowingVaultForkTest --mt test_closeLeveragePosition_CorrectAmounts  -vvvv  
 test-loop-fork :; forge test --fork-url https://test-rpc.plumenetwork.xyz --mc LeveragedBorrowingVaultTest  -vvv
+test-liquidator-fork-spec :; forge test --mc FlashMintLiquidatorTest --mt test_liquidateWithFlashLoan  -vvv
+test-liquidator-fork-fls :; forge test --mc FlashMintLiquidatorTest --mt test_liquidateWithFlashLoan  -vvvv
+test-liquidator-fork :; forge test --mc FlashMintLiquidatorTest  -vvv
