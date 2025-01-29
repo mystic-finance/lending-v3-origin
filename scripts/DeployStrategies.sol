@@ -78,15 +78,15 @@ contract DeployStrategies is DeployUtils, DefaultMarketInput, Script {
     // leverageStrategy.addAllowedCollateralToken(0x81537d879ACc8a290a1846635a0cAA908f8ca3a6);
 
     // devnet
-    // leverageStrategy.addAllowedBorrowToken(0xe644F07B1316f28a7F134998e021eA9f7135F351);
-    // leverageStrategy.addAllowedBorrowToken(0xaA6210015fbf0855F0D9fDA3C415c1B12776Ae74);
-    // leverageStrategy.addAllowedBorrowToken(0x2413b8C79Ce60045882559f63d308aE3DFE0903d);
-    // leverageStrategy.addAllowedBorrowToken(0x401eCb1D350407f13ba348573E5630B83638E30D);
+    leverageStrategy.addAllowedBorrowToken(0xe644F07B1316f28a7F134998e021eA9f7135F351);
+    leverageStrategy.addAllowedBorrowToken(0xaA6210015fbf0855F0D9fDA3C415c1B12776Ae74);
+    leverageStrategy.addAllowedBorrowToken(0x2413b8C79Ce60045882559f63d308aE3DFE0903d);
+    leverageStrategy.addAllowedBorrowToken(0x401eCb1D350407f13ba348573E5630B83638E30D);
 
-    // leverageStrategy.addAllowedCollateralToken(0xe644F07B1316f28a7F134998e021eA9f7135F351);
-    // leverageStrategy.addAllowedCollateralToken(0xaA6210015fbf0855F0D9fDA3C415c1B12776Ae74);
-    // leverageStrategy.addAllowedCollateralToken(0x2413b8C79Ce60045882559f63d308aE3DFE0903d);
-    // leverageStrategy.addAllowedCollateralToken(0x401eCb1D350407f13ba348573E5630B83638E30D);
+    leverageStrategy.addAllowedCollateralToken(0xe644F07B1316f28a7F134998e021eA9f7135F351);
+    leverageStrategy.addAllowedCollateralToken(0xaA6210015fbf0855F0D9fDA3C415c1B12776Ae74);
+    leverageStrategy.addAllowedCollateralToken(0x2413b8C79Ce60045882559f63d308aE3DFE0903d);
+    leverageStrategy.addAllowedCollateralToken(0x401eCb1D350407f13ba348573E5630B83638E30D);
     vm.stopBroadcast();
 
     // Write market deployment JSON report at /reports

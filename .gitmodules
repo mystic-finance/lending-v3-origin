@@ -13,3 +13,6 @@
 [submodule "lib/v3-core"]
 	path = lib/v3-core
 	url = https://github.com/uniswap/v3-core
+[submodule "lib/endpoint-v1-solidity-examples"]
+	path = lib/endpoint-v1-solidity-examples
+	url = https://github.com/LayerZero-Labs/endpoint-v1-solidity-examples

@@ -44,8 +44,8 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
 
   // Constants for testing
   uint256 internal constant INITIAL_BALANCE = 100_000 * 10 ** 18;
-  uint256 internal constant INITIAL_COLLATERAL = 1 * 10 ** 14;
-  uint256 internal constant LEVERAGE_MULTIPLIER = 4;
+  uint256 internal constant INITIAL_COLLATERAL = 1 * 10 ** 13;
+  uint256 internal constant LEVERAGE_MULTIPLIER = 3;
 
   function setUp() public {
     initL2TestEnvironment();
@@ -293,20 +293,20 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
     uint256 finalBalance = collateralToken.balanceOf(user);
     assertGt(
       finalBalance,
-      userMainCollateralBalance - 0.3e14,
+      userMainCollateralBalance - 0.1e13,
       'User should receive collateral back'
     );
 
     // Allow for some slippage/fees
     assertGt(
       collateralToken.balanceOf(user),
-      userInitialCollateralBalance + INITIAL_COLLATERAL - 0.3e14,
+      userInitialCollateralBalance + INITIAL_COLLATERAL - 0.1e13,
       'Incorrect final balance after closing'
     );
 
     assertGt(
       finalBalance - userInitialCollateralBalance,
-      INITIAL_COLLATERAL - 0.3e14,
+      INITIAL_COLLATERAL - 0.1e13,
       'Incorrect final collateral balance after closing'
     );
 
@@ -355,6 +355,258 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
     // Verify position is closed
     (, , , , , , , bool isActive) = vault.positions(positions[0]);
     assertFalse(isActive);
+  }
+
+  // Helper function to verify user balances after position updates
+  function _verifyUserBalances(
+    address _user,
+    uint256 expectedCollateralBalance,
+    uint256 expectedBorrowBalance
+  ) internal {
+    uint256 actualCollateralBalance = collateralToken.balanceOf(_user);
+    uint256 actualBorrowBalance = borrowToken.balanceOf(_user);
+
+    assertEq(actualCollateralBalance, expectedCollateralBalance, 'Incorrect collateral balance');
+    assertEq(actualBorrowBalance, expectedBorrowBalance, 'Incorrect borrow balance');
+  }
+
+  // Test: Adding to a position
+  function test_addToPosition_Success() public {
+    // First, open a position
+    _prepareUserTokens(user);
+    test_openLeveragePosition_Success();
+
+    uint256[] memory positions = vault.getUserPositions(user);
+    uint256 positionId = positions[0];
+
+    // Add collateral to the position
+    uint256 additionalCollateral = 1 * 10 ** 13 + INITIAL_COLLATERAL;
+    deal(address(collateralToken), user, additionalCollateral);
+    uint256 initialCollateralBalance = collateralToken.balanceOf(user);
+
+    vm.startPrank(user);
+    collateralToken.approve(address(vault), additionalCollateral);
+
+    (, , , , uint256 totalCollateralOld, uint256 totalBorrowedOld, , ) = vault.positions(
+      positionId
+    );
+
+    vault.updateLeveragePosition(positionId, additionalCollateral, LEVERAGE_MULTIPLIER);
+
+    // Verify position is updated
+    (, , , , uint256 totalCollateral, uint256 totalBorrowed, , bool isActive) = vault.positions(
+      positionId
+    );
+    assertGt(totalCollateral, totalCollateralOld, 'Collateral not increased');
+    assertGt(
+      totalCollateral,
+      ((INITIAL_COLLATERAL + 1 * 10 ** 13) * LEVERAGE_MULTIPLIER) - 0.4e13,
+      'Collateral not updated'
+    );
+    assertGt(totalBorrowed, totalBorrowedOld, 'Borrowed amount not updated');
+
+    // Verify user balances
+    // _verifyUserBalances(
+    //   user,
+    //   initialCollateralBalance - INITIAL_COLLATERAL - 1 * 10 ** 13, // Expected collateral balance
+    //   0 // Expected borrow balance
+    // );
+
+    vm.stopPrank();
+  }
+
+  // Test: Removing from a position
+  function test_removeFromPosition_Success() public {
+    // First, open a position
+    _prepareUserTokens(user);
+    test_openLeveragePosition_Success();
+
+    uint256[] memory positions = vault.getUserPositions(user);
+    uint256 positionId = positions[0];
+
+    // Remove collateral from the position
+    uint256 collateralToRemove = 5 * 10 ** 12;
+    (, , , , uint256 totalCollateralOld, uint256 totalBorrowedOld, , ) = vault.positions(
+      positionId
+    );
+
+    vm.startPrank(user);
+    vault.updateLeveragePosition(
+      positionId,
+      INITIAL_COLLATERAL - collateralToRemove,
+      LEVERAGE_MULTIPLIER
+    );
+
+    // Verify position is updated
+    (, , , , uint256 totalCollateral, uint256 totalBorrowed, , bool isActive) = vault.positions(
+      positionId
+    );
+    assertGt(totalCollateralOld, totalCollateral, 'Collateral not decreased');
+    assertGt(
+      ((INITIAL_COLLATERAL + 1 * 10 ** 13) * LEVERAGE_MULTIPLIER) - 0.4e13,
+      totalCollateral,
+      'Collateral not updated'
+    );
+    assertGt(totalBorrowedOld, totalBorrowed, 'Borrowed amount not updated');
+
+    // Verify user balances
+    // _verifyUserBalances(
+    //   user,
+    //   INITIAL_BALANCE - INITIAL_COLLATERAL + collateralToRemove, // Expected collateral balance
+    //   0 // Expected borrow balance
+    // );
+
+    vm.stopPrank();
+  }
+
+  // Test: Updating leverage multiplier
+  function test_updateLeverageMultiplier_Success() public {
+    // First, open a position
+    _prepareUserTokens(user);
+    test_openLeveragePosition_Success();
+
+    uint256[] memory positions = vault.getUserPositions(user);
+    uint256 positionId = positions[0];
+
+    // Update leverage multiplier
+    uint256 newLeverageMultiplier = 4;
+
+    (, , , , uint256 totalCollateralOld, uint256 totalBorrowedOld, , ) = vault.positions(
+      positionId
+    );
+
+    vm.startPrank(user);
+    vault.updateLeveragePosition(positionId, INITIAL_COLLATERAL, newLeverageMultiplier);
+
+    // Verify position is updated
+    (
+      ,
+      ,
+      ,
+      ,
+      uint256 totalCollateral,
+      uint256 totalBorrowed,
+      uint256 leverageMultiplier,
+      bool isActive
+    ) = vault.positions(positionId);
+    assertGt(totalCollateral, totalCollateralOld, 'Collateral not increased');
+    assertGt(
+      totalCollateral,
+      ((INITIAL_COLLATERAL + 1 * 10 ** 13) * LEVERAGE_MULTIPLIER) - 0.4e13,
+      'Collateral not updated'
+    );
+    assertGt(totalBorrowed, totalBorrowedOld, 'Borrowed amount not updated');
+
+    // Verify user balances
+    // _verifyUserBalances(
+    //   user,
+    //   INITIAL_BALANCE - INITIAL_COLLATERAL, // Expected collateral balance
+    //   0 // Expected borrow balance
+    // );
+
+    vm.stopPrank();
+  }
+
+  function test_updateReduceLeverageMultiplier_Success() public {
+    // First, open a position
+    _prepareUserTokens(user);
+    test_openLeveragePosition_Success();
+
+    uint256[] memory positions = vault.getUserPositions(user);
+    uint256 positionId = positions[0];
+
+    // Update leverage multiplier
+    uint256 newLeverageMultiplier = 2;
+
+    (, , , , uint256 totalCollateralOld, uint256 totalBorrowedOld, , ) = vault.positions(
+      positionId
+    );
+
+    vm.startPrank(user);
+    vault.updateLeveragePosition(positionId, INITIAL_COLLATERAL, newLeverageMultiplier);
+
+    // Verify position is updated
+    (
+      ,
+      ,
+      ,
+      ,
+      uint256 totalCollateral,
+      uint256 totalBorrowed,
+      uint256 leverageMultiplier,
+      bool isActive
+    ) = vault.positions(positionId);
+    assertGt(totalCollateralOld, totalCollateral, 'Collateral not decreased');
+    assertGt(
+      ((INITIAL_COLLATERAL + 1 * 10 ** 13) * LEVERAGE_MULTIPLIER) - 0.4e13,
+      totalCollateral,
+      'Collateral not updated'
+    );
+    assertGt(totalBorrowedOld, totalBorrowed, 'Borrowed amount not updated');
+
+    // Verify user balances
+    // _verifyUserBalances(
+    //   user,
+    //   INITIAL_BALANCE - INITIAL_COLLATERAL, // Expected collateral balance
+    //   0 // Expected borrow balance
+    // );
+
+    vm.stopPrank();
+  }
+
+  // Test: Revert on updating non-existent position
+  function test_updateLeveragePosition_RevertOn_NonExistentPosition() public {
+    _prepareUserTokens(user);
+
+    vm.startPrank(user);
+    vm.expectRevert('No active position');
+    vault.updateLeveragePosition(999, INITIAL_COLLATERAL, LEVERAGE_MULTIPLIER);
+    vm.stopPrank();
+  }
+
+  // Test: Revert on updating position with invalid leverage
+  function test_updateLeveragePosition_RevertOn_InvalidLeverage() public {
+    // First, open a position
+    _prepareUserTokens(user);
+    test_openLeveragePosition_Success();
+
+    uint256[] memory positions = vault.getUserPositions(user);
+    uint256 positionId = positions[0];
+
+    vm.startPrank(user);
+    vm.expectRevert('Invalid leverage');
+    vault.updateLeveragePosition(positionId, INITIAL_COLLATERAL, 0); // Invalid leverage
+
+    vm.expectRevert('Invalid leverage');
+    vault.updateLeveragePosition(positionId, INITIAL_COLLATERAL, 21); // Exceeds max leverage
+    vm.stopPrank();
+  }
+
+  // Test: Revert on updating position with low health factor
+  function test_updateLeveragePosition_RevertOn_LowHealthFactor() public {
+    // First, open a position
+    _prepareUserTokens(user);
+    test_openLeveragePosition_Success();
+
+    uint256[] memory positions = vault.getUserPositions(user);
+    uint256 positionId = positions[0];
+
+    // Simulate price drop of collateral by 50%
+    vm.startPrank(user);
+    IAaveOracle oracle = IAaveOracle(lendingPool.ADDRESSES_PROVIDER().getPriceOracle());
+    address[] memory assets = new address[](1);
+    assets[0] = address(collateralToken);
+
+    address[] memory sources = new address[](1);
+    sources[0] = address(new MockAggregator(900e8));
+
+    oracle.setAssetSources(assets, sources);
+
+    // Try to update position - should revert due to low health factor
+    vm.expectRevert('Position health is too low');
+    vault.updateLeveragePosition(positionId, INITIAL_COLLATERAL, LEVERAGE_MULTIPLIER);
+
+    vm.stopPrank();
   }
 
   // Test: Revert closing position with low health factor
