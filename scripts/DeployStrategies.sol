@@ -125,6 +125,14 @@ contract DeployStrategies is DeployUtils, DefaultMarketInput, Script {
 //   loopStrategy 0x17F6e6518E25400Ac2B8fd0F3517b0c1f97EE298
 //   leverageStrategy 0xcC616B1E21181e857678765EA2119e64D5A72011
 
+// devnet 4
+// ambientSwapper 0xE9e3A2027f049720911227BF39413EEB7332Dcf8
+//   flashLoaner 0x87776ADE28Cf941FA768c146Aa8F6AE8DBEa56fE
+//   swapController 0x441346b778C7e448817C7184ed7f6F3F486114E9
+//   flashloanController 0x1b3064AA01e9351B9CfF1742043896e9663cAa09
+//   loopStrategy 0x1969A5aE50c5e3e73999F3bfE86221a3dd6BA254
+//   leverageStrategy 0xBF864AD33002b46996CbF4168312a2aB679217F4
+
 // mainnet 1
 // == Logs ==
 //   Aave V3 Batch Listing
@@ -153,7 +161,7 @@ contract DeployStrategies is DeployUtils, DefaultMarketInput, Script {
 //   sender 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38
 //   ambientSwapper 0x6A9Bcc9107C52C50E9b096daC7268BE9F0d028f8  old - 0xa8A18e3C1B5c51bcC64332f23FC4B1BB0ab64cCa
 //   flashLoaner 0xA3954b212F70C41c2f54fe6E5684BAa09FF775b3
-//   swapController 0x0f8d9480ca937441c166E39e2d9f90a7A6031194
+//   swapController 0xD914F98AF8197cc461e9F1237d8D76e3b332D6c8  old - 0x0f8d9480ca937441c166E39e2d9f90a7A6031194
 //   flashloanController 0x5fA6836e652d7d43089EAc7df3a8360b5ccdCf9A
 //   loopStrategy 0x1EdF7b468731b2a15A48fcA02D6949fcb7f3D8f6
-//   leverageStrategy 0x5E71B0de6c8B71997941fbF15E399ab8dcd125AE  old - 0x5C4DdF6b3d65E7cfF4A6b0B1Ee4DcF45b4A08246
+//   leverageStrategy 0x249328B0F91A21eEcBf89862B9b181c522CEa5d5 old - 0x5E71B0de6c8B71997941fbF15E399ab8dcd125AE  older - 0x5C4DdF6b3d65E7cfF4A6b0B1Ee4DcF45b4A08246

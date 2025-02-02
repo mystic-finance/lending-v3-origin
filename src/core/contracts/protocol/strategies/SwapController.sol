@@ -79,6 +79,8 @@ contract SwapController is Ownable {
     IERC20(tokenOut).transferFrom(address(currentSwapper), address(this), amountOut);
     IERC20(tokenOut).transfer(msg.sender, amountOut);
 
+    require(amountOut > amountOutMinimum, "Not enough amount Out");
+
     emit SwapExecuted(tokenIn, tokenOut, amountIn, amountOut);
 
     return amountOut;

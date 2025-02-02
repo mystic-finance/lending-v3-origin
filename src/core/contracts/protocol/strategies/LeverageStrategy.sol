@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/access/Ownable.sol';
-import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
+import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
+import {ReentrancyGuard} from '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 import {IERC20Metadata} from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {IPool} from '../../interfaces/IPool.sol';
 import {Math} from '@openzeppelin/contracts/utils/math/Math.sol';
@@ -356,23 +356,22 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
 
     // Swap collateral to repay flash loan
     uint256 amountOwed = amount + premium;
-    uint256 expectedAmountIn = swapController.getQuote(
-      position.borrowToken,
-      position.collateralToken,
-      amountOwed,
-      DEFAULT_POOL_FEE
-    );
-    require(expectedAmountIn > 0, 'Invalid swap quote');
-    // uint256 maxAmountIn = (expectedAmountIn * (10000)) / (10000 - DEFAULT_POOL_FEE);
-    uint256 maxAmountIn = (expectedAmountIn * (10000 + DEFAULT_POOL_FEE + SLIPPAGE_TOLERANCE)) /
-      10000;
-    require(withdrawnAmount > maxAmountIn, 'invalid position');
+    // uint256 expectedAmountIn = swapController.getQuote(
+    //   position.borrowToken,
+    //   position.collateralToken,
+    //   amountOwed,
+    //   DEFAULT_POOL_FEE
+    // );
+    // require(expectedAmountIn > 0, 'Invalid swap quote');
+    // uint256 maxAmountIn = (expectedAmountIn * (10000 + DEFAULT_POOL_FEE + SLIPPAGE_TOLERANCE)) /
+    //   10000;
+    // require(withdrawnAmount > maxAmountIn, 'invalid position');
 
-    IERC20(position.collateralToken).approve(address(swapController), maxAmountIn);
+    IERC20(position.collateralToken).approve(address(swapController), withdrawnAmount);
     uint256 swappedAmount = swapController.swap(
       position.collateralToken,
       position.borrowToken,
-      maxAmountIn,
+      withdrawnAmount,
       amountOwed,
       DEFAULT_POOL_FEE
     );
@@ -381,17 +380,19 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     IERC20(position.borrowToken).approve(address(params.flashLoanController), amountOwed);
 
     // Return remaining collateral to user
-    uint256 remainingCollateral = withdrawnAmount - maxAmountIn;
-    if (remainingCollateral > 0) {
-      IERC20(position.collateralToken).transfer(params.user, remainingCollateral);
-    }
-
-    // Return excess borrowed tokens if any
     uint256 excessBorrowed = swappedAmount - amountOwed;
     if (excessBorrowed > 0) {
-      IERC20(position.borrowToken).transfer(params.user, excessBorrowed);
+      IERC20(position.borrowToken).approve(address(swapController), excessBorrowed);
+      uint256 swappedAmount = swapController.swap(
+        position.borrowToken,
+        position.collateralToken,
+        excessBorrowed,
+        0,
+        DEFAULT_POOL_FEE
+      );
+      IERC20(position.collateralToken).transfer(params.user, swappedAmount);
     }
-
+    
     emit LeveragePositionClosed(params.positionId, params.user, withdrawnAmount);
     delete positions[params.positionId];
     _removeUserPosition(params.user, params.positionId);
@@ -632,7 +633,7 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
       position.collateralToken,
       position.borrowToken,
       position.initialCollateral * (newLeverageMultiplier - 1),
-      DEFAULT_POOL_FEE // 0% buffer cause of flashloan
+      0 // 0% buffer cause of flashloan
     );
     require(newBorrowedAmount > 0, 'Invalid swap quote');
 
@@ -782,23 +783,12 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     );
 
     uint256 amountOwed = amount + premium;
-    uint256 expectedAmountIn = swapController.getQuote(
-      position.borrowToken,
-      position.collateralToken,
-      amountOwed,
-      DEFAULT_POOL_FEE
-    );
-    require(expectedAmountIn > 0, 'Invalid swap quote');
-    // uint256 maxAmountIn = (expectedAmountIn * (10000)) / (10000 - DEFAULT_POOL_FEE);
-    uint256 maxAmountIn = (expectedAmountIn * (10000 + DEFAULT_POOL_FEE + SLIPPAGE_TOLERANCE)) /
-      10000;
-    require(withdrawnAmount > maxAmountIn, 'invalid position');
-
-    IERC20(position.collateralToken).approve(address(swapController), maxAmountIn);
+  
+    IERC20(position.collateralToken).approve(address(swapController), withdrawnAmount);
     uint256 swappedAmount = swapController.swap(
       position.collateralToken,
       position.borrowToken,
-      maxAmountIn,
+      withdrawnAmount,
       amountOwed,
       DEFAULT_POOL_FEE
     );
@@ -807,17 +797,17 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     IERC20(position.borrowToken).approve(address(params.flashLoanController), amountOwed);
 
     // Return remaining collateral to user
-    if (withdrawnAmount - maxAmountIn > 0) {
-      IERC20(position.collateralToken).transfer(
-        params.user,
-        withdrawnAmount - maxAmountIn
-      );
-    }
-
-    // Return excess borrowed tokens if any
     uint256 excessBorrowed = swappedAmount - amountOwed;
     if (excessBorrowed > 0) {
-      IERC20(position.borrowToken).transfer(params.user, excessBorrowed);
+      IERC20(position.borrowToken).approve(address(swapController), excessBorrowed);
+      uint256 swappedAmount = swapController.swap(
+        position.borrowToken,
+        position.collateralToken,
+        excessBorrowed,
+        0,
+        DEFAULT_POOL_FEE
+      );
+      IERC20(position.collateralToken).transfer(params.user, swappedAmount);
     }
 
     // Update the position's total collateral and borrowed amount
@@ -899,26 +889,17 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
         address(this),
         collateralToWithdraw
       );
+
       uint256 withdrawnAmount = lendingPool.withdraw(params.collateralToken, collateralToWithdraw, address(this));
 
       // Swap part of the collateral to repay the flash loan
       uint256 amountOwed = amount + premium;
-      uint256 expectedAmountIn = swapController.getQuote(
-        position.borrowToken,
-        position.collateralToken,
-        amountOwed,
-        DEFAULT_POOL_FEE
-      );
-      require(expectedAmountIn > 0, 'Invalid swap quote');
-      uint256 maxAmountIn = (expectedAmountIn * (10000 + DEFAULT_POOL_FEE )) /
-        10000;
-      require(withdrawnAmount > maxAmountIn, 'invalid position');
-
-      IERC20(position.collateralToken).approve(address(swapController), maxAmountIn);
+      IERC20(position.collateralToken).approve(address(swapController), withdrawnAmount);
+      
       uint256 swappedAmount = swapController.swap(
         position.collateralToken,
         position.borrowToken,
-        maxAmountIn,
+        withdrawnAmount,
         amountOwed,
         DEFAULT_POOL_FEE
       );
@@ -927,18 +908,18 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
       IERC20(position.borrowToken).approve(address(params.flashLoanController), amountOwed);
 
       // Return remaining collateral to user
-      if (withdrawnAmount - maxAmountIn > 0) {
-        IERC20(position.collateralToken).transfer(
-          params.user,
-          withdrawnAmount - maxAmountIn
+      uint256 excessBorrowed = swappedAmount - amountOwed;
+      if (excessBorrowed > 0) {
+        IERC20(position.borrowToken).approve(address(swapController), excessBorrowed);
+        uint256 swappedAmount = swapController.swap(
+          position.borrowToken,
+          position.collateralToken,
+          excessBorrowed,
+          0,
+          DEFAULT_POOL_FEE
         );
+        IERC20(position.collateralToken).transfer(params.user, swappedAmount);
       }
-
-    // Return excess borrowed tokens if any
-    uint256 excessBorrowed = swappedAmount - amountOwed;
-    if (excessBorrowed > 0) {
-      IERC20(position.borrowToken).transfer(params.user, excessBorrowed);
-    }
 
       // Update the position's total collateral and borrowed amount
       position.totalCollateral -= collateralToWithdraw;
