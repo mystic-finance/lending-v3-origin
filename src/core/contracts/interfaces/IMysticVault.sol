@@ -27,26 +27,14 @@ interface IMysticVault is IERC4626 {
 
   /// @notice Adds a new asset allocation to the vault
   /// @param asset Address of the asset
-  /// @param aToken Address of the corresponding aToken
   /// @param oracle Address of the price oracle for the asset
   /// @param allocationPercentage Percentage of allocation for this asset (in basis points)
   /// @param mysticPoolAddress Address of the Mystic pool for this asset
-  function addAssetAllocation(
+  function updateAssetAllocation(
     address asset,
-    address aToken,
     address oracle,
     uint256 allocationPercentage,
     address mysticPoolAddress
-  ) external;
-
-  /// @notice Updates the allocation percentage for an existing asset
-  /// @param asset Address of the asset
-  /// @param mysticPoolAddress Address of the Mystic pool for this asset
-  /// @param newAllocationPercentage New allocation percentage (in basis points)
-  function updateAssetAllocation(
-    address asset,
-    address mysticPoolAddress,
-    uint256 newAllocationPercentage
   ) external;
 
   /// @notice Reallocates assets based on the new allocation percentage

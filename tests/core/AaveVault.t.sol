@@ -108,7 +108,7 @@ contract MysticVaultTest is TestnetProcedures {
   function testUpdateAssetAllocation() public {
     vm.startPrank(curator);
     vault.addMysticPool(address(baseAsset), MOCK_PRICE_FEED, 1000, poolAddress); // 10%
-    vault.updateAssetAllocation(address(baseAsset), poolAddress, 500); // Update to 5%
+    vault.updateAssetAllocation(address(baseAsset), MOCK_PRICE_FEED, 500,poolAddress); // Update to 5%
     (, , , uint256 allocationPercentage) = vault.assetAllocations(poolAddress, address(baseAsset));
 
     assertEq(allocationPercentage, 500, 'Asset allocation should be updated');

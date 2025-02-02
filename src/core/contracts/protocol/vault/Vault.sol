@@ -4,6 +4,7 @@ pragma solidity ^0.8.10;
 import '../../dependencies/openzeppelin/contracts/ERC4626.sol';
 import '../../dependencies/openzeppelin/contracts/Math.sol';
 import '../../dependencies/openzeppelin/contracts/IERC20.sol';
+import '../../dependencies/openzeppelin/contracts/SafeERC20.sol';
 import '../../dependencies/openzeppelin/contracts/Ownable.sol';
 import '../../interfaces/IPool.sol';
 import '../../dependencies/chainlink/AggregatorV3Interface.sol';
@@ -16,20 +17,30 @@ import {ReserveConfiguration} from 'src/core/contracts/protocol/libraries/config
 contract MysticVault is ERC4626, Ownable, IMysticVault {
   using UserConfiguration for DataTypes.UserConfigurationMap;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
+  using SafeERC20 for IERC20;
 
   mapping(address => mapping(address => AssetAllocation)) public assetAllocations;
   mapping(address => address[]) public poolAssets;
   address[] public mysticPools;
   mapping(address => bool) public curators;
   mapping(address => WithdrawalRequest) public withdrawalRequests;
+  mapping(address => uint256) public lastValidPrice;
 
   struct APRData {
     uint256 supplyAPR;
     uint256 borrowAPR;
   }
+  // Struct to cache deposit data
+  struct DepositData {
+      address mysticPool;
+      AssetAllocation allocation;
+      uint256 amountToDeposit;
+  }
 
+  // Array to store cached deposits
+  DepositData[] depositsToProcess;
   uint256 public constant PERCENTAGE_SCALE = 10000;
-  uint256 public constant priceFeedUpdateInterval_ = 3600; // 1 hour
+  uint256 public constant priceFeedUpdateInterval = 3600; // 1 hour
   uint256 public withdrawalTimelock;
   uint256 public maxDeposit_;
   uint256 public maxWithdrawal_;
@@ -43,6 +54,7 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
   event AssetAllocationAdded(address asset, address mysticPool, uint256 allocationPercentage);
   event AssetAllocationUpdated(address asset, address mysticPool, uint256 newAllocationPercentage);
   event MysticPoolAdded(address mysticPool);
+  event MysticPoolRemoved(address mysticPool);
   event Rebalanced();
   event FeeAccrued(uint256 amount);
   event FeesWithdrawn(uint256 amount);
@@ -67,6 +79,7 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
     feeRecipient = _feeRecipient;
 
     _transferOwnership(_initialOwner);
+    _mint(address(this), 1e18); // Mint initial shares to the vault
   }
 
   modifier onlyCurator() {
@@ -96,7 +109,7 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
     address mysticPoolAddress
   ) external onlyCurator {
     _addMysticPool(mysticPoolAddress);
-    addAssetAllocation(newAsset, address(0), oracle, allocationPercentage, mysticPoolAddress); // atoken is generated in addAssetAllocation
+    updateAssetAllocation(newAsset, oracle, allocationPercentage, mysticPoolAddress); // atoken is generated in updateAssetAllocation
   }
 
   function _addMysticPool(address mysticPoolAddress) internal {
@@ -106,9 +119,16 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
     emit MysticPoolAdded(mysticPoolAddress);
   }
 
-  function addAssetAllocation(
+  function _removeMysticPool(address mysticPoolAddress) internal {
+    require(mysticPoolAddress != address(0), 'Pool address cannot be zero');
+    uint idx = _mysticPoolIndex(mysticPoolAddress);
+    mysticPools[idx] = mysticPools[mysticPools.length -1];
+    mysticPools.pop();
+    emit MysticPoolRemoved(mysticPoolAddress);
+  }
+
+  function updateAssetAllocation(
     address newAsset,
-    address,
     address oracle,
     uint256 allocationPercentage,
     address mysticPoolAddress
@@ -116,19 +136,26 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
     require(newAsset != address(0), 'Asset address cannot be zero');
     require(oracle != address(0), 'Oracle address cannot be zero');
     require(mysticPoolAddress != address(0), 'Pool address cannot be zero');
-    require(allocationPercentage != 0, 'Allocation Percentage cannot be zero');
 
     address aToken = _getAssetATokenAddress(mysticPoolAddress);
+    require(aToken != address(0), 'Asset not supported by pool');
+    
     if (assetAllocations[mysticPoolAddress][newAsset].allocationPercentage > 0) {
-      updateAssetAllocation(newAsset, mysticPoolAddress, allocationPercentage);
+      // update or remove pool by setting allocation% to zero
+      _updateAssetAllocation(newAsset, mysticPoolAddress, allocationPercentage);
+      _rebalance();
+      if(allocationPercentage == 0){
+        _removeMysticPool(mysticPoolAddress);
+      }
     } else {
+      // new pool addtion and allocation
       require(
         allocationPercentage <= PERCENTAGE_SCALE && allocationPercentage > 0,
         'Allocation must be <= 100%'
       );
       require(_isMysticPoolAdded(mysticPoolAddress), 'Mystic pool not added');
       require(
-        _checkTotalAllocation(newAsset, mysticPoolAddress, allocationPercentage),
+        _checkTotalAllocation(newAsset, allocationPercentage),
         'Total allocation exceeds 100%'
       );
 
@@ -144,24 +171,25 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
         poolAssets[mysticPoolAddress].push(newAsset);
         // we expect one asset per mysticPoolAddress so one in the array
       }
+      _rebalance();
 
-      IERC20(newAsset).approve(mysticPoolAddress, type(uint256).max);
+      IERC20(newAsset).safeApprove(mysticPoolAddress, type(uint256).max);
       emit AssetAllocationAdded(newAsset, mysticPoolAddress, allocationPercentage);
     }
   }
 
-  function updateAssetAllocation(
+  function _updateAssetAllocation(
     address updateAsset,
     address mysticPoolAddress,
     uint256 newAllocationPercentage
-  ) public onlyCurator {
+  ) internal {
     require(
       newAllocationPercentage <= PERCENTAGE_SCALE && newAllocationPercentage > 0,
       'Allocation must be <= 100%'
     );
     require(_isMysticPoolAdded(mysticPoolAddress), 'Mystic pool not added');
     require(
-      _checkTotalAllocation(updateAsset, mysticPoolAddress, newAllocationPercentage),
+      _checkTotalAllocation(updateAsset, newAllocationPercentage),
       'Total allocation exceeds 100%'
     );
     require(updateAsset == asset(), 'asset does not match base asset');
@@ -175,23 +203,33 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
     address mysticPoolAddress,
     uint256 newAllocationPercentage
   ) external onlyCurator {
-    updateAssetAllocation(asset, mysticPoolAddress, newAllocationPercentage);
+    _updateAssetAllocation(asset, mysticPoolAddress, newAllocationPercentage);
     _rebalance();
   }
 
+
   function _checkTotalAllocation(
     address asset,
-    address mysticPoolAddress,
     uint256 newAllocation
   ) internal view returns (bool) {
-    uint256 totalAllocation = newAllocation;
-    for (uint256 i = 0; i < poolAssets[mysticPoolAddress].length; i++) {
-      address currentAsset = poolAssets[mysticPoolAddress][i];
-      if (currentAsset != asset) {
-        totalAllocation += assetAllocations[mysticPoolAddress][currentAsset].allocationPercentage;
+      //allocation percentage is per asset, meaning usdc allocation must sum up to 100% for a set of pools, 
+      // but same set of pools might have different allocations of eth summing up to 100 also
+      uint256 totalAllocation = newAllocation;
+
+      // Iterate through all pools to calculate the total allocation for the asset
+      for (uint256 i = 0; i < mysticPools.length; i++) {
+          address mysticPool = mysticPools[i];
+
+          // Skip the current pool if the asset is not allocated in it
+          if (!_isAssetInPool(asset, mysticPool)) {
+              continue;
+          }
+
+          // Add the allocation for the asset in the current pool
+          totalAllocation += assetAllocations[mysticPool][asset].allocationPercentage;
       }
-    }
-    return totalAllocation <= PERCENTAGE_SCALE;
+
+      return totalAllocation <= PERCENTAGE_SCALE;
   }
 
   function _isAssetInPool(address asset, address mysticPoolAddress) internal view returns (bool) {
@@ -212,19 +250,17 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
     return false;
   }
 
+  function _mysticPoolIndex(address mysticPoolAddress) internal view returns (uint256) {
+    for (uint256 i = 0; i < mysticPools.length; i++) {
+      if (mysticPools[i] == mysticPoolAddress) {
+        return i;
+      }
+    }
+    // it should fail if pool is large enough to reach uint256 mas
+    return type(uint256).max - 1;
+  }
+
   function totalAssets() public view override(IERC4626, ERC4626) returns (uint256) {
-    // uint256 total = 0;
-    // for (uint256 i = 0; i < mysticPools.length; i++) {
-    //   address mysticPool = mysticPools[i];
-    //   for (uint256 j = 0; j < poolAssets[mysticPool].length; j++) {
-    //     address asset = poolAssets[mysticPool][j];
-    //     AssetAllocation memory allocation = assetAllocations[mysticPool][asset];
-    //     uint256 balance = IERC20(allocation.asset).balanceOf(address(this)) +
-    //       IERC20(allocation.aToken).balanceOf(address(this));
-    //     total += _convertToUsd(balance, allocation.oracle);
-    //   }
-    // }
-    // return total;
     return totalDeposited;
   }
 
@@ -313,8 +349,8 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
 
     // deposit collateral if needed
     if (collateralAmount > 0) {
-      IERC20(collateralAsset).transferFrom(msg.sender, address(this), collateralAmount);
-      IERC20(collateralAsset).approve(mysticPoolAddress, collateralAmount);
+      IERC20(collateralAsset).safeTransferFrom(msg.sender, address(this), collateralAmount);
+      IERC20(collateralAsset).safeApprove(mysticPoolAddress, collateralAmount);
       IPool(mysticPoolAddress).supply(collateralAsset, collateralAmount, msg.sender, 0);
     }
 
@@ -332,7 +368,7 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
       deposit(amount, receiver);
     } else {
       IPool(mysticPoolAddress).borrow(asset(), amount, 2, 0, msg.sender);
-      IERC20(asset()).transfer(receiver, amount);
+      IERC20(asset()).safeTransfer(receiver, amount);
     }
   }
 
@@ -388,10 +424,10 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
     require(_isAssetAndPoolSupported(asset(), mysticPoolAddress), 'Asset or pool not supported');
     totalBorrowed -= amount;
 
-    IERC20(asset()).transferFrom(msg.sender, address(this), amount);
+    IERC20(asset()).safeTransferFrom(msg.sender, address(this), amount);
     uint256 allowance = IERC20(asset()).allowance(address(this), mysticPoolAddress);
     if (allowance < amount) {
-      IERC20(asset()).approve(mysticPoolAddress, type(uint256).max);
+      IERC20(asset()).safeApprove(mysticPoolAddress, type(uint256).max);
     }
 
     IPool(mysticPoolAddress).repay(asset(), amount, 2, onBehalfOf);
@@ -407,7 +443,7 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
 
     uint256 allowance = IERC20(asset()).allowance(address(this), mysticPoolAddress);
     if (allowance < amount) {
-      IERC20(asset()).approve(mysticPoolAddress, type(uint256).max);
+      IERC20(asset()).safeApprove(mysticPoolAddress, type(uint256).max);
     }
 
     IPool(mysticPoolAddress).repay(asset(), amount, 2, onBehalfOf);
@@ -431,6 +467,7 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
     uint256 assets,
     uint256 shares
   ) internal override {
+    _rebalance();
     _withdrawFromMystic(assets);
     super._withdraw(caller, receiver, owner, assets, shares);
     totalDeposited -= assets;
@@ -439,40 +476,56 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
   function _rebalance() internal {
     uint256 totalAssetsUsd = totalAssetsInUsd();
 
-    for (uint256 i = 0; i < mysticPools.length; i++) {
-      address mysticPool = mysticPools[i];
-      for (uint256 j = 0; j < poolAssets[mysticPool].length; j++) {
-        address asset = poolAssets[mysticPool][j];
-        AssetAllocation memory allocation = assetAllocations[mysticPool][asset];
-        uint256 targetAllocationUsd = (totalAssetsUsd * allocation.allocationPercentage) /
-          PERCENTAGE_SCALE;
-        uint256 currentAllocationUsd = _convertToUsd(
-          // IERC20(allocation.asset).balanceOf(address(this)) +
-          IERC20(allocation.aToken).balanceOf(address(this)),
-          allocation.oracle
-        );
+    
 
-        if (currentAllocationUsd < targetAllocationUsd) {
-          uint256 amountToDepositUsd = targetAllocationUsd - currentAllocationUsd;
-          uint256 amountToDeposit = _convertFromUsd(amountToDepositUsd, allocation.oracle);
-          _depositToMystic(mysticPool, allocation, amountToDeposit);
-        } else if (currentAllocationUsd > targetAllocationUsd) {
-          uint256 amountToWithdrawUsd = currentAllocationUsd - targetAllocationUsd;
-          uint256 amountToWithdraw = _convertFromUsd(amountToWithdrawUsd, allocation.oracle);
-          _withdrawFromMysticPool(mysticPool, allocation, amountToWithdraw);
+    // First pass: Process all withdrawals
+    for (uint256 i = 0; i < mysticPools.length; i++) {
+        address mysticPool = mysticPools[i];
+        for (uint256 j = 0; j < poolAssets[mysticPool].length; j++) {
+            address asset = poolAssets[mysticPool][j];
+            AssetAllocation memory allocation = assetAllocations[mysticPool][asset];
+
+            uint256 targetAllocationUsd = (totalAssetsUsd * allocation.allocationPercentage) / PERCENTAGE_SCALE;
+            uint256 currentAllocationUsd = _convertToUsd(
+                IERC20(allocation.aToken).balanceOf(address(this)),
+                allocation.oracle
+            );
+
+            if (currentAllocationUsd < targetAllocationUsd) {
+              uint256 amountToDepositUsd = targetAllocationUsd - currentAllocationUsd;
+              uint256 amountToDeposit = _convertFromUsd(amountToDepositUsd, allocation.oracle);
+              depositsToProcess.push(DepositData({
+                    mysticPool: mysticPool,
+                    allocation: allocation,
+                    amountToDeposit: amountToDeposit
+                }));
+            } else if (currentAllocationUsd > targetAllocationUsd) {
+              uint256 amountToWithdrawUsd = currentAllocationUsd - targetAllocationUsd;
+              uint256 amountToWithdraw = _convertFromUsd(amountToWithdrawUsd, allocation.oracle);
+              _withdrawFromMysticPool(mysticPool, allocation, amountToWithdraw);
+            }
         }
-      }
+    }
+
+    // Process cached deposits
+    for (uint256 k = 0; k < depositsToProcess.length; ) {
+        DepositData memory depositData = depositsToProcess[k];
+        _depositToMystic(depositData.mysticPool, depositData.allocation, depositData.amountToDeposit);
+
+        unchecked {
+            k++; 
+        }
     }
 
     emit Rebalanced();
-  }
+}
 
   function _depositToMystic(
     address mysticPool,
     AssetAllocation memory allocation,
     uint256 amount
   ) internal {
-    IERC20(allocation.asset).approve(mysticPool, amount);
+    IERC20(allocation.asset).safeApprove(mysticPool, amount);
     IPool(mysticPool).supply(allocation.asset, amount, address(this), 0);
   }
 
@@ -506,13 +559,32 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
     IPool(mysticPool).withdraw(allocation.asset, amount, address(this));
   }
 
+  function _updateLastValidPrice(address _oracle, uint _price) internal {
+    uint price = _price;
+    if(_price == 0){
+      (, int256 price_, , , ) = AggregatorV3Interface(_oracle).latestRoundData();
+      price = uint256(price_);
+    }
+    lastValidPrice[_oracle] = price;
+  }
+
+  function _priceThresholds(address _oracle) internal view returns (uint, uint) {
+    
+    uint256 price = lastValidPrice[_oracle];
+    uint deviation = price * 2000/PERCENTAGE_SCALE;
+    return (price - deviation, price + deviation);
+  }
+
   function _convertToUsd(uint256 amount, address oracle) internal view returns (uint256) {
     (, int256 price, , uint256 updatedAt, ) = AggregatorV3Interface(oracle).latestRoundData();
     uint decimals = AggregatorV3Interface(oracle).decimals();
+    (uint min, uint max) = _priceThresholds(oracle);
 
     require(price > 0, 'Invalid Price');
     require(decimals > 0, 'Invalid Decimals');
-    // require(updatedAt >= block.timestamp - priceFeedUpdateInterval_, 'Out of Date');
+    require(updatedAt >= block.timestamp - priceFeedUpdateInterval, 'Out of Date');
+    require(uint256(price) >= min && uint256(price) <= max, "Price not within threshold");
+    _updateLastValidPrice(oracle, uint256(price));
     return (amount * uint256(price)) / 10 ** decimals; // Assuming 8 decimal places for price feed
   }
 
@@ -523,17 +595,9 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
 
     require(price > 0, 'Invalid Price');
     require(decimals > 0, 'Invalid Decimals');
-    // require(updatedAt >= block.timestamp - priceFeedUpdateInterval_, 'Out of Date');
+    require(updatedAt >= block.timestamp - priceFeedUpdateInterval, 'Out of Date');
     return (amountUsd * 10 ** decimals) / uint256(price); // Assuming 8 decimal places for price feed
   }
-
-  // function accrueFees() internal returns (uint256 remaining) {
-  //   uint256 totalAssetValue = totalAssets();
-  //   uint256 feeAmount = (totalAssetValue * fee) / PERCENTAGE_SCALE;
-  //   uint256 feeShares = _convertToShares(feeAmount, Math.Rounding.Floor);
-  //   _mint(feeRecipient, feeShares);
-  //   emit FeeAccrued(feeAmount);
-  // }
 
   function accrueFees(uint totalAssetValue) internal returns (uint256 remaining) {
     uint256 feeAmount = (totalAssetValue * fee) / PERCENTAGE_SCALE;
@@ -559,7 +623,7 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
     uint256 feeShares = balanceOf(feeRecipient);
     uint256 feeAssets = _convertToAssets(feeShares, Math.Rounding.Floor);
     _burn(feeRecipient, feeShares);
-    IERC20(asset()).transfer(feeRecipient, feeAssets);
+    IERC20(asset()).safeTransfer(feeRecipient, feeAssets);
     emit FeesWithdrawn(feeAssets);
   }
 
@@ -620,7 +684,9 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
       return APRData(0, 0);
     }
 
-    return APRData(totalSupplyAPR / totalWeight, totalBorrowAPR / totalWeight);
+
+
+    return APRData(totalSupplyAPR / totalWeight, totalBorrowAPR / PERCENTAGE_SCALE);
   }
 
   function _getAssetAPRs(
