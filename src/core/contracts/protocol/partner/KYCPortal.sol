@@ -10,9 +10,8 @@ import {MysticIdentity} from './KYCId.sol';
 
 contract KYCPortal is Ownable {
   using SafeMath for uint256;
-  address timelock;
+  address immutable timelock;
   MysticIdentity identity;
-  // IPoolAddressesProvider public immutable ADDRESSES_PROVIDER;
 
   struct Partner {
     bool isActive;
@@ -41,6 +40,7 @@ contract KYCPortal is Ownable {
   event LiquidatorRemoved(address indexed partner, address indexed liquidator);
   event PartnerRemoved(address indexed partner);
   event UserRemoved(address indexed partner, uint8 poolType);
+  event IdentityUpdated(address oldIdentity, address newIdentity);
 
   constructor(address _timelock, address _identity, address _addressProvider) {
     relayers[msg.sender] = true;
@@ -50,9 +50,6 @@ contract KYCPortal is Ownable {
     timelock = _timelock;
 
     transferOwnership(_timelock);
-    // IACLManager(IPoolAddressesProvider(_addressProvider).getACLManager()).addLiquidatorAdmin(
-    //   _timelock
-    // );
   }
 
   modifier onlyRelayer() {
@@ -108,6 +105,8 @@ contract KYCPortal is Ownable {
       IACLManager(_addressProvider.getACLManager()).addRegulatedPoolUser(partner);
     } else if (poolType == 2) {
       IACLManager(_addressProvider.getACLManager()).addInvestorPoolUser(partner);
+    } else {
+      revert();
     }
   }
 
@@ -133,6 +132,8 @@ contract KYCPortal is Ownable {
       IACLManager(_addressProvider.getACLManager()).removeRegulatedPoolUser(partner);
     } else if (poolType == 2) {
       IACLManager(_addressProvider.getACLManager()).removeInvestorPoolUser(partner);
+    }else {
+      revert();
     }
   }
 
@@ -149,6 +150,8 @@ contract KYCPortal is Ownable {
       IACLManager(_addressProvider.getACLManager()).addInvestorLiquidator(liquidator);
     } else if (liquidationType == 2) {
       IACLManager(_addressProvider.getACLManager()).addRegulatedLiquidator(liquidator);
+    }else {
+      revert();
     }
   }
 
@@ -163,6 +166,8 @@ contract KYCPortal is Ownable {
       IACLManager(_addressProvider.getACLManager()).removeInvestorLiquidator(liquidator);
     } else if (liquidationType == 2) {
       IACLManager(_addressProvider.getACLManager()).removeRegulatedLiquidator(liquidator);
+    } else {
+      revert();
     }
   }
 
@@ -179,8 +184,7 @@ contract KYCPortal is Ownable {
         arr[i].liquidatorType == liquidator.liquidatorType &&
         arr[i].addressProvider == _addressProvider
       ) {
-        index = i;
-        return i + 1;
+        return i;
       }
     }
 
@@ -206,6 +210,7 @@ contract KYCPortal is Ownable {
 
     require(!poolUsers[_hash], 'User already added');
     require(poolType < 3, 'pool type is limited');
+    require(user != address(0), 'zero address');
     poolUsers[_hash] = true;
 
     _addPermissions(user, poolType, _addressProvider);
@@ -225,6 +230,7 @@ contract KYCPortal is Ownable {
 
     require(poolUsers[_hash], 'User not added');
     require(poolType < 3, 'pool type is limited');
+    require(user != address(0), 'zero address');
     poolUsers[_hash] = false;
 
     _removePermissions(user, poolType, _addressProvider);
@@ -281,8 +287,7 @@ contract KYCPortal is Ownable {
     require(partners[_hash].isActive, 'Partner not added');
 
     Liquidator[] memory liquidators = partners[_hash].liquidators;
-    partners[_hash].isActive = true;
-    partners[_hash].timestampAdded = block.timestamp;
+    partners[_hash].isActive = false;
 
     for (uint i = 0; i < liquidators.length; ) {
       _removeLiquidationPermissions(
@@ -324,6 +329,8 @@ contract KYCPortal is Ownable {
 
     bytes32 _hash = keccak256(abi.encode(msg.sender, _addressProvider));
     require(partners[_hash].isActive, 'Partner not found');
+    require(liquidator.liquidatorType < 3, 'pool type is limited');
+    require(liquidator.liquidator != address(0), 'zero address');
     partners[_hash].liquidators.push(
       Liquidator(liquidator.liquidatorType, liquidator.liquidator, address(_addressProvider))
     );
@@ -340,6 +347,8 @@ contract KYCPortal is Ownable {
 
     bytes32 _hash = keccak256(abi.encode(msg.sender, _addressProvider));
     require(partners[_hash].isActive, 'Partner not found');
+    require(liquidator.liquidatorType < 3, 'pool type is limited');
+    require(liquidator.liquidator != address(0), 'zero address');
 
     uint index = _findLiquidatorFromArray(
       partners[_hash].liquidators,
@@ -362,5 +371,17 @@ contract KYCPortal is Ownable {
     );
 
     emit LiquidatorRemoved(msg.sender, liquidator.liquidator);
+  }
+
+  /**
+   * @dev update Mystic Identity.
+   */
+  function updateIdentity(
+    address _identity
+  ) external onlyOwner {
+    address oldIdentity = address(identity);
+    identity = MysticIdentity(_identity);
+    emit IdentityUpdated(oldIdentity, _identity);
+    
   }
 }

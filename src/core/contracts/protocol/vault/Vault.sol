@@ -48,6 +48,7 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
   address public feeRecipient;
   uint256 public totalDeposited;
   uint256 public totalBorrowed;
+  uint256 public MAX_TIMELOCK = 7 days;
 
   event CuratorAdded(address curator);
   event CuratorRemoved(address curator);
@@ -88,16 +89,16 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
   }
 
   modifier onlyCuratorOrOwner() {
-    require(curators[msg.sender] || msg.sender == owner(), 'Not a curator');
+    require(curators[msg.sender] || msg.sender == owner(), 'Not a curator/owner');
     _;
   }
 
-  function addCurator(address curator) external onlyCurator {
+  function addCurator(address curator) external onlyCuratorOrOwner {
     curators[curator] = true;
     emit CuratorAdded(curator);
   }
 
-  function removeCurator(address curator) external onlyCurator {
+  function removeCurator(address curator) external onlyCuratorOrOwner {
     curators[curator] = false;
     emit CuratorRemoved(curator);
   }
@@ -139,7 +140,7 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
 
     address aToken = _getAssetATokenAddress(mysticPoolAddress);
     require(aToken != address(0), 'Asset not supported by pool');
-    
+
     if (assetAllocations[mysticPoolAddress][newAsset].allocationPercentage > 0) {
       // update or remove pool by setting allocation% to zero
       _updateAssetAllocation(newAsset, mysticPoolAddress, allocationPercentage);
@@ -205,6 +206,14 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
   ) external onlyCurator {
     _updateAssetAllocation(asset, mysticPoolAddress, newAllocationPercentage);
     _rebalance();
+  }
+
+  function updateAllocationOracle(
+  address oracle,
+    address asset,
+    address mysticPoolAddress
+  ) external onlyCurator {
+    assetAllocations[mysticPoolAddress][asset].oracle = oracle;
   }
 
 
@@ -317,10 +326,8 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
       .getUserConfiguration(user);
 
     for (uint256 i = 0; i < reserves.length; i++) {
-      bool approvedCollateral = userConfig.isUsingAsCollateral(i);
-
-      if (approvedCollateral) {
-        return true;
+      if (reserves[i] == collateralAsset && userConfig.isUsingAsCollateral(i)) {
+            return true;
       }
     }
 
@@ -373,7 +380,8 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
   }
 
   function withdraw(
-    uint256,
+    //this is to match the erc4626 implementation of withdraw to allow override, but assets is previously computed in requestWithdrawal
+    uint256, 
     address receiver,
     address owner
   ) public override(ERC4626, IERC4626) returns (uint256) {
@@ -385,12 +393,13 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
 
     uint256 assets = withdrawalRequests[owner].assets;
     delete withdrawalRequests[owner];
-    uint withdrawAsset = accrueFees(assets);
+    uint withdrawAsset = _accrueFees(assets, true);
     return super.withdraw(withdrawAsset, receiver, owner);
   }
 
   function redeem(
-    uint256,
+    //this is to match the erc4626 implementation of redeem to allow override, but shares is previously computed in requestWithdrawal
+    uint256, 
     address receiver,
     address owner
   ) public override(ERC4626, IERC4626) returns (uint256) {
@@ -404,13 +413,14 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
     uint shares = _convertToShares(assets, Math.Rounding.Floor);
 
     delete withdrawalRequests[owner];
-    uint withdrawShares = accrueFees(shares, 0);
+    uint withdrawShares = _accrueFees(shares, false);
     return super.redeem(withdrawShares, receiver, owner);
   }
 
   function requestWithdrawal(uint256 assets) external {
     uint shares = _convertToShares(assets, Math.Rounding.Floor);
     require(balanceOf(msg.sender) >= shares, 'Insufficient balance');
+    // throttle max withdrawal at a time to allow reasonable rebalance on each withdrawal
     require(assets <= maxWithdrawal_, 'Withdrawal amount exceeds maximum');
 
     withdrawalRequests[msg.sender] = WithdrawalRequest({
@@ -467,9 +477,11 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
     uint256 assets,
     uint256 shares
   ) internal override {
-    _rebalance();
+    // we expect that pools are rebalanced from eith previous deposits or reallocations,
+    // so no need to rebalance before withdrawal
     _withdrawFromMystic(assets);
     super._withdraw(caller, receiver, owner, assets, shares);
+    _rebalance();
     totalDeposited -= assets;
   }
 
@@ -599,24 +611,25 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
     return (amountUsd * 10 ** decimals) / uint256(price); // Assuming 8 decimal places for price feed
   }
 
-  function accrueFees(uint totalAssetValue) internal returns (uint256 remaining) {
-    uint256 feeAmount = (totalAssetValue * fee) / PERCENTAGE_SCALE;
-    uint256 feeShares = _convertToShares(feeAmount, Math.Rounding.Floor);
-    _transfer(msg.sender, feeRecipient, feeShares);
-    emit FeeAccrued(feeAmount);
+  function _accrueFees(uint value, bool assetNotShares) internal returns (uint256 remaining) {
+    if(assetNotShares){
+      uint256 feeAmount = (value * fee) / PERCENTAGE_SCALE;
+      uint256 feeShares = _convertToShares(feeAmount, Math.Rounding.Floor);
+      _transfer(msg.sender, feeRecipient, feeShares);
+      emit FeeAccrued(feeAmount);
 
-    return totalAssetValue - feeAmount;
+      return value - feeAmount;
+    }else {
+      //trigger function overload without extra params
+      uint256 feeShares = (value * fee) / PERCENTAGE_SCALE;
+      uint256 feeAmount = _convertToAssets(feeShares, Math.Rounding.Floor);
+      _transfer(msg.sender, feeRecipient, feeShares);
+      emit FeeAccrued(feeAmount);
+
+      return value - feeShares;
+    }
   }
 
-  function accrueFees(uint shares, uint) internal returns (uint256 remaining) {
-    //trigger function overload without extra params
-    uint256 feeShares = (shares * fee) / PERCENTAGE_SCALE;
-    uint256 feeAmount = _convertToAssets(feeShares, Math.Rounding.Floor);
-    _transfer(msg.sender, feeRecipient, feeShares);
-    emit FeeAccrued(feeAmount);
-
-    return shares - feeShares;
-  }
 
   function withdrawFees() external {
     require(msg.sender == feeRecipient, 'Only fee recipient can withdraw fees');
@@ -711,6 +724,7 @@ contract MysticVault is ERC4626, Ownable, IMysticVault {
   }
 
   function setWithdrawalTimelock(uint256 newTimelock) external onlyCuratorOrOwner {
+    require(newTimelock <= MAX_TIMELOCK, "Invalid timelock period");
     withdrawalTimelock = newTimelock;
   }
 

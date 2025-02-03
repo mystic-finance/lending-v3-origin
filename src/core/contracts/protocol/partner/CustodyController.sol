@@ -49,12 +49,14 @@ contract CustodyController is AccessControl, ReentrancyGuard, Pausable {
   mapping(address => uint256) public pendingWithdrawals;
   mapping(address => AssetInfo) public supportedAssets;
   mapping(address => uint256) public assetWithdrawalLimits;
+  mapping(bytes32=> mapping(address => uint256)) public assetWithdrawalRequests;
   mapping(address => bool) public approvedTargets;
 
   // State variables
   address public custodyWallet;
   address public repoLocker;
   bytes32 public lastRequestId;
+  uint256 public nonce;
 
   // Events
   event AssetDeposited(address indexed token, uint256 amount, address indexed depositor);
@@ -99,6 +101,8 @@ contract CustodyController is AccessControl, ReentrancyGuard, Pausable {
     _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     _setupRole(TREASURY_MANAGER_ROLE, msg.sender);
     _setupRole(CUSTODIAN_OPERATOR_ROLE, msg.sender);
+    // allow TREASURY_MANAGER_ROLE to update WITHDRAWAL_OPERATOR_ROLE
+    _setRoleAdmin(WITHDRAWAL_OPERATOR_ROLE, TREASURY_MANAGER_ROLE);
 
     // Grant withdrawal operator roles
     for (uint256 i = 0; i < _withdrawalOperators.length; i++) {
@@ -124,14 +128,12 @@ contract CustodyController is AccessControl, ReentrancyGuard, Pausable {
     require(supportedAssets[token].isActive, 'Asset not supported');
     require(amount > 0, 'Invalid deposit amount');
 
-    // Safely transfer tokens from sender to treasury
-    IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
 
     // Update total deposited
     supportedAssets[token].totalDeposited += amount;
 
-    // Transfer to custody wallet
-    IERC20(token).safeTransfer(custodyWallet, amount);
+    // Safely transfer tokens from sender to custodyWallet
+    IERC20(token).safeTransferFrom(msg.sender, custodyWallet, amount);
 
     emit AssetDeposited(token, amount, msg.sender);
   }
@@ -157,7 +159,8 @@ contract CustodyController is AccessControl, ReentrancyGuard, Pausable {
     require(approvedTargets[target], 'Target not approved');
 
     // Check withdrawal limits and create unique request ID
-    bytes32 requestId = keccak256(abi.encodePacked(block.timestamp, msg.sender, block.number));
+    nonce++;
+    bytes32 requestId = keccak256(abi.encodePacked(block.timestamp, msg.sender, nonce));
     lastRequestId = requestId;
 
     // Create withdrawal request
@@ -179,8 +182,11 @@ contract CustodyController is AccessControl, ReentrancyGuard, Pausable {
 
       // Check withdrawal limit if set
       uint256 limit = assetWithdrawalLimits[assets[i]];
+      assetWithdrawalRequests[requestId][assets[i]] += amounts[i];
       if (limit > 0) {
         require(amounts[i] <= limit, 'Exceeds withdrawal limit');
+        // this ensure that even if duplicate asset is withdrawn, the limit per asset still persists
+        require(assetWithdrawalRequests[requestId][assets[i]] <= limit, 'Exceeds withdrawal limit');
       }
 
       pendingWithdrawals[assets[i]] += amounts[i];
@@ -198,7 +204,7 @@ contract CustodyController is AccessControl, ReentrancyGuard, Pausable {
   function updateRequest(
     bytes32 requestId,
     RequestStatus newStatus
-  ) external nonReentrant onlyRole(CUSTODIAN_OPERATOR_ROLE) {
+  ) external nonReentrant whenNotPaused onlyRole(CUSTODIAN_OPERATOR_ROLE) {
     WithdrawalRequest storage request = withdrawalRequests[requestId];
     require(request.requestTime != 0, 'Request does not exist');
     require(uint8(newStatus) > uint8(request.status), 'Invalid status transition');
@@ -238,12 +244,32 @@ contract CustodyController is AccessControl, ReentrancyGuard, Pausable {
   }
 
   /**
+   * @dev Remove a new supported asset
+   * @param token Token address to support
+   */
+  function removeSupportedAsset(address token) external onlyRole(TREASURY_MANAGER_ROLE) {
+    require(token != address(0), 'Invalid token address');
+    require(supportedAssets[token].isActive, 'Asset already deactivated');
+
+    delete supportedAssets[token];
+  }
+
+  /**
    * @dev Add a new supported target
    * @param _target target to support
    */
   function addApprovedTarget(address _target) external onlyRole(TREASURY_MANAGER_ROLE) {
     require(_target != address(0), 'Invalid token address');
     approvedTargets[_target] = true;
+  }
+
+  /**
+   * @dev Remove a new supported target
+   * @param _target target to support
+   */
+  function removeApprovedTarget(address _target) external onlyRole(TREASURY_MANAGER_ROLE) {
+    require(_target != address(0), 'Invalid token address');
+    approvedTargets[_target] = false;
   }
 
   /**
