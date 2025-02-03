@@ -40,6 +40,21 @@ contract DeployPreDepositVault is DeployUtils, DefaultMarketInput, Script {
     console.log('has role', lpToken.hasRole(lpToken.DEFAULT_ADMIN_ROLE(), deployer));
 
     lpToken.grantRole(lpToken.MINTER_ROLE(), address(vault));
+
+    // StoneBeraVault vault = StoneBeraVault(0x2D39f0D5d4b19D5d8f2B3d6757CB4BB5147b7447);
+    // OracleConfigurator configurator = OracleConfigurator(0x1F263995486a9aCfD648D6Cff5206f090c54470f);
+    // MainOracle mainOracleEth = new MainOracle(0xaA6210015fbf0855F0D9fDA3C415c1B12776Ae74, "eth oracle", 3000e18);
+
+    // configurator.updateOracle(0x2413b8C79Ce60045882559f63d308aE3DFE0903d, 0xE55ab85986C832CbC27C9f26054153023c199Cf4);
+    // configurator.updateOracle(0xe644F07B1316f28a7F134998e021eA9f7135F351, 0xE55ab85986C832CbC27C9f26054153023c199Cf4);
+    // configurator.updateOracle(0x401eCb1D350407f13ba348573E5630B83638E30D, 0xE55ab85986C832CbC27C9f26054153023c199Cf4);
+    // configurator.updateOracle(0xaA6210015fbf0855F0D9fDA3C415c1B12776Ae74, address(mainOracleEth));
+    // vault.grantRole(vault.VAULT_OPERATOR_ROLE(), deployer);
+    // vault.grantRole(vault.ASSETS_MANAGEMENT_ROLE(), deployer);
+    // vault.addUnderlyingAsset(0x2413b8C79Ce60045882559f63d308aE3DFE0903d); //usdt
+    // vault.addUnderlyingAsset(0xe644F07B1316f28a7F134998e021eA9f7135F351); //pusd
+    // vault.addUnderlyingAsset(0x401eCb1D350407f13ba348573E5630B83638E30D); //usdc
+    // vault.addUnderlyingAsset(0xaA6210015fbf0855F0D9fDA3C415c1B12776Ae74); //weth
     
 
     console.log('oracle', address(mainOracle));
