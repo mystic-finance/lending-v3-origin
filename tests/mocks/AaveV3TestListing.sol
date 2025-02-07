@@ -16,7 +16,7 @@ contract AaveV3TestListing is AaveV3Payload {
   bytes32 public constant POOL_ADMIN_ROLE_ID =
     0x12ad05bde78c5ab75238ce885307f96ecd482bb402ef831f99e7018a0f169b7b;
 
-  address public immutable USDX_ADDRESS;
+  address public USDX_ADDRESS;
   address public immutable USDX_MOCK_PRICE_FEED;
 
   address public immutable WBTC_ADDRESS;
@@ -34,10 +34,16 @@ contract AaveV3TestListing is AaveV3Payload {
   constructor(
     IEngine customEngine,
     address erc20Owner,
+    address usdx,
     address weth9,
     MarketReport memory report
   ) AaveV3Payload(customEngine) {
-    USDX_ADDRESS = address(new TestnetERC20('USDX', 'USDX', 6, erc20Owner));
+    if(usdx != address(0)){
+      USDX_ADDRESS = usdx;
+    }else{
+      USDX_ADDRESS = address(new TestnetERC20('USDX', 'USDX', 6, erc20Owner));
+    }
+    
     USDX_MOCK_PRICE_FEED = address(new MockAggregator(1e8));
 
     WBTC_ADDRESS = address(new TestnetERC20('WBTC', 'WBTC', 8, erc20Owner));

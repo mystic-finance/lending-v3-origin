@@ -65,8 +65,11 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
   uint256 internal carolPrivateKey;
 
   MarketReport internal report;
+  MarketReport internal report2;
   ContractsReport internal contracts;
+  ContractsReport internal contracts2;
   TokenList internal tokenList;
+  TokenList internal tokenList2;
 
   Roles internal roleList;
 
@@ -119,6 +122,17 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
 
     (report, tokenList) = deployAaveV3TestnetAssets(
       poolAdmin,
+      address(0),
+      roles,
+      config,
+      subConfig,
+      flags,
+      deployedContracts
+    );
+
+    (report2, ) = deployAaveV3TestnetAssets(
+      poolAdmin,
+      address(tokenList.usdx),
       roles,
       config,
       subConfig,
@@ -127,6 +141,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     );
 
     contracts = report.toContractsReport();
+    contracts2 = report2.toContractsReport();
 
     usdx = TestnetERC20(tokenList.usdx);
     wbtc = TestnetERC20(tokenList.wbtc);
@@ -219,6 +234,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
 
   function deployAaveV3TestnetAssets(
     address deployer,
+    address usdx,
     Roles memory roles,
     MarketConfig memory config,
     SubMarketConfig memory subConfig,
@@ -245,6 +261,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     AaveV3TestListing testnetListingPayload = new AaveV3TestListing(
       IAaveV3ConfigEngine(engine),
       roles.poolAdmin,
+      usdx,
       assetsList.weth,
       r
     );

@@ -48,9 +48,9 @@ contract MysticVaultTest is TestnetProcedures {
     );
 
     vm.startPrank(poolAdmin);
-    baseAsset.mint(owner, 1000e18); // Mint some base asset for testing
-    baseAsset.mint(bob, 1000e18); // Mint some base asset for testing
-    collateralAsset.mint(bob, 1000e18);
+    baseAsset.mint(owner, 10000e18); // Mint some base asset for testing
+    baseAsset.mint(bob, 10000e18); // Mint some base asset for testing
+    collateralAsset.mint(bob, 10000e18);
     // vault.addCurator(curator);
 
     vm.startPrank(bob);
@@ -168,8 +168,8 @@ contract MysticVaultTest is TestnetProcedures {
       .getReserveData(vault.asset())
       .variableDebtTokenAddress;
     ICreditDelegationToken variableDebtToken = ICreditDelegationToken(variableDebtTokenAddress);
-    baseAsset.approve(address(vault), 1000e18); // Approve the vault to use collateral
-    collateralAsset.approve(address(vault), 1000e18); // Approve the vault to use collateral
+    baseAsset.approve(address(vault), 10000e18); // Approve the vault to use collateral
+    collateralAsset.approve(address(vault), 10000e18); // Approve the vault to use collateral
     collateralAsset.approve(address(poolAddress), 1000e18);
     variableDebtToken.approveDelegation(address(vault), 100e18);
 

@@ -110,7 +110,7 @@ contract MysticVault is ERC4626, Ownable, IMysticVault, ReentrancyGuard {
     address oracle,
     uint256 allocationPercentage,
     address mysticPoolAddress
-  ) external onlyCurator nonReentrant {
+  ) external onlyCurator {
     _addMysticPool(mysticPoolAddress);
     updateAssetAllocation(newAsset, oracle, allocationPercentage, mysticPoolAddress); // atoken is generated in updateAssetAllocation
   }
@@ -135,7 +135,7 @@ contract MysticVault is ERC4626, Ownable, IMysticVault, ReentrancyGuard {
     address oracle,
     uint256 allocationPercentage,
     address mysticPoolAddress
-  ) public onlyCurator nonReentrant {
+  ) public onlyCurator {
     require(newAsset != address(0), 'Asset address cannot be zero');
     require(oracle != address(0), 'Oracle address cannot be zero');
     require(mysticPoolAddress != address(0), 'Pool address cannot be zero');
@@ -177,7 +177,7 @@ contract MysticVault is ERC4626, Ownable, IMysticVault, ReentrancyGuard {
       }
       _rebalance();
 
-      IERC20(newAsset).safeApprove(mysticPoolAddress, type(uint256).max);
+      IERC20(newAsset).approve(mysticPoolAddress, type(uint256).max);
       emit AssetAllocationAdded(newAsset, mysticPoolAddress, allocationPercentage);
     }
   }
@@ -310,7 +310,8 @@ contract MysticVault is ERC4626, Ownable, IMysticVault, ReentrancyGuard {
   function deposit(
     uint256 assets,
     address receiver
-  ) public override(ERC4626, IERC4626) nonReentrant returns (uint256) {
+  ) public override(ERC4626, IERC4626) returns (uint256) {
+    require(assets > 0, "deposit zero assets");
     require(assets <= maxDeposit_, 'Deposit amount exceeds maximum');
     return super.deposit(assets, receiver);
   }
@@ -318,8 +319,9 @@ contract MysticVault is ERC4626, Ownable, IMysticVault, ReentrancyGuard {
   function mint(
     uint256 shares,
     address receiver
-  ) public override(ERC4626, IERC4626) nonReentrant returns (uint256) {
+  ) public override(ERC4626, IERC4626) returns (uint256) {
     uint256 assets = _convertToAssets(shares, Math.Rounding.Ceil);
+    require(assets > 0, "deposit zero assets");
     require(assets <= maxDeposit_, 'Mint amount exceeds maximum deposit');
     return super.mint(shares, receiver);
   }
@@ -365,7 +367,7 @@ contract MysticVault is ERC4626, Ownable, IMysticVault, ReentrancyGuard {
     // deposit collateral if needed
     if (collateralAmount > 0) {
       IERC20(collateralAsset).safeTransferFrom(msg.sender, address(this), collateralAmount);
-      IERC20(collateralAsset).safeApprove(mysticPoolAddress, collateralAmount);
+      IERC20(collateralAsset).approve(mysticPoolAddress, collateralAmount);
       IPool(mysticPoolAddress).supply(collateralAsset, collateralAmount, msg.sender, 0);
     }
 
@@ -380,7 +382,11 @@ contract MysticVault is ERC4626, Ownable, IMysticVault, ReentrancyGuard {
     // Proceed to borrow the specified amount
     if (receiveShares) {
       IPool(mysticPoolAddress).borrow(asset(), amount, 2, 0, msg.sender);
-      deposit(amount, receiver);
+      require(amount <= maxDeposit_, 'Deposit amount exceeds maximum');
+      // deposit with call as vault because vault receives the borrowed amount from the pool
+      uint shares = _convertToShares(amount, Math.Rounding.Floor);
+      IERC20(asset()).approve(address(this), amount);
+      _deposit(address(this),receiver, amount, shares);
     } else {
       IPool(mysticPoolAddress).borrow(asset(), amount, 2, 0, msg.sender);
       IERC20(asset()).safeTransfer(receiver, amount);
@@ -445,7 +451,7 @@ contract MysticVault is ERC4626, Ownable, IMysticVault, ReentrancyGuard {
     IERC20(asset()).safeTransferFrom(msg.sender, address(this), amount);
     uint256 allowance = IERC20(asset()).allowance(address(this), mysticPoolAddress);
     if (allowance < amount) {
-      IERC20(asset()).safeApprove(mysticPoolAddress, type(uint256).max);
+      IERC20(asset()).approve(mysticPoolAddress, type(uint256).max);
     }
 
     IPool(mysticPoolAddress).repay(asset(), amount, 2, onBehalfOf);
@@ -461,7 +467,7 @@ contract MysticVault is ERC4626, Ownable, IMysticVault, ReentrancyGuard {
 
     uint256 allowance = IERC20(asset()).allowance(address(this), mysticPoolAddress);
     if (allowance < amount) {
-      IERC20(asset()).safeApprove(mysticPoolAddress, type(uint256).max);
+      IERC20(asset()).approve(mysticPoolAddress, type(uint256).max);
     }
 
     IPool(mysticPoolAddress).repay(asset(), amount, 2, onBehalfOf);
@@ -545,7 +551,7 @@ contract MysticVault is ERC4626, Ownable, IMysticVault, ReentrancyGuard {
     AssetAllocation memory allocation,
     uint256 amount
   ) internal {
-    IERC20(allocation.asset).safeApprove(mysticPool, amount);
+    IERC20(allocation.asset).approve(mysticPool, amount);
     IPool(mysticPool).supply(allocation.asset, amount, address(this), 0);
   }
 
@@ -619,7 +625,7 @@ contract MysticVault is ERC4626, Ownable, IMysticVault, ReentrancyGuard {
 
     require(price > 0, 'Invalid Price');
     require(decimals > 0, 'Invalid Decimals');
-    require(updatedAt >= block.timestamp - priceFeedUpdateInterval, 'Out of Date');
+    require(updatedAt + priceFeedUpdateInterval >= block.timestamp , 'Out of Date');
     require(uint256(price) >= min && uint256(price) <= max, "Price not within threshold");
     return (uint256(price), decimals);
   }

@@ -70,6 +70,7 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
     AaveV3TestListing testnetListingPayload = new AaveV3TestListing(
       IAaveV3ConfigEngine(engine),
       marketOwner,
+      address(0),
       weth9,
       fullReport
     );
@@ -100,6 +101,7 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
     AaveV3TestListing testnetListingPayload = new AaveV3TestListing(
       IAaveV3ConfigEngine(engine),
       marketOwner,
+      address(0),
       weth9,
       fullReport
     );
