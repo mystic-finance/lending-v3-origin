@@ -114,7 +114,7 @@ contract MysticVaultController is AccessControl {
 
   function rankVaults(address token) external view returns (VaultRanking[] memory rankedVaults) {
     address[] memory suitableVaults = getSuitableVaultsForToken(token);
-    VaultRanking[] memory rankedVaults = _rankVaults(suitableVaults);
+    rankedVaults = _rankVaults(suitableVaults);
   }
 
   /**

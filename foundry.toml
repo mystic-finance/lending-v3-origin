@@ -9,8 +9,7 @@ evm_version = 'shanghai'
 bytecode_hash = 'none'
 out = 'out'
 libs = ['lib']
-remappings = [
-]
+remappings = []
 fs_permissions = [{access = "write", path = "./reports"}, {access = "read", path = "./out" }, {access = "read", path = "./config"}]
 ffi = true
 
