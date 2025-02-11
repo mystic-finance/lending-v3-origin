@@ -270,7 +270,7 @@ contract StoneBeraVault is AccessControl {
   function activeAssets() public view returns (uint256 assets) {
     uint256 price = oracleConfigurator.getPrice(address(withdrawToken));
     uint256 reservedValue = redeemableAmountInPast.mulDiv(price, D18, Math.Rounding.Floor);
-    // reservedValue = _convertTo18(address(withdrawToken), reservedValue);
+    // reservedValue = _convertFrom18(address(withdrawToken), reservedValue);
 
     return totalAssets() - reservedValue;
   }
@@ -329,7 +329,7 @@ contract StoneBeraVault is AccessControl {
     uint256 requestingShares = requestingSharesInRound;
     uint256 withdrawTokenAmount = requestingShares.mulDiv(rate, price, Math.Rounding.Ceil);
     // withdrawTokenAmount = _convertTo18(address(withdrawToken), withdrawTokenAmount);
-    
+
     uint balance = withdrawToken.balanceOf(address(this));
     balance = _convertTo18(address(withdrawToken), balance);
 

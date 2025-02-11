@@ -8,6 +8,8 @@ import 'forge-std/console.sol';
 import 'src/deployments/interfaces/IMarketReportTypes.sol';
 import {DeployUtils} from 'src/deployments/contracts/utilities/DeployUtils.sol';
 import {MainOracle} from 'src/core/contracts/protocol/PreDeposits/oracle/MainOracle.sol';
+import {MainOracleV2} from 'src/core/contracts/protocol/PreDeposits/oracle/MainOracleV2.sol';
+
 import {OracleConfigurator} from 'src/core/contracts/protocol/PreDeposits/oracle/OracleConfigurator.sol';
 import {Token} from 'src/core/contracts/protocol/PreDeposits/Token.sol';
 import {StoneBeraVault} from 'src/core/contracts/protocol/PreDeposits/BeraPreDepositVault.sol';
@@ -20,8 +22,10 @@ contract DeployPreDepositVault is DeployUtils, DefaultMarketInput, Script {
   function run() external {
     console.log('Aave V3 Batch Listing');
     uint256 deployerPrivateKey = vm.envUint('PRIVATE_KEY');
-    address token = vm.envAddress('NEW_TOKEN');
-    // address poolProvider = vm.envAddress('POOL_PROVIDER');
+    address usdc = vm.envAddress('USDC');
+    address weth = vm.envAddress('WETH');
+    address usdcproxy = vm.envAddress('USDC_AGGREGATOR');
+    address wethProxy = vm.envAddress('WETH_AGGREGATOR');
     // address ambientSwap = vm.envAddress('AMBIENT_SWAP');
 
     vm.startBroadcast(deployerPrivateKey);
@@ -29,42 +33,52 @@ contract DeployPreDepositVault is DeployUtils, DefaultMarketInput, Script {
     console.log("Deployer address:", deployer);
     console.log('sender', msg.sender);
 
-    // MainOracle mainOracle = new MainOracle(token, "usdc oracle", 1e18);
-    // OracleConfigurator configurator = new OracleConfigurator();
+    MainOracleV2 mainOracle = new MainOracleV2(usdc, "usdc oracle", usdcproxy);
+    MainOracleV2 mainOracle2 = new MainOracleV2(weth, "weth oracle", wethProxy);
+    OracleConfigurator configurator = new OracleConfigurator();
 
-    // configurator.grantRole(configurator.ORACLE_MANAGER_ROLE(), deployer);
-    // configurator.updateOracle(token, address(mainOracle));
+    configurator.grantRole(configurator.ORACLE_MANAGER_ROLE(), deployer);
+    configurator.updateOracle(usdc, address(mainOracle));
+    configurator.updateOracle(weth, address(mainOracle2));
+    // deploy configurator
+    // deploy two oracles
+    // deploy lp token
+    // dpeloy vault
+    // map assets to oracles
+    // give toles to deployer
+    // add underlying asset to vault
 
-    // Token lpToken = new Token("Mystic Pre-Deposit LP","MPLP");
-    // StoneBeraVault vault = new StoneBeraVault(address(lpToken), token, address(configurator), 10000e18);
-    // console.log('has role', lpToken.hasRole(lpToken.DEFAULT_ADMIN_ROLE(), deployer));
+    Token lpToken = new Token("Mystic Pre-Deposit Lp Token","MPLP");
+    StoneBeraVault vault = new StoneBeraVault(address(lpToken), usdc, address(configurator), 10000000e18);
+    console.log('has role', lpToken.hasRole(lpToken.DEFAULT_ADMIN_ROLE(), deployer));
 
-    // lpToken.grantRole(lpToken.MINTER_ROLE(), address(vault));
+    lpToken.grantRole(lpToken.MINTER_ROLE(), address(vault));
+    lpToken.grantRole(lpToken.BURNER_ROLE(), address(vault));
 
-    StoneBeraVault vault = StoneBeraVault(0x678c562BeeDa3710066E8F3874352587b98BBb6F);
+    // StoneBeraVault vault = StoneBeraVault(0x678c562BeeDa3710066E8F3874352587b98BBb6F);
     // OracleConfigurator configurator = OracleConfigurator(0x1F263995486a9aCfD648D6Cff5206f090c54470f);
     // MainOracle mainOracleEth = new MainOracle(0xaA6210015fbf0855F0D9fDA3C415c1B12776Ae74, "eth oracle", 3000e18);
 
-    // configurator.updateOracle(0x2413b8C79Ce60045882559f63d308aE3DFE0903d, address(mainOracle));
-    // configurator.updateOracle(0xe644F07B1316f28a7F134998e021eA9f7135F351, address(mainOracle));
+    configurator.updateOracle(usdc, address(mainOracle));
+    configurator.updateOracle(weth, address(mainOracle2));
     // configurator.updateOracle(0x401eCb1D350407f13ba348573E5630B83638E30D, address(mainOracle));
     // configurator.updateOracle(0xaA6210015fbf0855F0D9fDA3C415c1B12776Ae74, address(mainOracle));
-    // vault.grantRole(vault.VAULT_OPERATOR_ROLE(), deployer);
-    // vault.grantRole(vault.ASSETS_MANAGEMENT_ROLE(), deployer);
+    vault.grantRole(vault.VAULT_OPERATOR_ROLE(), deployer);
+    vault.grantRole(vault.ASSETS_MANAGEMENT_ROLE(), deployer);
     // vault.addUnderlyingAsset(0x2413b8C79Ce60045882559f63d308aE3DFE0903d); //usdt
     // vault.addUnderlyingAsset(0xe644F07B1316f28a7F134998e021eA9f7135F351); //pusd
-    // vault.addUnderlyingAsset(0x401eCb1D350407f13ba348573E5630B83638E30D); //usdc
-    // vault.addUnderlyingAsset(0xaA6210015fbf0855F0D9fDA3C415c1B12776Ae74); //weth
+    vault.addUnderlyingAsset(usdc); //usdc
+    vault.addUnderlyingAsset(weth); //weth
 
     // vault.setCap(500000e18);
     // Token(0x2413b8C79Ce60045882559f63d308aE3DFE0903d).approve(address(vault), 1000000000);
-    vault.deposit(0x2413b8C79Ce60045882559f63d308aE3DFE0903d, 1000000, deployer);
+    // vault.deposit(0x2413b8C79Ce60045882559f63d308aE3DFE0903d, 1000000, deployer);
     
 
-    // console.log('oracle', address(mainOracle));
-    // console.log('oracle configurator', address(configurator));
-    // console.log('lp token', address(lpToken));
-    // console.log('bera vault', address(vault));
+    console.log('oracle', address(mainOracle));
+    console.log('oracle configurator', address(configurator));
+    console.log('lp token', address(lpToken));
+    console.log('bera vault', address(vault));
     
     vm.stopBroadcast();
 

@@ -44,7 +44,12 @@ deploy-script-plume-devnet :; forge script scripts/DeployAaveV3MarketBatched.sol
 deploy-script-test-polygon :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 137 --rpc-url polygon --broadcast --slow --verify --legacy --delay 5 --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63 -vvv
 deploy-script-strategy-plume-devnet :; forge script scripts/DeployStrategies.sol:DeployStrategies --chain 98864 --rpc-url plume3 --broadcast --slow --verifier blockscout --verifier-url https://test-explorer.plumenetwork.xyz/api? --legacy --gas-estimate-multiplier 5000 --delay 5 -vvv
 deploy-script-strategy-plume-mainnet :; forge script scripts/DeployStrategies.sol:DeployStrategies --chain 98865 --rpc-url plum_mainnet --broadcast --slow --verifier blockscout --verifier-url https://phoenix-explorer.plumenetwork.xyz/api? --legacy --gas-estimate-multiplier 5000 --delay 5 -vvv
+
+# pre-deposit
 deploy-script-predeposit-vault :; forge script scripts/DeployPreDepositVaults.sol:DeployPreDepositVault --chain 98864 --rpc-url plume3 --broadcast --slow --verifier blockscout --verifier-url https://test-explorer.plumenetwork.xyz/api? --legacy --gas-estimate-multiplier 5000 --delay 5 -vvv
+deploy-script-predeposit-vault-polygon :; forge script scripts/DeployPreDepositVaults.sol:DeployPreDepositVault --chain 137 --rpc-url polygon --broadcast --slow --verify --verifier etherscan --etherscan-api-key XTQMYH2JDHAMKD4CQW8TV3QPR2RUAP8M6M --legacy --gas-estimate-multiplier 5000 --delay 5 -vvv
+deploy-script-predeposit-vault-ethereum :; forge script scripts/DeployPreDepositVaults.sol:DeployPreDepositVault --chain 1 --rpc-url mainnet --broadcast --slow --verify --verifier etherscan --etherscan-api-key 53ADA6IG66V38YVY8GBXX1F8DJFVD38248 --legacy --gas-estimate-multiplier 5000 --delay 5 -vvv
+
 ## --resume to resume txn
 
 ## list tokens on pool
