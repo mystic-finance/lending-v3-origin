@@ -12,6 +12,7 @@ import {SwapController} from '../SwapController.sol';
 import {FlashLoanController} from '../FlashLoanController.sol';
 
 import 'src/core/contracts/protocol/libraries/math/PercentageMath.sol';
+import "./ILendingProvider.sol";
 
 /// @title CompoundMath.
 /// @dev Library emulating in solidity 8+ the behavior of Compound's mulScalarTruncate and divScalarByExpTruncate functions.
@@ -251,6 +252,8 @@ contract FlashMintLiquidator is ReentrancyGuard, Ownable, IERC3156FlashBorrower 
   IPool public immutable lendingPool;
   SwapController public immutable swapController;
   uint256 public slippageTolerance;
+  ILendingProvider[] public providers;
+
 
   event Liquidated(
     address indexed liquidator,
@@ -270,6 +273,11 @@ contract FlashMintLiquidator is ReentrancyGuard, Ownable, IERC3156FlashBorrower 
   );
   event SlippageToleranceSet(uint256 newTolerance);
 
+    event ProviderAdded(address indexed provider);
+    event ProviderRemoved(address indexed provider);
+    event LiquidationExecuted(address indexed provider, address indexed borrower, uint256 repayAmount);
+
+
   error OnlyLiquidator();
   error UnknownLender();
   error UnknownInitiator();
@@ -285,6 +293,7 @@ contract FlashMintLiquidator is ReentrancyGuard, Ownable, IERC3156FlashBorrower 
     address borrower;
     uint256 toLiquidate;
     bytes path;
+    uint256 providerIndex;
   }
 
   struct LiquidateParams {
@@ -295,6 +304,7 @@ contract FlashMintLiquidator is ReentrancyGuard, Ownable, IERC3156FlashBorrower 
     address liquidator;
     address borrower;
     uint256 toRepay;
+    uint256 providerIndex;
   }
 
   constructor(
@@ -313,6 +323,57 @@ contract FlashMintLiquidator is ReentrancyGuard, Ownable, IERC3156FlashBorrower 
     _;
   }
 
+ 
+    function addProvider(ILendingProvider provider) external onlyOwner {
+        providers.push(provider);
+        emit ProviderAdded(address(provider));
+    }
+
+    function removeProvider(uint256 index) external onlyOwner {
+        require(index < providers.length, "Invalid index");
+        address removed = address(providers[index]);
+        providers[index] = providers[providers.length - 1];
+        providers.pop();
+        emit ProviderRemoved(removed);
+    }
+
+    function compileLiquidateableUsers() external view returns (address[] memory allUsers, uint256[] memory allRepayAmounts) {
+        uint256 totalCount = 0;
+        for (uint256 i = 0; i < providers.length; i++) {
+            (address[] memory users, ) = providers[i].getLiquidateableUsers();
+            totalCount += users.length;
+        }
+
+        allUsers = new address[](totalCount);
+        allRepayAmounts = new uint256[](totalCount);
+        uint256 counter = 0;
+        for (uint256 i = 0; i < providers.length; i++) {
+            (address[] memory users, uint256[] memory amounts) = providers[i].getLiquidateableUsers();
+            for (uint256 j = 0; j < users.length; j++) {
+                allUsers[counter] = users[j];
+                allRepayAmounts[counter] = amounts[j];
+                counter++;
+            }
+        }
+    }
+
+    function compileLiquidateableProviderUsers(uint256 _providerIndex) external view returns (address[] memory allUsers, uint256[] memory allRepayAmounts) {
+        (address[] memory users, ) = providers[_providerIndex].getLiquidateableUsers();
+        uint256 totalCount = users.length;
+
+        allUsers = new address[](totalCount);
+        allRepayAmounts = new uint256[](totalCount);
+        uint256 counter = 0;
+        for (uint256 i = 0; i < providers.length; i++) {
+            (address[] memory users, uint256[] memory amounts) = providers[i].getLiquidateableUsers();
+            for (uint256 j = 0; j < users.length; j++) {
+                allUsers[counter] = users[j];
+                allRepayAmounts[counter] = amounts[j];
+                counter++;
+            }
+        }
+    }
+
   function setSlippageTolerance(uint256 _newTolerance) external onlyOwner {
     require(_newTolerance <= BASIS_POINTS, 'Value above basis points');
     slippageTolerance = _newTolerance;
@@ -320,6 +381,7 @@ contract FlashMintLiquidator is ReentrancyGuard, Ownable, IERC3156FlashBorrower 
   }
 
   function liquidate(
+    uint256 providerIndex,
     address _poolTokenBorrowedAddress,
     address _poolTokenCollateralAddress,
     address _borrower,
@@ -327,6 +389,7 @@ contract FlashMintLiquidator is ReentrancyGuard, Ownable, IERC3156FlashBorrower 
     bool _stakeTokens,
     bytes memory _path
   ) external nonReentrant onlyLiquidator {
+    require(providerIndex < providers.length, "Invalid provider index");
     LiquidateParams memory liquidateParams = LiquidateParams(
       ERC20(_getUnderlying(_poolTokenCollateralAddress)),
       ERC20(_getUnderlying(_poolTokenBorrowedAddress)),
@@ -334,7 +397,8 @@ contract FlashMintLiquidator is ReentrancyGuard, Ownable, IERC3156FlashBorrower 
       IAToken(_poolTokenBorrowedAddress),
       msg.sender,
       _borrower,
-      _repayAmount
+      _repayAmount,
+      providerIndex
     );
 
     uint256 seized;
@@ -356,7 +420,8 @@ contract FlashMintLiquidator is ReentrancyGuard, Ownable, IERC3156FlashBorrower 
         liquidateParams.liquidator,
         liquidateParams.borrower,
         liquidateParams.toRepay,
-        _path
+        _path,
+        providerIndex
       );
       seized = _liquidateWithFlashLoan(params);
       uint256 balanceBefore = liquidateParams.borrowedUnderlying.balanceOf(address(this));
@@ -365,9 +430,10 @@ contract FlashMintLiquidator is ReentrancyGuard, Ownable, IERC3156FlashBorrower 
   }
 
   function _liquidateInternal(LiquidateParams memory _params) internal returns (uint256 seized) {
+    ILendingProvider provider = providers[_params.providerIndex];
     uint256 balanceBefore = _params.collateralUnderlying.balanceOf(address(this));
-    _params.borrowedUnderlying.safeApprove(address(lendingPool), _params.toRepay);
-    lendingPool.liquidationCall(
+    _params.borrowedUnderlying.safeApprove(address(provider), _params.toRepay);
+    provider.liquidate(
       address(_params.poolTokenCollateral),
       address(_params.poolTokenBorrowed),
       _params.borrower,
@@ -461,7 +527,8 @@ contract FlashMintLiquidator is ReentrancyGuard, Ownable, IERC3156FlashBorrower 
       IAToken(_params.poolTokenBorrowed),
       _params.liquidator,
       _params.borrower,
-      _params.toLiquidate
+      _params.toLiquidate,
+      _params.providerIndex
     );
 
     uint256 seized = _liquidateInternal(liquidateParams);

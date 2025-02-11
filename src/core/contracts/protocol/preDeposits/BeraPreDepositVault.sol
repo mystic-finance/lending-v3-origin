@@ -133,6 +133,7 @@ contract StoneBeraVault is AccessControl {
     if (lpToken.totalSupply() + _shares > cap) revert DepositCapped();
 
     assets = previewMint(_asset, _shares);
+    if (assets == 0) revert ZeroAmount();
 
     TransferHelper.safeTransferFrom(_asset, msg.sender, address(this), assets);
 
@@ -216,7 +217,11 @@ contract StoneBeraVault is AccessControl {
     redeemableAmountInPast -= claimable;
     requestingSharesInPast -= requestShares;
 
-    if (claimable > 0) TransferHelper.safeTransfer(address(withdrawToken), msg.sender, claimable);
+    if (claimable > 0) {
+      // Convert the claimable amount (18-decimal) to native withdraw token units.
+      uint256 nativeClaimable = _convertFrom18(address(withdrawToken), claimable);
+      TransferHelper.safeTransfer(address(withdrawToken), msg.sender, nativeClaimable);
+    }
 
     emit RedeemClaimed(msg.sender, claimable);
   }
@@ -254,6 +259,7 @@ contract StoneBeraVault is AccessControl {
       if (balance != 0) {
         uint256 price = oracleConfigurator.getPrice(tokenAddr);
         uint256 value = price.mulDiv(balance, D18, Math.Rounding.Floor);
+        value = _convertTo18(address(tokenAddr), value);
 
         totalManagedAssets += value;
       }
@@ -264,6 +270,7 @@ contract StoneBeraVault is AccessControl {
   function activeAssets() public view returns (uint256 assets) {
     uint256 price = oracleConfigurator.getPrice(address(withdrawToken));
     uint256 reservedValue = redeemableAmountInPast.mulDiv(price, D18, Math.Rounding.Floor);
+    // reservedValue = _convertTo18(address(withdrawToken), reservedValue);
 
     return totalAssets() - reservedValue;
   }
@@ -291,6 +298,7 @@ contract StoneBeraVault is AccessControl {
 
     uint256 price = oracleConfigurator.getPrice(_asset);
     uint256 value = _amount.mulDiv(price, D18, Math.Rounding.Floor);
+    value = _convertTo18(address(_asset), value);
 
     return convertToShares(value);
   }
@@ -301,6 +309,7 @@ contract StoneBeraVault is AccessControl {
     uint256 price = oracleConfigurator.getPrice(_asset);
     uint256 amount = _shares.mulDiv(D18, price, Math.Rounding.Ceil);
     uint256 supply = lpToken.totalSupply();
+    amount = _convertFrom18(address(_asset), amount);
 
     return supply == 0 ? amount : amount.mulDiv(activeAssets(), activeShares(), Math.Rounding.Ceil);
   }
@@ -319,8 +328,12 @@ contract StoneBeraVault is AccessControl {
 
     uint256 requestingShares = requestingSharesInRound;
     uint256 withdrawTokenAmount = requestingShares.mulDiv(rate, price, Math.Rounding.Ceil);
+    // withdrawTokenAmount = _convertTo18(address(withdrawToken), withdrawTokenAmount);
+    
+    uint balance = withdrawToken.balanceOf(address(this));
+    balance = _convertTo18(address(withdrawToken), balance);
 
-    if (withdrawToken.balanceOf(address(this)) < redeemableAmountInPast + withdrawTokenAmount)
+    if (balance < redeemableAmountInPast + withdrawTokenAmount)
       revert InsufficientBalance();
 
     redeemableAmountInPast += withdrawTokenAmount;
@@ -341,6 +354,7 @@ contract StoneBeraVault is AccessControl {
     if (!isUnderlyingAssets[_asset]) revert InvalidAsset();
 
     uint256 balance = ERC20(_asset).balanceOf(address(this));
+    balance = _convertTo18(address(_asset), balance);
     if (balance < _amount) revert InsufficientBalance();
 
     if (_asset == address(withdrawToken) && balance < redeemableAmountInPast + _amount)
@@ -348,12 +362,15 @@ contract StoneBeraVault is AccessControl {
 
     uint256 price = oracleConfigurator.getPrice(_asset);
     uint256 value = _amount.mulDiv(price, D18, Math.Rounding.Ceil);
+    value = _convertTo18(address(_asset), value);
 
     assetsBorrowed += value;
 
-    TransferHelper.safeTransfer(_asset, msg.sender, _amount);
+    // Convert the withdrawal amount from 18 decimals back to native token units.
+    uint256 nativeAmount = _convertFrom18(_asset, _amount);
+    TransferHelper.safeTransfer(_asset, msg.sender, nativeAmount);
 
-    emit AssetsWithdrawn(_asset, _amount, value);
+    emit AssetsWithdrawn(_asset, nativeAmount, value);
   }
 
   function repayAssets(address _asset, uint256 _amount) external onlyRole(ASSETS_MANAGEMENT_ROLE) {
@@ -363,6 +380,7 @@ contract StoneBeraVault is AccessControl {
 
     uint256 price = oracleConfigurator.getPrice(_asset);
     uint256 value = _amount.mulDiv(price, D18, Math.Rounding.Floor);
+    value = _convertTo18(address(_asset), value);
 
     if (value > assetsBorrowed) {
       assetsBorrowed = 0;
@@ -427,5 +445,26 @@ contract StoneBeraVault is AccessControl {
 
     emit SetFeeRecipient(feeRecipient, _feeRecipient);
     feeRecipient = _feeRecipient;
+  }
+
+  function _convertTo18(address _asset, uint256 value) internal view returns (uint256) {
+    uint decimals = ERC20(_asset).decimals();
+    if(decimals > 18){
+      value = value.mulDiv(1, 10**(decimals-18), Math.Rounding.Floor);
+    }else if(decimals < 18){
+      value = value.mulDiv(10**(18 - decimals), 1,Math.Rounding.Floor);
+    }
+
+    return value;
+  }
+
+  function _convertFrom18(address _asset, uint256 amount18) internal view returns (uint256) {
+    uint256 decimals = ERC20(_asset).decimals();
+    if(decimals < 18){
+      amount18 = amount18.mulDiv(1, 10**(18-decimals), Math.Rounding.Floor);
+    } else if(decimals > 18){
+      amount18 = amount18.mulDiv(10**(decimals-18), 1, Math.Rounding.Floor);
+    }
+    return amount18;
   }
 }
