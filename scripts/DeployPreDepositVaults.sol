@@ -73,7 +73,7 @@ contract DeployPreDepositVault is DeployUtils, DefaultMarketInput, Script {
     // vault.setCap(500000e18);
     // Token(0x2413b8C79Ce60045882559f63d308aE3DFE0903d).approve(address(vault), 1000000000);
     // vault.deposit(0x2413b8C79Ce60045882559f63d308aE3DFE0903d, 1000000, deployer);
-    // DepositWrapper wrapper = new DepositWrapper(weth, 0x29985c0adDa5fF2d5f716E428E43A460987D90A5);
+    // DepositWrapper wrapper = new DepositWrapper(weth, 0xdC4C0661EC6BF350bB2AB63649161F8dBC4DfdC0);
     
 
     console.log('oracle', address(mainOracle));
