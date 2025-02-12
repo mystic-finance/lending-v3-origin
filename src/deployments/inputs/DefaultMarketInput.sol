@@ -51,7 +51,7 @@ contract DefaultMarketInput is MarketInput {
     address debtAsset,
     address collateralAsset
   ) internal view override returns (ListingConfig memory config) {
-    IAaveV3ConfigEngine.Listing[] memory listings = new IAaveV3ConfigEngine.Listing[](6);
+    IAaveV3ConfigEngine.Listing[] memory listings = new IAaveV3ConfigEngine.Listing[](7);
     IAaveV3ConfigEngine.Listing[] memory listingCollateral = new IAaveV3ConfigEngine.Listing[](1);
 
     listings[0] = IAaveV3ConfigEngine.Listing({
@@ -208,6 +208,33 @@ contract DefaultMarketInput is MarketInput {
       ltv: 60_00, // 90%
       liqThreshold: 80_00, // 92.5%
       liqBonus: 10_00, // 5%
+      reserveFactor: 10_00, // 10%
+      supplyCap: 1_000_000_000, // 100k AAVE
+      borrowCap: 1_000_000_000, // 60k AAVE
+      debtCeiling: EngineFlags.KEEP_CURRENT, // 100k USD
+      liqProtocolFee: 10_00, // 10%
+      eModeCategory: 0 // No category
+    });
+
+    listings[6] = IAaveV3ConfigEngine.Listing({
+      //borrow asset
+      asset: 0x9fbC367B9Bb966a2A537989817A088AFCaFFDC4c,
+      assetSymbol: 'nElixir',
+      priceFeed: 0xd651de29943F69858eD71B6331a918Ca93800df6,
+      rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
+        optimalUsageRatio: 50_00,
+        baseVariableBorrowRate: 0, // 1%
+        variableRateSlope1: 6_00,
+        variableRateSlope2: 304_27
+      }),
+      enabledToBorrow: EngineFlags.ENABLED,
+      flashloanable: EngineFlags.ENABLED,
+      stableRateModeEnabled: EngineFlags.DISABLED,
+      borrowableInIsolation: EngineFlags.ENABLED,
+      withSiloedBorrowing: EngineFlags.DISABLED,
+      ltv: 75_00, // 90%
+      liqThreshold: 80_00, // 92.5%
+      liqBonus: 8_50, // 5%
       reserveFactor: 10_00, // 10%
       supplyCap: 1_000_000_000, // 100k AAVE
       borrowCap: 1_000_000_000, // 60k AAVE
@@ -406,6 +433,11 @@ contract DefaultMarketInput is MarketInput {
 //   0xc713E69427d72Ef7df5fdf60D6566abDa8F5E7ca
 //   0xEa834B3D0C350DA8f846D6A35F27Cdd4bAdBb3F0
 //   0x407B025c809AB4060E196fA06C0dCEFf2531D1B2
+
+// Elixir
+// 0x02E012DD08812b463Ef4B861aD62196696236342
+//   0x71C8dfb49C89d355900A83E53547a5C7652c8b9B
+//   0x7123c0A1aEc696217644d307769e18441Eda702c
 
 // USDC.e - 0x3938A812c54304fEffD266C7E2E70B48F9475aD6
 // pUSD - 0xdddD73F5Df1F0DC31373357beAC77545dC5A6f3F
