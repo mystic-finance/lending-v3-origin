@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.17;
 
-import {ERC4626Upgradeable, Math, IERC4626} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC4626Upgradeable.sol';
+import {ERC4626Upgradeable, Math, IERC4626, IERC20 as IERC20Up} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC4626Upgradeable.sol';
 import {SafeERC20, IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol';
 import {IERC20Permit} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol';
 
@@ -53,7 +53,7 @@ abstract contract ERC4626StataTokenUpgradeable is ERC4626Upgradeable, IERC4626St
 
   function __ERC4626StataToken_init(address newAToken) internal onlyInitializing {
     IERC20 aTokenUnderlying = __ERC4626StataToken_init_unchained(newAToken);
-    __ERC4626_init_unchained(aTokenUnderlying);
+    __ERC4626_init_unchained(IERC20Up(address(aTokenUnderlying)));
   }
 
   function __ERC4626StataToken_init_unchained(
