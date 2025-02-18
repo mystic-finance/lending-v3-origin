@@ -40,6 +40,7 @@ git-diff :
 ## initial deploy
 deploy-script-test-arb-sepolia :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 421614 --rpc-url arb_sepolia --broadcast --verify --slow  -vvv --with-gas-price 200000000 --gas-estimate-multiplier 150 --delay 5
 deploy-script-plume-devnet3 :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 98864 --rpc-url plume3 --broadcast --slow --verifier blockscout --verifier-url https://test-explorer.plumenetwork.xyz/api --legacy --gas-estimate-multiplier 5000 --delay 5
+update-script-plume-devnet3 :; forge script scripts/misc/UpdateAaveV3MarketBatchedBase.sol:UpdateAaveV3MarketBatchedBase --chain 98864 --rpc-url plume3 -vvvv --broadcast --slow --verifier blockscout --verifier-url https://test-explorer.plumenetwork.xyz/api --legacy --gas-estimate-multiplier 500 --delay 5 
 deploy-script-plume-devnet :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 18230 --rpc-url plume2 --broadcast --slow --legacy --gas-estimate-multiplier 150 --delay 5
 deploy-script-test-polygon :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 137 --rpc-url polygon --broadcast --slow --verify --legacy --delay 5 --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63 -vvv
 deploy-script-strategy-plume-devnet :; forge script scripts/DeployStrategies.sol:DeployStrategies --chain 98864 --rpc-url plume3 --broadcast --slow --verifier blockscout --verifier-url https://test-explorer.plumenetwork.xyz/api? --legacy --gas-estimate-multiplier 5000 --delay 5 -vvv
@@ -47,6 +48,7 @@ deploy-script-strategy-plume-mainnet :; forge script scripts/DeployStrategies.so
 
 # pre-deposit
 deploy-script-predeposit-vault :; forge script scripts/DeployPreDepositVaults.sol:DeployPreDepositVault --chain 98864 --rpc-url plume3 --broadcast --slow --verifier blockscout --verifier-url https://test-explorer.plumenetwork.xyz/api? --legacy --gas-estimate-multiplier 5000 --delay 5 -vvv
+deploy-script-predeposit-vault-sepolia :; forge script scripts/DeployPreDepositVaults.sol:DeployPreDepositVault --chain 11155111 --rpc-url sepolia --broadcast --slow --verify --verifier etherscan --etherscan-api-key 53ADA6IG66V38YVY8GBXX1F8DJFVD38248 --legacy --delay 5 -vvv
 deploy-script-predeposit-vault-polygon :; forge script scripts/DeployPreDepositVaults.sol:DeployPreDepositVault --chain 137 --rpc-url polygon --broadcast --slow --verify --verifier etherscan --etherscan-api-key XTQMYH2JDHAMKD4CQW8TV3QPR2RUAP8M6M --legacy --delay 5 -vvv
 deploy-script-predeposit-vault-ethereum :; forge script scripts/DeployPreDepositVaults.sol:DeployPreDepositVault --chain 1 --rpc-url mainnet --broadcast --slow --verify --verifier etherscan --etherscan-api-key 53ADA6IG66V38YVY8GBXX1F8DJFVD38248 --legacy --delay 5 -vvv
 
@@ -80,11 +82,13 @@ verify-oracle :; forge verify-contract 0x59AB56F7285e723CD417aFf63EEea800fD03799
 
 
 plume3-check-logic :; forge script scripts/CheckPoolLogic.sol:CheckPoolLogic --chain 98864 --rpc-url https://test-rpc.plumenetwork.xyz -vvvv
+simulate-txn :; cast call 0x2e4e91890fa1d183c38C55096BBCd220FaF55E32 $data --rpc-url $RPC --trace --debug
 
 ## test  
 test-leverage :; forge test --mc LeveragedBorrowingVaultTest  -vvv
 test-loop :; forge test --mc AdvancedLoopStrategyTest  -vvv
 test-leverage-fork :; forge test --fork-url https://phoenix-rpc.plumenetwork.xyz --mc LeveragedBorrowingVaultForkTest  -vvv
+test-leverage-devnet-fork :; forge test --fork-url https://rpc-plume-testnet-m8kfz7osif.t.conduit.xyz --mc LeveragedBorrowingVaultDevnetForkTest  -vvv
 test-open-leverage-fork :; forge test --fork-url https://phoenix-rpc.plumenetwork.xyz --mc LeveragedBorrowingVaultForkTest --mt test_updateReduceLeverageMultiplier_Success  -vvvv
 test-loop-fork :; forge test --fork-url https://test-rpc.plumenetwork.xyz --mc LeveragedBorrowingVaultTest  -vvv
 test-liquidator-fork-spec :; forge test --mc FlashMintLiquidatorTest --mt test_liquidateWithFlashLoan  -vvv

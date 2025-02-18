@@ -205,6 +205,32 @@ library AaveV3BatchOrchestration {
     return report;
   }
 
+  function updateAaveV3(
+    address deployer,
+    Roles memory roles,
+    MarketConfig memory config,
+    SubMarketConfig memory subConfig,
+    DeployFlags memory flags,
+    MarketReport memory deployedContracts
+  ) internal {
+    PoolReport memory poolReport;
+
+    if (config.poolType == 0) {
+      poolReport = _deployPoolImplementations(deployedContracts.poolAddressesProvider, flags); //3
+    } else if (config.poolType == 1) {
+      poolReport = _deployPermissionedPoolImplementations(deployedContracts.poolAddressesProvider); //3
+    } else if (config.poolType == 2) {
+      poolReport = _deploySemiPermissionedPoolImplementations(
+        deployedContracts.poolAddressesProvider
+      ); //3
+    }
+
+    IPoolAddressesProvider provider = IPoolAddressesProvider(
+      deployedContracts.poolAddressesProvider
+    );
+    provider.setPoolImpl(poolReport.poolImplementation);
+  }
+
   function deployUIPoolDatProvider(
     address networkBaseTokenPriceInUsdProxyAggregator,
     address marketReferenceCurrencyPriceInUsdProxyAggregator

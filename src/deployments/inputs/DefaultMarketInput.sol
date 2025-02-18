@@ -41,6 +41,7 @@ contract DefaultMarketInput is MarketInput {
     subConfig.create2_factory = 0x4e59b44847b379578588920cA78FbF26c0B4956C; //0x914d7Fec6aaC8cd542e72Bca78B30650d45643d7;
 
     deployedContracts.poolAddressesProviderRegistry = address(0);
+    deployedContracts.poolAddressesProvider = address(0);
     flags.l2 = true;
 
     return (roles, config, subConfig, flags, deployedContracts);
