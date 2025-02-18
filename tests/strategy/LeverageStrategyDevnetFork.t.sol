@@ -16,6 +16,8 @@ import {AaveV3Flashloaner} from 'src/core/contracts/protocol/strategies/Flashloa
 import {IAaveOracle} from 'src/core/contracts/interfaces/IAaveOracle.sol';
 import {MockAggregator} from 'src/core/contracts/mocks/oracle/CLAggregators/MockAggregator.sol';
 import {AmbientSwap} from 'src/core/contracts/protocol/strategies/Swap/AmbientSwapper.sol';
+import {MaverickSwap} from 'src/core/contracts/protocol/strategies/Swap/MaverickSwapper.sol';
+
 contract LeveragedBorrowingVaultDevnetForkTest is TestnetProcedures {
   // Test Addresses
   address internal deployer;
@@ -90,6 +92,10 @@ contract LeveragedBorrowingVaultDevnetForkTest is TestnetProcedures {
     // new pool impl - 0x6404Ceae80abD0918958280FB533b4b120Df4184
 
     vault = LeveragedBorrowingVault(0xBF864AD33002b46996CbF4168312a2aB679217F4);
+    MaverickSwap swap = new MaverickSwap(
+      0xb3981D569633Cc6D63C800d159EDE0d0fA5723de,
+      0xf245948e9cf892C351361d298cc7c5b217C36D82
+    ); //factory, quoter
     // vault = LeveragedBorrowingVault(0x5C4DdF6b3d65E7cfF4A6b0B1Ee4DcF45b4A08246);
 
     vault.addAllowedBorrowToken(0xe644F07B1316f28a7F134998e021eA9f7135F351);
@@ -102,6 +108,7 @@ contract LeveragedBorrowingVaultDevnetForkTest is TestnetProcedures {
     vault.addAllowedCollateralToken(0x2413b8C79Ce60045882559f63d308aE3DFE0903d);
     vault.addAllowedCollateralToken(0x401eCb1D350407f13ba348573E5630B83638E30D);
 
+    vault.updateSwapController(address(swap));
     // new ambient, new swap controller, new vault
 
     // Add tokens as allowed
