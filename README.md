@@ -177,3 +177,142 @@ Copyright © 2024, Aave DAO, represented by its governance smart contracts.
 
 The [BUSL1.1](./LICENSE) license of this repository allows for any usage of the software, if respecting the Additional Use Grant limitations, forbidding any use case damaging anyhow the Aave DAO's interests.
 Interfaces and other components required for integrations are explicitly MIT licensed.
+
+## Tranches architecture
+
+![Tranches Architecture](./tranches.png)
+
+## Overview
+
+The system is designed to extend the functionality of Aave V3 Origin and its safety module by introducing a dual-tranche lending model. This solution splits user deposits into two tranches:
+
+- Junior Tranche (Pool): The primary lending pool where deposits are supplied and borrowers interact.
+- Senior Tranche (Vault): An insurance layer that covers losses and replenishes liquidity in the pool when needed.
+
+A key enhancement in this system is the dynamic inter-tranche coordination that allows pools to borrow liquidity from the senior tranche—even beyond the current vault balance—to bootstrap new pools with higher borrow pressure than supplies. This design minimizes changes to the core Aave contracts by leveraging wrapper contracts and hooks for coordination.
+
+## Architecture
+
+### Tranche Model
+
+#### Dual Tranche System:
+
+Deposits are split between a junior pool and a senior vault. The vault serves as a liquidity buffer and loss absorber, ensuring that the junior pool can maintain operations even in adverse conditions.
+
+#### Liquidity Sharing & Borrowing:
+
+Pools can borrow additional liquidity from the vault beyond the vault’s immediate balance. This feature is particularly useful during the initial bootstrapping of new pools where borrow demand may exceed current supplies. The mechanism provides flexibility to accommodate high borrow pressure until supply levels adjust.
+
+### Components
+
+#### Tranche Wrapper (Router):
+
+##### Role:
+
+Acts as the central router coordinating deposits, withdrawals, and liquidity flows between the junior pool and the senior vault.
+
+##### Functions:
+
+Splits deposits based on configurable ratios.
+Routes funds via before/after hooks during liquidity events.
+Facilitates rebalancing operations and liquidity borrowing.
+
+#### Multi-Asset Vault:
+
+##### Role:
+
+Manages similar assets in a unified vault to reduce valuation friction.
+
+##### Design:
+
+LP tokens are minted based directly on deposited amounts (near 1:1), with adjustments from rewards or slashing events.
+Provides liquidity to pools as needed through rebalancing functions.
+
+##### Key Feature:
+
+Supports liquidity borrowing that allows pools to draw funds beyond the vault's current balance—bootstrapping new pools under high borrow demand.
+
+#### Pool Wrapper & Hooks:
+
+##### Role:
+
+Minimal wrapper contracts around core Aave pool functions that inject before and after hooks.
+
+##### Functions:
+
+- Before Hook:
+
+Checks pool liquidity before withdrawals or borrows. If insufficient, it triggers a call via the wrapper to fetch funds from the vault.
+
+- After Hook:
+
+Detects liquidity shortfalls or bad debt after operations and initiates rebalancing from the vault.
+
+## Inter-Tranche Coordination & Rebalancing
+
+The system implements a series of hooks and coordination mechanisms to ensure robust liquidity management between the tranches:
+
+- Before Hooks (Pool):
+
+Prior to liquidity removal operations (withdraw or borrow), the pool calls a hook to verify available funds. If the pool lacks sufficient liquidity, the wrapper automatically requests additional funds from the vault.
+
+- After Hooks (Pool):
+
+Following liquidity operations, the pool calls a hook to detect any resulting bad debt. In such cases, the wrapper triggers a rebalancing process that transfers funds from the vault to cover deficits.
+
+- Liquidity Borrowing Feature:
+
+A notable enhancement allows pools to borrow more liquidity from the vault than the vault’s current on-chain balance might suggest. This bootstrapping mechanism supports scenarios where new pools experience high borrowing demand, enabling rapid growth and market penetration before supply levels catch up.
+
+## Modifications to the Aave V3 Codebase
+
+- Minimal Core Changes:
+  Custom logic is primarily implemented in wrapper contracts and hook functions to minimize modifications to the core Aave V3 Origin and safety module codebases.
+
+- Wrapper Contracts:
+
+The tranche wrapper encapsulates deposit-splitting, liquidity routing, and rebalancing logic, thereby interfacing seamlessly with existing Aave protocols.
+
+- Hook Integration:
+
+Before/after hooks are injected into key pool operations (such as supply, borrow, repay, and withdraw) to enable dynamic liquidity management and inter-tranche coordination.
+
+## Security & Risk Management
+
+- Risk Segmentation:
+
+The dual tranche system segregates risks by designating the junior tranche as the operational lending pool and the senior tranche as an insurance layer.
+
+- Automatic Liquidity Checks:
+
+Integrated hooks continuously monitor liquidity levels and bad debt, triggering automated rebalancing actions to safeguard the system.
+
+- Controlled Liquidity Borrowing:
+
+The ability for pools to borrow extra liquidity is controlled and monitored, ensuring that bootstrapping new pools does not compromise the overall stability of the system.
+
+- Robust Access Controls & Auditing:
+
+Administrative functions and critical operations are secured with strict access controls. All operations are logged for comprehensive auditability, and the system is subject to third-party security audits.
+
+## Work in progress
+
+- Dynamic Interest Rate Models:
+  Further refine interest rate models to adjust dynamically based on utilization metrics and risk factors.
+
+- Expanded Multi-Asset Support:
+  Explore granular risk models for a broader range of assets while maintaining the grouping of similar assets for simplified valuation.
+
+- Expanded Collateral Support:
+  Explore models for bypassing senior tranches to maximize collateral value and borrowing power.
+
+- Enhanced Liquidity Management:
+  Optimize the liquidity borrowing mechanism with additional safeguards and performance metrics to ensure sustainable bootstrapping of new pools.
+
+## Conclusion
+
+This tranche-based lending system extends Aave V3's robust framework by introducing a dual-tranche model that enhances risk management and liquidity efficiency. Through the use of wrapper contracts, dynamic inter-tranche coordination, and an innovative liquidity borrowing feature, the platform is designed to support high borrow demand—particularly during the bootstrapping of new pools—without compromising safety.
+
+This README serves as a detailed technical overview for external auditors, venture capitalists, and technical teams, demonstrating the forward-thinking and robust design of the system. Continued testing, rigorous auditing, and iterative improvements will further ensure the platform’s security and performance.
+
+For further details or technical discussions, please refer to the accompanying technical documentation and source code repositories.
