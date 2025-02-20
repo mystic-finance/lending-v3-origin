@@ -309,8 +309,8 @@ Administrative functions and critical operations are secured with strict access 
 
 ## Files
 
-- https://github.com/mystic-finance/lending-v3-origin/blob/mfi-v2/src/core/contracts/protocol/tranch/AaveHooks.sol
-- https://github.com/mystic-finance/lending-v3-origin/blob/mfi-v2/src/core/contracts/protocol/tranch/TranchRouter.sol
+- [AaveHooks](https://github.com/mystic-finance/lending-v3-origin/blob/mfi-v2/src/core/contracts/protocol/tranch/AaveHooks.sol)
+- [Tranch Wrapper](https://github.com/mystic-finance/lending-v3-origin/blob/mfi-v2/src/core/contracts/protocol/tranch/TranchRouter.sol)
 
 ## Conclusion
 
