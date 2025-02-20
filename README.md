@@ -269,9 +269,7 @@ A notable enhancement allows pools to borrow more liquidity from the vault than 
 - Minimal Core Changes:
   Custom logic is primarily implemented in wrapper contracts and hook functions to minimize modifications to the core Aave V3 Origin and safety module codebases.
 
-- Wrapper Contracts:
-
-The tranche wrapper encapsulates deposit-splitting, liquidity routing, and rebalancing logic, thereby interfacing seamlessly with existing Aave protocols.
+- Wrapper Contracts: The tranche wrapper encapsulates deposit-splitting, liquidity routing, and rebalancing logic, thereby interfacing seamlessly with existing Aave protocols.
 
 - Hook Integration:
 
@@ -308,6 +306,11 @@ Administrative functions and critical operations are secured with strict access 
 
 - Enhanced Liquidity Management:
   Optimize the liquidity borrowing mechanism with additional safeguards and performance metrics to ensure sustainable bootstrapping of new pools.
+
+## Files
+
+- https://github.com/mystic-finance/lending-v3-origin/blob/mfi-v2/src/core/contracts/protocol/tranch/AaveHooks.sol
+- https://github.com/mystic-finance/lending-v3-origin/blob/mfi-v2/src/core/contracts/protocol/tranch/TranchRouter.sol
 
 ## Conclusion
 
