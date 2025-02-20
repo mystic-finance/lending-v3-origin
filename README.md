@@ -186,7 +186,7 @@ Interfaces and other components required for integrations are explicitly MIT lic
 
 The system is designed to extend the functionality of Aave V3 Origin and its safety module by introducing a dual-tranche lending model. This solution splits user deposits into two tranches:
 
-- [Junior Tranche (Pool)](https://github.com/mystic-finance/lending-v3-origin/tree/mfi-v1): The primary lending pool where deposits are supplied and borrowers interact.
+- [Junior Tranche (Pool)](https://github.com/mystic-finance/lending-v3-origin/tree/mfi-v1): The primary lending core and isolated pools where deposits are supplied and borrowers interact.
 - [Senior Tranche (Vault)](https://github.com/mystic-finance/aave-stk-gov-v3/tree/senior-vault): An insurance layer that covers losses and replenishes liquidity in the pool when needed. The Senior tranche is a vault of assets with similar value and risk profile, for example stables vault, and eth derivatives vault. This is to allow modularity, allowing one vault serving multiple pools, and one pool connected to multiple vaults further segmenting risks.
 
 A key enhancement in this system is the dynamic inter-tranche coordination that allows pools to borrow liquidity from the senior tranche—even beyond the current vault balance—to bootstrap new pools with higher borrow pressure than supplies. This design minimizes changes to the core Aave contracts by leveraging wrapper contracts and hooks for coordination.
