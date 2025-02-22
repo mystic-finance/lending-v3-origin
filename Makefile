@@ -37,14 +37,14 @@ git-diff :
 	@mkdir -p diffs
 	@printf '%s\n%s\n%s\n' "\`\`\`diff" "$$(git diff --no-index --diff-algorithm=patience --ignore-space-at-eol ${before} ${after})" "\`\`\`" > diffs/${out}.md
 
-## initial deploy
-deploy-script-test-arb-sepolia :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 421614 --rpc-url arb_sepolia --broadcast --verify --slow  -vvv --with-gas-price 200000000 --gas-estimate-multiplier 150 --delay 5
-deploy-script-plume-devnet3 :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 98864 --rpc-url plume3 --broadcast --slow --verifier blockscout --verifier-url https://test-explorer.plumenetwork.xyz/api --legacy --gas-estimate-multiplier 5000 --delay 5
-update-script-plume-devnet3 :; forge script scripts/misc/UpdateAaveV3MarketBatchedBase.sol:UpdateAaveV3MarketBatchedBase --chain 98864 --rpc-url plume3 -vvvv --broadcast --slow --verifier blockscout --verifier-url https://test-explorer.plumenetwork.xyz/api --legacy --gas-estimate-multiplier 500 --delay 5 
-deploy-script-plume-devnet :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 18230 --rpc-url plume2 --broadcast --slow --legacy --gas-estimate-multiplier 150 --delay 5
-deploy-script-test-polygon :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 137 --rpc-url polygon --broadcast --slow --verify --legacy --delay 5 --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63 -vvv
-deploy-script-strategy-plume-devnet :; forge script scripts/DeployStrategies.sol:DeployStrategies --chain 98864 --rpc-url plume3 --broadcast --slow --verifier blockscout --verifier-url https://test-explorer.plumenetwork.xyz/api? --legacy --gas-estimate-multiplier 5000 --delay 5 -vvv
-deploy-script-strategy-plume-mainnet :; forge script scripts/DeployStrategies.sol:DeployStrategies --chain 98865 --rpc-url plum_mainnet --broadcast --slow --verifier blockscout --verifier-url https://phoenix-explorer.plumenetwork.xyz/api? --legacy --gas-estimate-multiplier 5000 --delay 5 -vvv
+# ## initial deploy
+# deploy-script-test-arb-sepolia :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 421614 --rpc-url arb_sepolia --broadcast --verify --slow  -vvv --with-gas-price 200000000 --gas-estimate-multiplier 150 --delay 5
+# deploy-script-plume-devnet3 :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 98864 --rpc-url plume3 --broadcast --slow --verifier blockscout --verifier-url https://test-explorer.plumenetwork.xyz/api --legacy --gas-estimate-multiplier 5000 --delay 5
+# update-script-plume-devnet3 :; forge script scripts/misc/UpdateAaveV3MarketBatchedBase.sol:UpdateAaveV3MarketBatchedBase --chain 98864 --rpc-url plume3 -vvvv --broadcast --slow --verifier blockscout --verifier-url https://test-explorer.plumenetwork.xyz/api --legacy --gas-estimate-multiplier 500 --delay 5 
+# deploy-script-plume-devnet :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 18230 --rpc-url plume2 --broadcast --slow --legacy --gas-estimate-multiplier 150 --delay 5
+# deploy-script-test-polygon :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 137 --rpc-url polygon --broadcast --slow --verify --legacy --delay 5 --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63 -vvv
+# deploy-script-strategy-plume-devnet :; forge script scripts/DeployStrategies.sol:DeployStrategies --chain 98864 --rpc-url plume3 --broadcast --slow --verifier blockscout --verifier-url https://test-explorer.plumenetwork.xyz/api? --legacy --gas-estimate-multiplier 5000 --delay 5 -vvv
+# deploy-script-strategy-plume-mainnet :; forge script scripts/DeployStrategies.sol:DeployStrategies --chain 98865 --rpc-url plum_mainnet --broadcast --slow --verifier blockscout --verifier-url https://phoenix-explorer.plumenetwork.xyz/api? --legacy --gas-estimate-multiplier 5000 --delay 5 -vvv
 
 # pre-deposit
 deploy-script-predeposit-vault :; forge script scripts/DeployPreDepositVaults.sol:DeployPreDepositVault --chain 98864 --rpc-url plume3 --broadcast --slow --verifier blockscout --verifier-url https://test-explorer.plumenetwork.xyz/api? --legacy --gas-estimate-multiplier 5000 --delay 5 -vvv
@@ -53,12 +53,26 @@ deploy-script-predeposit-vault-polygon :; forge script scripts/DeployPreDepositV
 deploy-script-predeposit-vault-ethereum :; forge script scripts/DeployPreDepositVaults.sol:DeployPreDepositVault --chain 1 --rpc-url mainnet --broadcast --slow --verify --verifier etherscan --etherscan-api-key 53ADA6IG66V38YVY8GBXX1F8DJFVD38248 --legacy --delay 5 -vvv
 
 ## --resume to resume txn
+# Gas reports
+gas-report :; forge test --mp 'tests/gas/*.t.sol' --isolate
+
+
+## initial deploy
+deploy-script-test-arb-sepolia :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 421614 --rpc-url arb_sepolia --broadcast --verify --slow  -vvv --with-gas-price 200000000 --gas-estimate-multiplier 150 --delay 5
+deploy-script-plume-devnet :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 98864 --rpc-url plume3 --broadcast --slow --verifier blockscout --verifier-url https://test-explorer.plumenetwork.xyz/api? --legacy --gas-estimate-multiplier 5000 --delay 5 -vvvvvvvvvv
+deploy-script-plume-devnet-resume :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 98864 --rpc-url plume3 --broadcast --resume --slow --verifier blockscout --verifier-url https://test-explorer.plumenetwork.xyz/api? --legacy --gas-estimate-multiplier 5000 --delay 5
+deploy-script-test-polygon :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 137 --rpc-url polygon --broadcast --slow --verify --legacy --delay 5 --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63 -vvv
+deploy-script-plume-mainnet :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 98865 --rpc-url plume_mainnet --broadcast --slow --verifier blockscout --verifier-url https://phoenix-explorer.plumenetwork.xyz/api? --legacy --gas-estimate-multiplier 5000 --delay 5
+deploy-script-plume-mainnet-gateway :; forge script scripts/DeployAaveWToken.sol:DeployGateway --chain 98865 --rpc-url plume_mainnet --broadcast --slow --verifier blockscout --verifier-url https://phoenix-explorer.plumenetwork.xyz/api? --legacy --gas-estimate-multiplier 5000 --delay 5
+deploy-script-plume3-gateway :; forge script scripts/DeployAaveWToken.sol:DeployGateway --chain 98864 --rpc-url plume3 --broadcast --slow --verifier blockscout --verifier-url https://test-explorer.plumenetwork.xyz/api? --legacy --gas-estimate-multiplier 5000 --delay 5
+update-pool-script-plume-mainnet :; forge script scripts/DeployAaveNewImpl.sol:DeployNewImpl --chain 98865 --rpc-url plume_mainnet --broadcast --slow --verifier blockscout --verifier-url https://phoenix-explorer.plumenetwork.xyz/api? --legacy --gas-estimate-multiplier 5000 --delay 5
+
 
 ## list tokens on pool
 deploy-list-asset-arb-sepolia :; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 421614 --rpc-url arb_sepolia --broadcast --slow --verify -vvv --with-gas-price 200000000  --gas-estimate-multiplier 150 --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63 --delay 5
 deploy-list-asset-plume :; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 161221135 --rpc-url plume --broadcast --slow --sender 0x4C741E7f98B166286157940Bc7bb86EBaEC51D0a --delay 5
 deploy-list-asset-plume2 :; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 18230 --rpc-url plume2 --broadcast --slow --delay 5
-deploy-list-asset-plume3 :; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 98864 --rpc-url plume3 --broadcast --slow --delay 5 --gas-estimate-multiplier 5000
+deploy-list-asset-plume3 :; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 98864 --rpc-url plume3 --broadcast --slow --delay 5 --gas-estimate-multiplier 5000 -vvv
 deploy-list-asset-plume-verify :; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 161221135 --rpc-url plume --broadcast --legacy --slow --verifier blockscout --verifier-url https://plume-testnet.explorer.caldera.xyz/api --gas-estimate-multiplier 150 --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63 --delay 5
 deploy-list-asset-polygon :; forge script scripts/ListAaveV3MarketBatched.sol:Default --chain 137 --rpc-url polygon --broadcast --slow --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63 --delay 5 -vvv
 
@@ -88,7 +102,7 @@ simulate-txn :; cast call 0x2e4e91890fa1d183c38C55096BBCd220FaF55E32 $data --rpc
 test-leverage :; forge test --mc LeveragedBorrowingVaultTest  -vvv
 test-loop :; forge test --mc AdvancedLoopStrategyTest  -vvv
 test-leverage-fork :; forge test --fork-url https://phoenix-rpc.plumenetwork.xyz --mc LeveragedBorrowingVaultForkTest  -vvv
-test-leverage-devnet-fork :; forge test --fork-url https://rpc-plume-testnet-m8kfz7osif.t.conduit.xyz --mc LeveragedBorrowingVaultDevnetForkTest  -vvv
+test-leverage-devnet-fork :; forge test --fork-url https://rpc-plume-testnet-m8kfz7osif.t.conduit.xyz --mc LeveragedBorrowingVaultDevnetForkTest --mt test_openLeveragePosition_Success  -vvvvv
 test-open-leverage-fork :; forge test --fork-url https://phoenix-rpc.plumenetwork.xyz --mc LeveragedBorrowingVaultForkTest --mt test_updateReduceLeverageMultiplier_Success  -vvvv
 test-loop-fork :; forge test --fork-url https://test-rpc.plumenetwork.xyz --mc LeveragedBorrowingVaultTest  -vvv
 test-liquidator-fork-spec :; forge test --mc FlashMintLiquidatorTest --mt test_liquidateWithFlashLoan  -vvv

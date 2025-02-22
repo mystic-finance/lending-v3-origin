@@ -202,7 +202,7 @@ contract AmbientSwap is Ownable {
     // Convert USD value to output token amount
     uint256 amountOut = (outputValueInUsd * 10 ** tokenOutDecimals) / tokenOutPrice;
 
-    return amountOut;
+    return amountOut / 1e1;
   }
 
   /**

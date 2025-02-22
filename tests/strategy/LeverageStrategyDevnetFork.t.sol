@@ -46,7 +46,7 @@ contract LeveragedBorrowingVaultDevnetForkTest is TestnetProcedures {
 
   // Constants for testing
   uint256 internal constant INITIAL_BALANCE = 100_000 * 10 ** 18;
-  uint256 internal constant INITIAL_COLLATERAL = 1 * 10 ** 7;
+  uint256 internal constant INITIAL_COLLATERAL = 1 * 10 ** 10;
   uint256 internal constant LEVERAGE_MULTIPLIER = 2;
 
   function setUp() public {
@@ -69,8 +69,8 @@ contract LeveragedBorrowingVaultDevnetForkTest is TestnetProcedures {
     // peth-pusd. peth-usdc, pusd-usdc, - 0xD630fb6A07c9c723cf709d2DaA9B63325d0E0B73 - peth, 0xdddD73F5Df1F0DC31373357beAC77545dC5A6f3F - pusd, 0x3938A812c54304fEffD266C7E2E70B48F9475aD6 - usdc
 
     // Deploy mock tokens
-    collateralToken = IERC20(0xe644F07B1316f28a7F134998e021eA9f7135F351); //new MockERC20('CollateralToken', 'CLT', 18);
-    borrowToken = IERC20(0x2413b8C79Ce60045882559f63d308aE3DFE0903d); //new MockERC20('BorrowToken', 'BRT', 18);
+    collateralToken = IERC20(0x1738E5247c85f96c9D35FE55800557C5479b7063); //new MockERC20('CollateralToken', 'CLT', 18); // 0x1738E5247c85f96c9D35FE55800557C5479b7063 - weth
+    borrowToken = IERC20(0xe644F07B1316f28a7F134998e021eA9f7135F351); //new MockERC20('BorrowToken', 'BRT', 18); // 0xEa9942e1C6A7Fa1b4cAeCeE595c5176272f1722D - usdt
 
     // Deploy mock controllers
     lendingPool = IPool(0xd7ecf5312aa4FE7ddcAAFba779494fBC5f5f459A);
@@ -91,6 +91,15 @@ contract LeveragedBorrowingVaultDevnetForkTest is TestnetProcedures {
     // swapController.updateSwapper(address(ambientSwapper));
     // new pool impl - 0x6404Ceae80abD0918958280FB533b4b120Df4184
 
+    // eth to weth
+    0x1738E5247c85f96c9D35FE55800557C5479b7063.call{value: 1e14}('');
+    //deposit weth
+    vm.startPrank(user);
+    collateralToken.approve(address(lendingPool), 1e24);
+    lendingPool.supply(0x1738E5247c85f96c9D35FE55800557C5479b7063, 1e13, deployer, 0);
+    vm.stopPrank();
+
+    vm.startPrank(0x37081C7c25284CeE72947aF90A13B7402f2eB6fb);
     vault = LeveragedBorrowingVault(0xBF864AD33002b46996CbF4168312a2aB679217F4);
     MaverickSwap swap = new MaverickSwap(
       0xb3981D569633Cc6D63C800d159EDE0d0fA5723de,
@@ -98,15 +107,17 @@ contract LeveragedBorrowingVaultDevnetForkTest is TestnetProcedures {
     ); //factory, quoter
     // vault = LeveragedBorrowingVault(0x5C4DdF6b3d65E7cfF4A6b0B1Ee4DcF45b4A08246);
 
-    vault.addAllowedBorrowToken(0xe644F07B1316f28a7F134998e021eA9f7135F351);
-    vault.addAllowedBorrowToken(0xaA6210015fbf0855F0D9fDA3C415c1B12776Ae74);
-    vault.addAllowedBorrowToken(0x2413b8C79Ce60045882559f63d308aE3DFE0903d);
-    vault.addAllowedBorrowToken(0x401eCb1D350407f13ba348573E5630B83638E30D);
+    // vault.addAllowedBorrowToken(0xe644F07B1316f28a7F134998e021eA9f7135F351);
+    vault.addAllowedBorrowToken(0x1738E5247c85f96c9D35FE55800557C5479b7063);
+    // vault.addAllowedBorrowToken(0xaA6210015fbf0855F0D9fDA3C415c1B12776Ae74);
+    // vault.addAllowedBorrowToken(0x2413b8C79Ce60045882559f63d308aE3DFE0903d);
+    // vault.addAllowedBorrowToken(0x401eCb1D350407f13ba348573E5630B83638E30D);
 
-    vault.addAllowedCollateralToken(0xe644F07B1316f28a7F134998e021eA9f7135F351);
-    vault.addAllowedCollateralToken(0xaA6210015fbf0855F0D9fDA3C415c1B12776Ae74);
-    vault.addAllowedCollateralToken(0x2413b8C79Ce60045882559f63d308aE3DFE0903d);
-    vault.addAllowedCollateralToken(0x401eCb1D350407f13ba348573E5630B83638E30D);
+    // vault.addAllowedCollateralToken(0xe644F07B1316f28a7F134998e021eA9f7135F351);
+    vault.addAllowedCollateralToken(0x1738E5247c85f96c9D35FE55800557C5479b7063);
+    // vault.addAllowedCollateralToken(0xaA6210015fbf0855F0D9fDA3C415c1B12776Ae74);
+    // vault.addAllowedCollateralToken(0x2413b8C79Ce60045882559f63d308aE3DFE0903d);
+    // vault.addAllowedCollateralToken(0x401eCb1D350407f13ba348573E5630B83638E30D);
 
     vault.updateSwapController(address(swap));
     // new ambient, new swap controller, new vault

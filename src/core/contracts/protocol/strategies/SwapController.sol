@@ -18,7 +18,7 @@ interface ISwapper {
     address tokenOut,
     uint256 amountIn,
     uint24 poolFee
-  ) external view returns (uint256 expectedAmountOut);
+  ) external returns (uint256 expectedAmountOut);
 }
 
 contract SwapController is Ownable {
@@ -79,7 +79,7 @@ contract SwapController is Ownable {
     IERC20(tokenOut).transferFrom(address(currentSwapper), address(this), amountOut);
     IERC20(tokenOut).transfer(msg.sender, amountOut);
 
-    require(amountOut > amountOutMinimum, "Not enough amount Out");
+    require(amountOut > amountOutMinimum, 'Not enough amount Out');
 
     emit SwapExecuted(tokenIn, tokenOut, amountIn, amountOut);
 
@@ -99,7 +99,7 @@ contract SwapController is Ownable {
     address tokenOut,
     uint256 amountIn,
     uint24 poolFee
-  ) external view returns (uint256 expectedAmountOut) {
+  ) external returns (uint256 expectedAmountOut) {
     return currentSwapper.getQuote(tokenIn, tokenOut, amountIn, poolFee);
   }
 }

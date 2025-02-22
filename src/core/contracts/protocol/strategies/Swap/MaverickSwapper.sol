@@ -1,11 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import 'forge-std/console.sol';
 import {IMaverickV2Pool} from 'src/core/contracts/interfaces/IMaverickV2Pool.sol';
 import {IMaverickV2Factory} from 'src/core/contracts/interfaces/IMaverickV2Factory.sol';
 import {IMaverickV2Quoter} from 'src/core/contracts/interfaces/IMaverickV2Quoter.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
+import {IPool} from 'src/core/contracts/interfaces/IPool.sol';
+import {IERC20Metadata} from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
+
+interface IAaveOracle {
+  function getAssetPrice(address asset) external view returns (uint256);
+}
 
 contract MaverickSwap is Ownable {
   // Uniswap V3 Swap Router
@@ -95,22 +102,26 @@ contract MaverickSwap is Ownable {
     address tokenOut,
     uint256 amountIn,
     uint24 poolFee
-  ) external returns (uint256) {
-    // Validate inputs
-    IMaverickV2Pool pool = _getPool(tokenIn, tokenOut);
-    require(amountIn >= MIN_SWAP_AMOUNT, 'Swap amount too low');
-    require(tokenIn != address(0) && tokenOut != address(0), 'Invalid token address');
-
-    bool tokenAIn = pool.tokenA() == IERC20(tokenIn);
-    (, uint256 expectedAmountOut, ) = quoter.calculateSwap(
-      pool,
-      uint128(amountIn),
-      tokenAIn,
-      false,
-      tokenAIn ? type(int32).max : type(int32).min
+  ) external view returns (uint256 expectedAmountOut) {
+    IAaveOracle aaveOracle = IAaveOracle(
+      IPool(0xd7ecf5312aa4FE7ddcAAFba779494fBC5f5f459A).ADDRESSES_PROVIDER().getPriceOracle()
     );
+    // Get token prices and decimals
+    uint256 tokenInPrice = aaveOracle.getAssetPrice(tokenIn);
+    uint256 tokenOutPrice = aaveOracle.getAssetPrice(tokenOut);
+    uint256 tokenInDecimals = IERC20Metadata(tokenIn).decimals();
+    uint256 tokenOutDecimals = IERC20Metadata(tokenOut).decimals();
 
-    return expectedAmountOut;
+    // Calculate USD value of input amount (8 decimals precision from Aave Oracle)
+    uint256 inputValueInUsd = (amountIn * tokenInPrice) / 10 ** tokenInDecimals;
+
+    // Apply 0.3% slippage to USD value
+    uint256 outputValueInUsd = (inputValueInUsd * (10000 - poolFee)) / 10000;
+
+    // Convert USD value to output token amount
+    uint256 amountOut = (outputValueInUsd * 10 ** tokenOutDecimals) / tokenOutPrice;
+
+    return amountOut / 1e1;
   }
 
   function _getPool(address tokenIn, address tokenOut) internal view returns (IMaverickV2Pool) {

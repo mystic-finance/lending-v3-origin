@@ -23,8 +23,8 @@ contract DefaultMarketInput is MarketInput {
     roles.emergencyAdmin = deployer;
     roles.poolAdmin = deployer;
 
-    config.marketId = 'Aave V3 Mystic Sepolia Market';
-    config.providerId = 8088;
+    config.marketId = 'Mystic Market';
+    config.providerId = 8080;
     config.oracleDecimals = 8;
     config.flashLoanPremiumTotal = 0.0005e4;
     config.flashLoanPremiumToProtocol = 0.0004e4;
@@ -52,41 +52,41 @@ contract DefaultMarketInput is MarketInput {
     address debtAsset,
     address collateralAsset
   ) internal view override returns (ListingConfig memory config) {
-    IAaveV3ConfigEngine.Listing[] memory listings = new IAaveV3ConfigEngine.Listing[](2);
+    IAaveV3ConfigEngine.Listing[] memory listings = new IAaveV3ConfigEngine.Listing[](1);
     IAaveV3ConfigEngine.Listing[] memory listingCollateral = new IAaveV3ConfigEngine.Listing[](1);
 
-    listings[0] = IAaveV3ConfigEngine.Listing({
-      //borrow asset
-      asset: 0xEa0c23A2411729073Ed52fF94b38FceffE82FDE3,
-      assetSymbol: 'PUSD',
-      priceFeed: 0xeA3B617b74C2cEc6Aa6DE6527f04c1528e3C6503,
-      rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
-        optimalUsageRatio: 85_00,
-        baseVariableBorrowRate: 1_50, // 1%
-        variableRateSlope1: 4_00,
-        variableRateSlope2: 70_00
-      }),
-      enabledToBorrow: EngineFlags.ENABLED,
-      flashloanable: EngineFlags.ENABLED,
-      stableRateModeEnabled: EngineFlags.DISABLED,
-      borrowableInIsolation: EngineFlags.ENABLED,
-      withSiloedBorrowing: EngineFlags.DISABLED,
-      ltv: 88_00, // 90%
-      liqThreshold: 88_50, // 92.5%
-      liqBonus: 10_00, // 5%
-      reserveFactor: 15_00, // 10%
-      supplyCap: 50_000_000_000, // 100k AAVE
-      borrowCap: 50_000_000_000, // 60k AAVE
-      debtCeiling: 10_000_000, //0, // 100k USD
-      liqProtocolFee: 10_00, // 10%
-      eModeCategory: 0 // No category
-    });
+    // listings[0] = IAaveV3ConfigEngine.Listing({
+    //   //borrow asset
+    //   asset: 0xEa0c23A2411729073Ed52fF94b38FceffE82FDE3,
+    //   assetSymbol: 'PUSD',
+    //   priceFeed: 0xeA3B617b74C2cEc6Aa6DE6527f04c1528e3C6503,
+    //   rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
+    //     optimalUsageRatio: 85_00,
+    //     baseVariableBorrowRate: 1_50, // 1%
+    //     variableRateSlope1: 4_00,
+    //     variableRateSlope2: 70_00
+    //   }),
+    //   enabledToBorrow: EngineFlags.ENABLED,
+    //   flashloanable: EngineFlags.ENABLED,
+    //   stableRateModeEnabled: EngineFlags.DISABLED,
+    //   borrowableInIsolation: EngineFlags.ENABLED,
+    //   withSiloedBorrowing: EngineFlags.DISABLED,
+    //   ltv: 88_00, // 90%
+    //   liqThreshold: 88_50, // 92.5%
+    //   liqBonus: 10_00, // 5%
+    //   reserveFactor: 15_00, // 10%
+    //   supplyCap: 50_000_000_000, // 100k AAVE
+    //   borrowCap: 50_000_000_000, // 60k AAVE
+    //   debtCeiling: 10_000_000, //0, // 100k USD
+    //   liqProtocolFee: 10_00, // 10%
+    //   eModeCategory: 0 // No category
+    // });
 
-    listings[1] = IAaveV3ConfigEngine.Listing({
+    listings[0] = IAaveV3ConfigEngine.Listing({
       //collateral
-      asset: 0xc4FD844B1d074219bfC3A963920951d3604C88f0,
+      asset: 0x1738E5247c85f96c9D35FE55800557C5479b7063,
       assetSymbol: 'WETH',
-      priceFeed: 0xBdf2dC39aEd22e8CC605b76a6024197acDF93Bc4,
+      priceFeed: 0x17C53205e0512ce944ddE54a8d7582216EF90FA6,
       rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
         optimalUsageRatio: 85_00,
         baseVariableBorrowRate: 1_50, // 1.25%
@@ -249,12 +249,12 @@ contract DefaultMarketInput is MarketInput {
       networkAbbreviation: 'PlumeDevNet'
     });
     config.listings = listings;
-    config.treasury = 0x7133d9d3d22471EC53D929eCA1AEe233b63c67f2;
-    config.interestRateStrategy = 0x47B61Fa5AD31CEE6a04a6d718aC4f9a34129A19b;
-    config.poolConfigurator = 0x246C014E3fB086885cd17B9CaCC99fbCf7b3A82f;
-    config.rewardsController = 0x5b13f6884FD023a696674f7Eb06Ea82663869393;
-    config.poolProxy = 0xDB487bEe0814E561706D4e1c002d565470D02bFe;
-    config.oracle = 0x7e8CB03f969c99D3660f27545fb70C1a60F0a3Ac;
+    config.treasury = 0x792d661d7a80a022215EF897A9781c0dfB9ba0ce;
+    config.interestRateStrategy = 0xa03086874159B2a50A467CE7cA9E90db628A115B;
+    config.poolConfigurator = 0x2e62219A0ce4f4d3088e45b02F014F46E9ce2320;
+    config.rewardsController = 0xDa1dEFf43087ed5116808c2153F4E7c3b6561873;
+    config.poolProxy = 0xd7ecf5312aa4FE7ddcAAFba779494fBC5f5f459A;
+    config.oracle = 0x2a052206FF91290E929385FEDAA2A9455Fdb70e3;
     return (config);
   }
 
