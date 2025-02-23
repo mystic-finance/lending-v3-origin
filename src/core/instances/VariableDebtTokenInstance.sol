@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {VariableDebtToken, IPool, IInitializableDebtToken, VersionedInitializable, IAaveIncentivesController, Errors} from '../contracts/protocol/tokenization/VariableDebtToken.sol';
 
 contract VariableDebtTokenInstance is VariableDebtToken {
-  uint256 public constant DEBT_TOKEN_REVISION = 1;
+  uint256 public constant DEBT_TOKEN_REVISION = 2;
 
   constructor(IPool pool) VariableDebtToken(pool) {}
 

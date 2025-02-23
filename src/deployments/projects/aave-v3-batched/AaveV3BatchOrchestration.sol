@@ -370,6 +370,43 @@ library AaveV3BatchOrchestration {
     }
   }
 
+  function upgradeAssetAaveV3(
+    ListingConfig memory config,
+    SubMarketConfig memory subConfig
+  ) internal {
+    IPoolConfigurator configurator = IPoolConfigurator(config.poolConfigurator);
+    ConfiguratorInputTypes.InitReserveInput[]
+      memory initReserveInputs = new ConfiguratorInputTypes.InitReserveInput[](
+        config.listings.length
+      );
+
+    AaveV3TokensBatch.TokensReport memory tokensReport = _deployTokens(
+      config.poolProxy,
+      config.treasury,
+      subConfig
+    );
+
+    // 6. configure caps, borrow side, collateral and assets emode
+    for (uint256 i = 0; i < config.listings.length; i++) {
+      _upgradeAToken(
+        configurator,
+        config.listings[i],
+        config.treasury,
+        tokensReport.aToken,
+        config.rewardsController,
+        config.poolContext.networkName
+      );
+      _upgradeVToken(
+        configurator,
+        config.listings[i],
+        config.treasury,
+        tokensReport.variableDebtToken,
+        config.rewardsController,
+        config.poolContext.networkName
+      );
+    }
+  }
+
   function deployAaveBundler(
     address pointsProgram,
     uint8 taskId
@@ -647,6 +684,55 @@ library AaveV3BatchOrchestration {
     }
 
     oracle.setAssetSources(assets, sources);
+  }
+
+  function _upgradeAToken(
+    IPoolConfigurator poolConfigurator,
+    IAaveV3ConfigEngine.Listing memory listing,
+    address _treasury,
+    address _impl,
+    address _rewardsController,
+    string memory name
+  ) internal {
+    poolConfigurator.updateAToken(
+      ConfiguratorInputTypes.UpdateATokenInput({
+        asset: listing.asset,
+        treasury: _treasury,
+        incentivesController: _rewardsController,
+        name: string.concat('Mystic ', name, ' ', listing.assetSymbol),
+        symbol: string.concat(
+          'my',
+          // config.poolContext.networkAbbreviation,
+          listing.assetSymbol
+        ),
+        implementation: _impl,
+        params: bytes('')
+      })
+    );
+  }
+
+  function _upgradeVToken(
+    IPoolConfigurator poolConfigurator,
+    IAaveV3ConfigEngine.Listing memory listing,
+    address _treasury,
+    address _impl,
+    address _rewardsController,
+    string memory name
+  ) internal {
+    poolConfigurator.updateVariableDebtToken(
+      ConfiguratorInputTypes.UpdateDebtTokenInput({
+        asset: listing.asset,
+        incentivesController: _rewardsController,
+        name: string.concat('Mystic ', name, ' ', listing.assetSymbol),
+        symbol: string.concat(
+          'my',
+          // config.poolContext.networkAbbreviation,
+          listing.assetSymbol
+        ),
+        implementation: _impl,
+        params: bytes('')
+      })
+    );
   }
 
   function _configureCaps(

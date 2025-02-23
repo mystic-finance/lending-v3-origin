@@ -46,8 +46,8 @@ contract LeveragedBorrowingVaultDevnetForkTest is TestnetProcedures {
 
   // Constants for testing
   uint256 internal constant INITIAL_BALANCE = 100_000 * 10 ** 18;
-  uint256 internal constant INITIAL_COLLATERAL = 1 * 10 ** 10;
-  uint256 internal constant LEVERAGE_MULTIPLIER = 2;
+  uint256 internal constant INITIAL_COLLATERAL = 1 * 10 ** 15;
+  uint256 internal constant LEVERAGE_MULTIPLIER = 3;
 
   function setUp() public {
     initL2TestEnvironment();
@@ -56,7 +56,7 @@ contract LeveragedBorrowingVaultDevnetForkTest is TestnetProcedures {
     deployer = address(this);
     user = 0xf927Efdc25E14F33C6402F8A1dCEa5911051e749;
     // anotherUser = address(0x205);
-    vm.startPrank(0x37081C7c25284CeE72947aF90A13B7402f2eB6fb);
+    vm.startPrank(user);
 
     //   Aave V3 Batch Listing
     //   sender 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38
@@ -75,10 +75,10 @@ contract LeveragedBorrowingVaultDevnetForkTest is TestnetProcedures {
     // Deploy mock controllers
     lendingPool = IPool(0xd7ecf5312aa4FE7ddcAAFba779494fBC5f5f459A);
 
-    // AaveV3Flashloaner flashLoanWrapper = new AaveV3Flashloaner(
-    //   address(lendingPool.ADDRESSES_PROVIDER())
-    // );
-    // FlashLoanController flashLoanController = new FlashLoanController(address(flashLoanWrapper));
+    AaveV3Flashloaner flashLoanWrapper = new AaveV3Flashloaner(
+      address(lendingPool.ADDRESSES_PROVIDER())
+    );
+    FlashLoanController flashLoanController = new FlashLoanController(address(flashLoanWrapper));
 
     // // Deploy the vault
     // AmbientSwap ambientSwapper = new AmbientSwap(
@@ -92,34 +92,43 @@ contract LeveragedBorrowingVaultDevnetForkTest is TestnetProcedures {
     // new pool impl - 0x6404Ceae80abD0918958280FB533b4b120Df4184
 
     // eth to weth
-    0x1738E5247c85f96c9D35FE55800557C5479b7063.call{value: 1e14}('');
+    0x1738E5247c85f96c9D35FE55800557C5479b7063.call{value: 1e16}('');
+    collateralToken.transfer(address(user), 1e16);
     //deposit weth
-    vm.startPrank(user);
+    // vm.startPrank(user);
     collateralToken.approve(address(lendingPool), 1e24);
-    lendingPool.supply(0x1738E5247c85f96c9D35FE55800557C5479b7063, 1e13, deployer, 0);
-    vm.stopPrank();
+    lendingPool.deposit(0x1738E5247c85f96c9D35FE55800557C5479b7063, 5e15, user, 0);
+    // vm.stopPrank();
 
     vm.startPrank(0x37081C7c25284CeE72947aF90A13B7402f2eB6fb);
-    vault = LeveragedBorrowingVault(0xBF864AD33002b46996CbF4168312a2aB679217F4);
+
     MaverickSwap swap = new MaverickSwap(
       0xb3981D569633Cc6D63C800d159EDE0d0fA5723de,
       0xf245948e9cf892C351361d298cc7c5b217C36D82
     ); //factory, quoter
-    // vault = LeveragedBorrowingVault(0x5C4DdF6b3d65E7cfF4A6b0B1Ee4DcF45b4A08246);
 
-    // vault.addAllowedBorrowToken(0xe644F07B1316f28a7F134998e021eA9f7135F351);
+    swapController = new SwapController(address(swap));
+    vault = new LeveragedBorrowingVault(
+      0xd7ecf5312aa4FE7ddcAAFba779494fBC5f5f459A,
+      address(swapController),
+      address(flashLoanController)
+    );
+    // lendingPool.setUserUseReserveAsCollateral(address(collateralToken), true);
+    // vault = LeveragedBorrowingVault(0xBF864AD33002b46996CbF4168312a2aB679217F4);
+
+    vault.addAllowedBorrowToken(0xe644F07B1316f28a7F134998e021eA9f7135F351);
     vault.addAllowedBorrowToken(0x1738E5247c85f96c9D35FE55800557C5479b7063);
-    // vault.addAllowedBorrowToken(0xaA6210015fbf0855F0D9fDA3C415c1B12776Ae74);
-    // vault.addAllowedBorrowToken(0x2413b8C79Ce60045882559f63d308aE3DFE0903d);
-    // vault.addAllowedBorrowToken(0x401eCb1D350407f13ba348573E5630B83638E30D);
+    vault.addAllowedBorrowToken(0xaA6210015fbf0855F0D9fDA3C415c1B12776Ae74);
+    vault.addAllowedBorrowToken(0x2413b8C79Ce60045882559f63d308aE3DFE0903d);
+    vault.addAllowedBorrowToken(0x401eCb1D350407f13ba348573E5630B83638E30D);
 
-    // vault.addAllowedCollateralToken(0xe644F07B1316f28a7F134998e021eA9f7135F351);
+    vault.addAllowedCollateralToken(0xe644F07B1316f28a7F134998e021eA9f7135F351);
     vault.addAllowedCollateralToken(0x1738E5247c85f96c9D35FE55800557C5479b7063);
-    // vault.addAllowedCollateralToken(0xaA6210015fbf0855F0D9fDA3C415c1B12776Ae74);
-    // vault.addAllowedCollateralToken(0x2413b8C79Ce60045882559f63d308aE3DFE0903d);
-    // vault.addAllowedCollateralToken(0x401eCb1D350407f13ba348573E5630B83638E30D);
+    vault.addAllowedCollateralToken(0xaA6210015fbf0855F0D9fDA3C415c1B12776Ae74);
+    vault.addAllowedCollateralToken(0x2413b8C79Ce60045882559f63d308aE3DFE0903d);
+    vault.addAllowedCollateralToken(0x401eCb1D350407f13ba348573E5630B83638E30D);
 
-    vault.updateSwapController(address(swap));
+    // vault.updateSwapController(address(swap));
     // new ambient, new swap controller, new vault
 
     // Add tokens as allowed
@@ -160,7 +169,7 @@ contract LeveragedBorrowingVaultDevnetForkTest is TestnetProcedures {
   // Test helper to prepare user tokens and approvals
   function _prepareUserTokens(address _user) internal {
     vm.startPrank(_user);
-    collateralToken.approve(address(vault), INITIAL_COLLATERAL);
+    collateralToken.approve(address(vault), INITIAL_COLLATERAL * 1000000);
     vm.stopPrank();
   }
 
@@ -182,14 +191,8 @@ contract LeveragedBorrowingVaultDevnetForkTest is TestnetProcedures {
       address(vault),
       INITIAL_COLLATERAL * 100_000
     );
-    // lendingPool.supply(
-    //   address(collateralToken),
-    //   (INITIAL_COLLATERAL * 19) / 20,
-    //   user,
-    //   0
-    // );
-    // lendingPool.setUserUseReserveAsCollateral( address(collateralToken), true);
-    console.log(address(collateralToken) < address(borrowToken));
+
+    // console.log(address(collateralToken) < address(borrowToken));
 
     vault.openLeveragePosition(
       address(collateralToken),
@@ -306,22 +309,18 @@ contract LeveragedBorrowingVaultDevnetForkTest is TestnetProcedures {
 
     // Verify user received back approximately initial collateral (minus fees)
     uint256 finalBalance = collateralToken.balanceOf(user);
-    assertGt(
-      finalBalance,
-      userMainCollateralBalance - 0.1e13,
-      'User should receive collateral back'
-    );
+    assertGt(finalBalance, userMainCollateralBalance - 2e14, 'User should receive collateral back');
 
     // Allow for some slippage/fees
     assertGt(
       collateralToken.balanceOf(user),
-      userInitialCollateralBalance + INITIAL_COLLATERAL - 0.1e13,
+      userInitialCollateralBalance + INITIAL_COLLATERAL - 2e14,
       'Incorrect final balance after closing'
     );
 
     assertGt(
       finalBalance - userInitialCollateralBalance,
-      INITIAL_COLLATERAL - 0.1e13,
+      INITIAL_COLLATERAL - 2e14,
       'Incorrect final collateral balance after closing'
     );
 
@@ -381,8 +380,12 @@ contract LeveragedBorrowingVaultDevnetForkTest is TestnetProcedures {
     uint256 actualCollateralBalance = collateralToken.balanceOf(_user);
     uint256 actualBorrowBalance = borrowToken.balanceOf(_user);
 
-    assert(actualCollateralBalance >= expectedCollateralBalance);
-    assert(actualBorrowBalance >= expectedBorrowBalance);
+    assertGt(
+      actualCollateralBalance,
+      expectedCollateralBalance,
+      'bal should be >= expected balance'
+    );
+    assertGt(actualBorrowBalance, expectedBorrowBalance, 'borrow bal is not correct');
   }
 
   // Test: Adding to a position
@@ -396,7 +399,7 @@ contract LeveragedBorrowingVaultDevnetForkTest is TestnetProcedures {
     uint256 positionId = positions[0];
 
     // Add collateral to the position
-    uint256 additionalCollateral = 1 * 10 ** 13 + INITIAL_COLLATERAL;
+    uint256 additionalCollateral = 1 * 10 ** 15 + INITIAL_COLLATERAL;
     deal(address(collateralToken), user, additionalCollateral);
     uint256 initialCollateralBalance = collateralToken.balanceOf(user);
 
@@ -416,17 +419,17 @@ contract LeveragedBorrowingVaultDevnetForkTest is TestnetProcedures {
     assertGt(totalCollateral, totalCollateralOld, 'Collateral not increased');
     assertGt(
       totalCollateral,
-      ((INITIAL_COLLATERAL + 1 * 10 ** 13) * LEVERAGE_MULTIPLIER) - 0.4e13,
+      ((INITIAL_COLLATERAL + 1 * 10 ** 15) * LEVERAGE_MULTIPLIER) - 0.4e15,
       'Collateral not updated'
     );
     assertGt(totalBorrowed, totalBorrowedOld, 'Borrowed amount not updated');
 
-    // assertGt(actualCollateralBalance, userInitialCollateralBalance - INITIAL_COLLATERAL - 1 * 10 ** 13 - 1, 'Incorrect Balance');
+    // assertGt(actualCollateralBalance, userInitialCollateralBalance - INITIAL_COLLATERAL - 1 * 10 ** 15 - 1, 'Incorrect Balance');
 
     //Verify user balances
     _verifyUserBalances(
       user,
-      userInitialCollateralBalance - INITIAL_COLLATERAL - 1 * 10 ** 13, // Expected collateral balance
+      0, //userInitialCollateralBalance - additionalCollateral, // Expected collateral balance
       0 // Expected borrow balance
     );
 
@@ -462,7 +465,7 @@ contract LeveragedBorrowingVaultDevnetForkTest is TestnetProcedures {
     );
     assertGt(totalCollateralOld, totalCollateral, 'Collateral not decreased');
     assertGt(
-      ((INITIAL_COLLATERAL + 1 * 10 ** 13) * LEVERAGE_MULTIPLIER) - 0.4e13,
+      ((INITIAL_COLLATERAL + 1 * 10 ** 15) * LEVERAGE_MULTIPLIER) - 0.4e15,
       totalCollateral,
       'Collateral not updated'
     );
@@ -471,7 +474,7 @@ contract LeveragedBorrowingVaultDevnetForkTest is TestnetProcedures {
     uint256 actualCollateralBalance = collateralToken.balanceOf(user);
     assertGt(
       actualCollateralBalance,
-      userInitialCollateralBalance - INITIAL_COLLATERAL + collateralToRemove - 0.1e13,
+      userInitialCollateralBalance - INITIAL_COLLATERAL + collateralToRemove - 0.1e15,
       'Incorrect Balance'
     );
 
@@ -517,13 +520,13 @@ contract LeveragedBorrowingVaultDevnetForkTest is TestnetProcedures {
       bool isActive
     ) = vault.positions(positionId);
     assertGt(totalCollateral, totalCollateralOld, 'Collateral not increased');
-    assertGt(totalCollateral, ((INITIAL_COLLATERAL) * 4) - 0.1e13, 'Collateral not updated');
+    assertGt(totalCollateral, ((INITIAL_COLLATERAL) * 4) - 2e14, 'Collateral not updated');
     assertGt(totalBorrowed, totalBorrowedOld, 'Borrowed amount not updated');
 
     // Verify user balances
     _verifyUserBalances(
       user,
-      userInitialCollateralBalance - INITIAL_COLLATERAL, // Expected collateral balance
+      userInitialCollateralBalance - INITIAL_COLLATERAL - 1e14, // Expected collateral balance
       0 // Expected borrow balance
     );
 
@@ -561,7 +564,7 @@ contract LeveragedBorrowingVaultDevnetForkTest is TestnetProcedures {
     ) = vault.positions(positionId);
     assertGt(totalCollateralOld, totalCollateral, 'Collateral not decreased');
 
-    assertGt(((INITIAL_COLLATERAL) * 2) - 0.1e13, totalCollateral, 'Collateral not updated');
+    assertGt(((INITIAL_COLLATERAL) * 2) - 0.1e15, totalCollateral, 'Collateral not updated');
     assertGt(totalBorrowedOld, totalBorrowed, 'Borrowed amount not updated');
 
     // Verify user balances

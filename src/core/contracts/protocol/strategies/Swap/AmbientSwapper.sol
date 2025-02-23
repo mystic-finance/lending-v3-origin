@@ -185,7 +185,7 @@ contract AmbientSwap is Ownable {
     address tokenOut,
     uint256 amountIn,
     uint24 poolFee
-  ) external view returns (uint256 expectedAmountOut) {
+  ) external returns (uint256 expectedAmountOut) {
     // uint  poolFee = 500;
     // Get token prices and decimals
     uint256 tokenInPrice = aaveOracle.getAssetPrice(tokenIn);
@@ -202,7 +202,7 @@ contract AmbientSwap is Ownable {
     // Convert USD value to output token amount
     uint256 amountOut = (outputValueInUsd * 10 ** tokenOutDecimals) / tokenOutPrice;
 
-    return amountOut / 1e1;
+    return amountOut;
   }
 
   /**

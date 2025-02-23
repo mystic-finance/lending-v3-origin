@@ -84,7 +84,7 @@ contract FlashLoanController is Ownable, ReentrancyGuard {
     // Decode and validate params
     (, , , address borrowToken, , , , address strategy, ) = abi.decode(
       params,
-      (uint256, address, address, address, uint256, uint256, address, address, bool)
+      (uint256, address, address, address, uint256, uint256, address, address, uint8)
     );
 
     IERC20(borrowToken).transfer(strategy, amounts[0]);

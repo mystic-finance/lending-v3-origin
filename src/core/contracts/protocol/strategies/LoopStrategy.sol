@@ -27,7 +27,7 @@ interface ISwapController {
     address tokenOut,
     uint256 amountIn,
     uint24 poolFee
-  ) external view returns (uint256 expectedAmountOut);
+  ) external returns (uint256 expectedAmountOut);
 }
 
 /**

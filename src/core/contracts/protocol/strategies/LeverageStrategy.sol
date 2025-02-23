@@ -20,12 +20,13 @@ interface ISwapController {
     uint256 amountOutMinimum,
     uint24 poolFee
   ) external returns (uint256 amountOut);
+
   function getQuote(
     address tokenIn,
     address tokenOut,
     uint256 amountIn,
     uint24 poolFee
-  ) external view returns (uint256 expectedAmountOut);
+  ) external returns (uint256 expectedAmountOut);
 }
 
 interface IFlashLoanProvider {
@@ -392,7 +393,7 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
       );
       IERC20(position.collateralToken).transfer(params.user, swappedAmount);
     }
-    
+
     emit LeveragePositionClosed(params.positionId, params.user, withdrawnAmount);
     delete positions[params.positionId];
     _removeUserPosition(params.user, params.positionId);
@@ -783,7 +784,7 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     );
 
     uint256 amountOwed = amount + premium;
-  
+
     IERC20(position.collateralToken).approve(address(swapController), withdrawnAmount);
     uint256 swappedAmount = swapController.swap(
       position.collateralToken,
@@ -883,19 +884,24 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
       );
 
       // Withdraw collateral and swap part of it to repay the flash loan
-      uint256 collateralToWithdraw = params.initialCollateral * (position.leverageMultiplier - params.leverageMultiplier);
+      uint256 collateralToWithdraw = params.initialCollateral *
+        (position.leverageMultiplier - params.leverageMultiplier);
       IERC20(reserveData.aTokenAddress).transferFrom(
         params.user,
         address(this),
         collateralToWithdraw
       );
 
-      uint256 withdrawnAmount = lendingPool.withdraw(params.collateralToken, collateralToWithdraw, address(this));
+      uint256 withdrawnAmount = lendingPool.withdraw(
+        params.collateralToken,
+        collateralToWithdraw,
+        address(this)
+      );
 
       // Swap part of the collateral to repay the flash loan
       uint256 amountOwed = amount + premium;
       IERC20(position.collateralToken).approve(address(swapController), withdrawnAmount);
-      
+
       uint256 swappedAmount = swapController.swap(
         position.collateralToken,
         position.borrowToken,
