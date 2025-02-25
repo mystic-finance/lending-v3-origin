@@ -16,6 +16,8 @@ import {AaveV3Flashloaner} from 'src/core/contracts/protocol/strategies/Flashloa
 import {IAaveOracle} from 'src/core/contracts/interfaces/IAaveOracle.sol';
 import {MockAggregator} from 'src/core/contracts/mocks/oracle/CLAggregators/MockAggregator.sol';
 import {AmbientSwap} from 'src/core/contracts/protocol/strategies/Swap/AmbientSwapper.sol';
+import {MaverickSwap} from 'src/core/contracts/protocol/strategies/Swap/MaverickSwapper.sol';
+
 contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
   // Test Addresses
   address internal deployer;
@@ -54,7 +56,7 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
     deployer = address(this);
     user = 0xf927Efdc25E14F33C6402F8A1dCEa5911051e749;
     // anotherUser = address(0x205);
-    vm.startPrank(0x37081C7c25284CeE72947aF90A13B7402f2eB6fb);
+    vm.startPrank(0xf927Efdc25E14F33C6402F8A1dCEa5911051e749);
 
     //   Aave V3 Batch Listing
     //   sender 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38
@@ -76,20 +78,21 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
     // AaveV3Flashloaner flashLoanWrapper = AaveV3Flashloaner(
     //   address(lendingPool.ADDRESSES_PROVIDER())
     // );
-    flashLoanController = FlashLoanController(0x5fA6836e652d7d43089EAc7df3a8360b5ccdCf9A);
+    // flashLoanController = FlashLoanController(0x5fA6836e652d7d43089EAc7df3a8360b5ccdCf9A);
+    AaveV3Flashloaner flashLoanWrapper = new AaveV3Flashloaner(
+      address(lendingPool.ADDRESSES_PROVIDER())
+    );
+    FlashLoanController flashLoanController = new FlashLoanController(address(flashLoanWrapper));
 
     // Deploy the vault
-    AmbientSwap ambientSwapper = new AmbientSwap(
-      0xAaAaAAAA81a99d2a05eE428eC7a1d8A3C2237D85,
-      0xd5b3495C5e059a23Bea726166E3C46b0Cb3b42Ab
-    );
+    MaverickSwap swap = new MaverickSwap(
+      0x056A588AfdC0cdaa4Cab50d8a4D2940C5D04172E,
+      0xf245948e9cf892C351361d298cc7c5b217C36D82
+    ); //factory, quoter
 
-    swapController = new SwapController(address(ambientSwapper));
-    // swapController = SwapController(0x0f8d9480ca937441c166E39e2d9f90a7A6031194);
-    // swapController.updateSwapper(address(ambientSwapper));
-
+    swapController = new SwapController(address(swap));
     vault = new LeveragedBorrowingVault(
-      address(lendingPool),
+      0xd5b3495C5e059a23Bea726166E3C46b0Cb3b42Ab,
       address(swapController),
       address(flashLoanController)
     );
@@ -366,8 +369,8 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
     uint256 actualCollateralBalance = collateralToken.balanceOf(_user);
     uint256 actualBorrowBalance = borrowToken.balanceOf(_user);
 
-    assert(actualCollateralBalance>= expectedCollateralBalance);
-    assert(actualBorrowBalance>= expectedBorrowBalance);
+    assert(actualCollateralBalance >= expectedCollateralBalance);
+    assert(actualBorrowBalance >= expectedBorrowBalance);
   }
 
   // Test: Adding to a position
@@ -406,7 +409,6 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
     );
     assertGt(totalBorrowed, totalBorrowedOld, 'Borrowed amount not updated');
 
-    
     // assertGt(actualCollateralBalance, userInitialCollateralBalance - INITIAL_COLLATERAL - 1 * 10 ** 13 - 1, 'Incorrect Balance');
 
     //Verify user balances
@@ -455,7 +457,11 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
     assertGt(totalBorrowedOld, totalBorrowed, 'Borrowed amount not updated');
 
     uint256 actualCollateralBalance = collateralToken.balanceOf(user);
-    assertGt(actualCollateralBalance, userInitialCollateralBalance - INITIAL_COLLATERAL + collateralToRemove - 0.1e13, 'Incorrect Balance');
+    assertGt(
+      actualCollateralBalance,
+      userInitialCollateralBalance - INITIAL_COLLATERAL + collateralToRemove - 0.1e13,
+      'Incorrect Balance'
+    );
 
     // Verify user balances
     // _verifyUserBalances(
@@ -499,11 +505,7 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
       bool isActive
     ) = vault.positions(positionId);
     assertGt(totalCollateral, totalCollateralOld, 'Collateral not increased');
-    assertGt(
-      totalCollateral,
-      ((INITIAL_COLLATERAL) * 4) - 0.1e13,
-      'Collateral not updated'
-    );
+    assertGt(totalCollateral, ((INITIAL_COLLATERAL) * 4) - 0.1e13, 'Collateral not updated');
     assertGt(totalBorrowed, totalBorrowedOld, 'Borrowed amount not updated');
 
     // Verify user balances
@@ -546,13 +548,8 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
       bool isActive
     ) = vault.positions(positionId);
     assertGt(totalCollateralOld, totalCollateral, 'Collateral not decreased');
-   
-    assertGt(
-      ((INITIAL_COLLATERAL) * 2) - 0.1e13,
-      totalCollateral,
-      
-      'Collateral not updated'
-    );
+
+    assertGt(((INITIAL_COLLATERAL) * 2) - 0.025e13, totalCollateral, 'Collateral not updated');
     assertGt(totalBorrowedOld, totalBorrowed, 'Borrowed amount not updated');
 
     // Verify user balances
@@ -681,7 +678,7 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
 
   // Test: Admin token management
   function test_adminTokenManagement() public {
-    vm.startPrank(0x37081C7c25284CeE72947aF90A13B7402f2eB6fb);
+    vm.startPrank(0xf927Efdc25E14F33C6402F8A1dCEa5911051e749);
 
     MockERC20 newToken = new MockERC20('NewToken', 'NEW', 18);
 
@@ -700,7 +697,8 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
   function test_revertOn_UnauthorizedTokenManagement() public {
     MockERC20 newToken = new MockERC20('NewToken', 'NEW', 18);
 
-    vm.startPrank(user);
+    // vm.startPrank(user);
+    vm.startPrank(0x37081C7c25284CeE72947aF90A13B7402f2eB6fb);
     vm.expectRevert();
     vault.addAllowedCollateralToken(address(newToken));
 

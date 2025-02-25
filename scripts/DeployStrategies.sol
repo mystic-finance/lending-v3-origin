@@ -39,38 +39,38 @@ contract DeployStrategies is DeployUtils, DefaultMarketInput, Script {
     //   0x1E4aC9797E50bdb9706df99a45dB6afaff212239,
     //   config.providerId
     // );
-    // MaverickSwap ambientSwapper = new MaverickSwap(factory, quoter);
+    MaverickSwap ambientSwapper = new MaverickSwap(factory, quoter);
     AaveV3Flashloaner flashLoaner = new AaveV3Flashloaner(poolProvider);
 
-    // SwapController swapController = new SwapController(address(ambientSwapper));
+    SwapController swapController = new SwapController(address(ambientSwapper));
     FlashLoanController flashloanController = new FlashLoanController(address(flashLoaner));
 
     // SwapController swapController = SwapController(0x0f8d9480ca937441c166E39e2d9f90a7A6031194);
     // swapController.updateSwapper(address(ambientSwapper));
 
-    // AdvancedLoopStrategy loopStrategy = new AdvancedLoopStrategy(
-    //   msg.sender,
-    //   lendingPool,
-    //   address(swapController),
-    //   500
-    // );
-    // LeveragedBorrowingVault leverageStrategy = new LeveragedBorrowingVault(
-    //   lendingPool,
-    //   address(swapController),
-    //   address(flashloanController)
-    // );
-
-    AdvancedLoopStrategy loopStrategy = AdvancedLoopStrategy(
-      0x1EdF7b468731b2a15A48fcA02D6949fcb7f3D8f6
+    AdvancedLoopStrategy loopStrategy = new AdvancedLoopStrategy(
+      msg.sender,
+      lendingPool,
+      address(swapController),
+      500
     );
-    LeveragedBorrowingVault leverageStrategy = LeveragedBorrowingVault(
-      0x249328B0F91A21eEcBf89862B9b181c522CEa5d5
+    LeveragedBorrowingVault leverageStrategy = new LeveragedBorrowingVault(
+      lendingPool,
+      address(swapController),
+      address(flashloanController)
     );
-    leverageStrategy.updateFlashLoanController(address(flashloanController));
 
-    // console.log('ambientSwapper', address(ambientSwapper));
+    // AdvancedLoopStrategy loopStrategy = AdvancedLoopStrategy(
+    //   0x1EdF7b468731b2a15A48fcA02D6949fcb7f3D8f6
+    // );
+    // LeveragedBorrowingVault leverageStrategy = LeveragedBorrowingVault(
+    //   0x249328B0F91A21eEcBf89862B9b181c522CEa5d5
+    // );
+    // leverageStrategy.updateFlashLoanController(address(flashloanController));
+
+    console.log('ambientSwapper', address(ambientSwapper));
     console.log('flashLoaner', address(flashLoaner));
-    // console.log('swapController', address(swapController));
+    console.log('swapController', address(swapController));
     console.log('flashloanController', address(flashloanController));
     console.log('loopStrategy', address(loopStrategy));
     console.log('leverageStrategy', address(leverageStrategy));
@@ -178,3 +178,14 @@ contract DeployStrategies is DeployUtils, DefaultMarketInput, Script {
 //   flashloanController 0x0f9eA60Bb83b8B8d38F59580a40e92C6301b4A6F  0x5fA6836e652d7d43089EAc7df3a8360b5ccdCf9A-old
 //   loopStrategy 0x1EdF7b468731b2a15A48fcA02D6949fcb7f3D8f6
 //   leverageStrategy 0x249328B0F91A21eEcBf89862B9b181c522CEa5d5 old - 0x5E71B0de6c8B71997941fbF15E399ab8dcd125AE  older - 0x5C4DdF6b3d65E7cfF4A6b0B1Ee4DcF45b4A08246
+
+// mainnet 4
+// == Logs ==
+//   Aave V3 Batch Listing
+//   sender 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38
+//   ambientSwapper 0x7E620391AC654Dad79C1c15d6Af2bB83B813fF59
+//   flashLoaner 0x9E794C6Db6DCdF82aE43716Ef697B4B4f8a139c8
+//   swapController 0x7942cEC0A6a6C02B78845E836C9BE96aa39F57Bf
+//   flashloanController 0xB8e5A61D8518761F271409A236a1F1706CCEe69D
+//   loopStrategy 0x9Bd7e6b833BF7c2B1Db2703EFA68B1e38d594848
+//   leverageStrategy 0x8088DD0042641195E0F35f250Eb0A2D3892456a0
