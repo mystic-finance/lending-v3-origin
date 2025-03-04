@@ -109,7 +109,10 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
   uint256 public constant SLIPPAGE_TOLERANCE = 50; // 0.5%
   uint16 public constant REFERRAL_CODE = 0;
   uint24 public DEFAULT_POOL_FEE = 50; // 0.5% pool fee
-  uint256 private nextPositionId = 1;
+  uint256 public nextPositionId = 1;
+  uint256 public totalSupplied = 0;
+  uint256 public totalCollateral = 0;
+  uint256 public totalBorrowed = 0;
 
   // External Contracts
   IPool public lendingPool;
@@ -311,6 +314,10 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
 
     userPositions[params.user].push(params.positionId);
 
+    totalSupplied += params.initialCollateral;
+    totalBorrowed += amountOwed;
+    totalCollateral += totalCollateral;
+
     emit LeveragePositionOpened(
       params.positionId,
       params.user,
@@ -395,6 +402,11 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     }
 
     emit LeveragePositionClosed(params.positionId, params.user, withdrawnAmount);
+
+    totalSupplied -= params.initialCollateral;
+    totalBorrowed -= amountOwed;
+    totalCollateral -= totalCollateral;
+
     delete positions[params.positionId];
     _removeUserPosition(params.user, params.positionId);
 
@@ -733,6 +745,9 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     position.totalCollateral += totalCollateral;
     position.totalBorrowed += amountOwed;
 
+    totalBorrowed += amountOwed;
+    totalCollateral += totalCollateral;
+
     emit LeveragePositionAdded(
       params.positionId,
       params.user,
@@ -815,6 +830,9 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     position.totalCollateral -= collateralToWithdraw;
     position.totalBorrowed -= amountOwed;
 
+    totalBorrowed -= amountOwed;
+    totalCollateral -= collateralToWithdraw;
+
     emit LeveragePositionRemoved(
       params.positionId,
       params.user,
@@ -870,6 +888,9 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
       // Update the position's total collateral and borrowed amount
       position.totalCollateral += swappedAmount;
       position.totalBorrowed += amountOwed;
+
+      totalBorrowed += amountOwed;
+      totalCollateral += swappedAmount;
     } else {
       // Decreasing leverage: repay part of the borrowed amount
       IERC20(params.borrowToken).approve(address(lendingPool), amount);
@@ -930,6 +951,9 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
       // Update the position's total collateral and borrowed amount
       position.totalCollateral -= collateralToWithdraw;
       position.totalBorrowed -= amount;
+
+      totalBorrowed -= amount;
+      totalCollateral -= collateralToWithdraw;
     }
 
     // Update the leverage multiplier
