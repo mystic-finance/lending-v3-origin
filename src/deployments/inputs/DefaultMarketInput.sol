@@ -42,6 +42,7 @@ contract DefaultMarketInput is MarketInput {
 
     deployedContracts.poolAddressesProviderRegistry = address(0);
     deployedContracts.poolAddressesProvider = address(0);
+    // deployedContracts.poolAddressesProviderRegistry = 0xA5eF7993Aec6527472035544ce0EA9513B324182;
     flags.l2 = true;
 
     return (roles, config, subConfig, flags, deployedContracts);
@@ -57,9 +58,9 @@ contract DefaultMarketInput is MarketInput {
 
     listings[0] = IAaveV3ConfigEngine.Listing({
       //borrow asset
-      asset: 0xe644F07B1316f28a7F134998e021eA9f7135F351,
-      assetSymbol: 'PUSD',
-      priceFeed: 0xeA3B617b74C2cEc6Aa6DE6527f04c1528e3C6503,
+      asset: 0x22d6672f7282F67Ce20d8Dafe30C6f012a219558,
+      assetSymbol: 'WETH9',
+      priceFeed: 0xd20E650914278614b56cf55e0fDed462fa7cFC03,
       rateStrategyParams: IAaveV3ConfigEngine.InterestRateInputData({
         optimalUsageRatio: 85_00,
         baseVariableBorrowRate: 1_50, // 1%

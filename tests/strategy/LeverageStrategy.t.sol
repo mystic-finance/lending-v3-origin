@@ -68,15 +68,16 @@ contract LeveragedBorrowingVaultTest is TestnetProcedures {
     flashLoanController = new FlashLoanController(address(flashLoanWrapper));
 
     // Deploy the vault
-    vault = new LeveragedBorrowingVault(
-      address(lendingPool),
-      address(swapController),
-      address(flashLoanController)
-    );
+    // vault = new LeveragedBorrowingVault(
+    //   address(lendingPool),
+    //   address(swapController),
+    //   address(flashLoanController)
+    // );
 
-    // Add tokens as allowed
-    vault.addAllowedCollateralToken(address(collateralToken));
-    vault.addAllowedBorrowToken(address(borrowToken));
+    // // Add tokens as allowed
+    // vault.addAllowedCollateralToken(address(collateralToken));
+    // vault.addAllowedBorrowToken(address(borrowToken));
+    
 
     // Mint tokens to user
     vm.startPrank(poolAdmin);

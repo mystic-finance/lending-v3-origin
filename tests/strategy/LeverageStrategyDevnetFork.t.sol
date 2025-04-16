@@ -69,7 +69,7 @@ contract LeveragedBorrowingVaultDevnetForkTest is TestnetProcedures {
     // peth-pusd. peth-usdc, pusd-usdc, - 0xD630fb6A07c9c723cf709d2DaA9B63325d0E0B73 - peth, 0xdddD73F5Df1F0DC31373357beAC77545dC5A6f3F - pusd, 0x3938A812c54304fEffD266C7E2E70B48F9475aD6 - usdc
 
     // Deploy mock tokens
-    collateralToken = IERC20(0x1738E5247c85f96c9D35FE55800557C5479b7063); //new MockERC20('CollateralToken', 'CLT', 18); // 0x1738E5247c85f96c9D35FE55800557C5479b7063 - weth
+    collateralToken = IERC20(0x22d6672f7282F67Ce20d8Dafe30C6f012a219558); //new MockERC20('CollateralToken', 'CLT', 18); // 0x1738E5247c85f96c9D35FE55800557C5479b7063 - weth
     borrowToken = IERC20(0xe644F07B1316f28a7F134998e021eA9f7135F351); //new MockERC20('BorrowToken', 'BRT', 18); // 0xEa9942e1C6A7Fa1b4cAeCeE595c5176272f1722D - usdt
 
     // Deploy mock controllers
@@ -92,12 +92,12 @@ contract LeveragedBorrowingVaultDevnetForkTest is TestnetProcedures {
     // new pool impl - 0x6404Ceae80abD0918958280FB533b4b120Df4184
 
     // eth to weth
-    0x1738E5247c85f96c9D35FE55800557C5479b7063.call{value: 1e16}('');
+    0x22d6672f7282F67Ce20d8Dafe30C6f012a219558.call{value: 1e26}('');
     collateralToken.transfer(address(user), 1e16);
     //deposit weth
     // vm.startPrank(user);
     collateralToken.approve(address(lendingPool), 1e24);
-    lendingPool.deposit(0x1738E5247c85f96c9D35FE55800557C5479b7063, 5e15, user, 0);
+    lendingPool.deposit(0x22d6672f7282F67Ce20d8Dafe30C6f012a219558, 5e15, user, 0);
     // vm.stopPrank();
 
     vm.startPrank(0x37081C7c25284CeE72947aF90A13B7402f2eB6fb);
@@ -117,13 +117,13 @@ contract LeveragedBorrowingVaultDevnetForkTest is TestnetProcedures {
     // vault = LeveragedBorrowingVault(0xBF864AD33002b46996CbF4168312a2aB679217F4);
 
     vault.addAllowedBorrowToken(0xe644F07B1316f28a7F134998e021eA9f7135F351);
-    vault.addAllowedBorrowToken(0x1738E5247c85f96c9D35FE55800557C5479b7063);
+    vault.addAllowedBorrowToken(0x22d6672f7282F67Ce20d8Dafe30C6f012a219558);
     vault.addAllowedBorrowToken(0xaA6210015fbf0855F0D9fDA3C415c1B12776Ae74);
     vault.addAllowedBorrowToken(0x2413b8C79Ce60045882559f63d308aE3DFE0903d);
     vault.addAllowedBorrowToken(0x401eCb1D350407f13ba348573E5630B83638E30D);
 
     vault.addAllowedCollateralToken(0xe644F07B1316f28a7F134998e021eA9f7135F351);
-    vault.addAllowedCollateralToken(0x1738E5247c85f96c9D35FE55800557C5479b7063);
+    vault.addAllowedCollateralToken(0x22d6672f7282F67Ce20d8Dafe30C6f012a219558);
     vault.addAllowedCollateralToken(0xaA6210015fbf0855F0D9fDA3C415c1B12776Ae74);
     vault.addAllowedCollateralToken(0x2413b8C79Ce60045882559f63d308aE3DFE0903d);
     vault.addAllowedCollateralToken(0x401eCb1D350407f13ba348573E5630B83638E30D);

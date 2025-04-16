@@ -38,9 +38,10 @@ abstract contract ListAaveV3MarketBatchedBase is DeployUtils, MarketInput, Scrip
     //   oldConfig.networkBaseTokenPriceInUsdProxyAggregator,
     //   oldConfig.marketReferenceCurrencyPriceInUsdProxyAggregator
     // );
-    // console.log(uipd);
-    AaveV3BatchOrchestration.upgradeAssetAaveV3(config, subConfig);
+    // console.log(uipd);  listAssetPairAaveV3
+    AaveV3BatchOrchestration.listAssetPairAaveV3(config, subConfig);
     // AaveV3BatchOrchestration.updateAssetPairAaveV3(config, subConfig);
+    // AaveV3BatchOrchestration.upgradeAssetAaveV3(config, subConfig);
     vm.stopBroadcast();
 
     // Write market deployment JSON report at /reports

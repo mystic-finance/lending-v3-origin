@@ -13,7 +13,7 @@ import {MainOracleV2} from 'src/core/contracts/protocol/PreDeposits/oracle/MainO
 import {OracleConfigurator} from 'src/core/contracts/protocol/PreDeposits/oracle/OracleConfigurator.sol';
 import {Token} from 'src/core/contracts/protocol/PreDeposits/Token.sol';
 import {StoneBeraVault} from 'src/core/contracts/protocol/PreDeposits/BeraPreDepositVault.sol';
-import {DepositWrapper} from "src/core/contracts/protocol/preDeposits/ETHDepositWrapper.sol";
+import {DepositWrapper} from 'src/core/contracts/protocol/preDeposits/ETHDepositWrapper.sol';
 import {DefaultMarketInput} from 'src/deployments/inputs/DefaultMarketInput.sol';
 
 contract DeployPreDepositVault is DeployUtils, DefaultMarketInput, Script {
@@ -30,11 +30,11 @@ contract DeployPreDepositVault is DeployUtils, DefaultMarketInput, Script {
 
     vm.startBroadcast(deployerPrivateKey);
     address deployer = vm.addr(deployerPrivateKey);
-    console.log("Deployer address:", deployer);
+    console.log('Deployer address:', deployer);
     console.log('sender', msg.sender);
 
-    MainOracleV2 mainOracle = new MainOracleV2(usdc, "usdc oracle", usdcproxy);
-    MainOracleV2 mainOracle2 = new MainOracleV2(weth, "weth oracle", wethProxy);
+    MainOracleV2 mainOracle = new MainOracleV2(usdc, 'usdc oracle', usdcproxy);
+    MainOracleV2 mainOracle2 = new MainOracleV2(weth, 'weth oracle', wethProxy);
     OracleConfigurator configurator = new OracleConfigurator();
 
     configurator.grantRole(configurator.ORACLE_MANAGER_ROLE(), deployer);
@@ -48,8 +48,13 @@ contract DeployPreDepositVault is DeployUtils, DefaultMarketInput, Script {
     // give toles to deployer
     // add underlying asset to vault
 
-    Token lpToken = new Token("Mystic PreDeposit LP Token","MPLT");
-    StoneBeraVault vault = new StoneBeraVault(address(lpToken), usdc, address(configurator), 10000000e18);
+    Token lpToken = new Token('Mystic PreDeposit LP Token', 'MPLT');
+    StoneBeraVault vault = new StoneBeraVault(
+      address(lpToken),
+      usdc,
+      address(configurator),
+      10000000e18
+    );
     console.log('has role', lpToken.hasRole(lpToken.DEFAULT_ADMIN_ROLE(), deployer));
 
     lpToken.grantRole(lpToken.MINTER_ROLE(), address(vault));
@@ -74,18 +79,15 @@ contract DeployPreDepositVault is DeployUtils, DefaultMarketInput, Script {
     // Token(0x2413b8C79Ce60045882559f63d308aE3DFE0903d).approve(address(vault), 1000000000);
     // vault.deposit(0x2413b8C79Ce60045882559f63d308aE3DFE0903d, 1000000, deployer);
     // DepositWrapper wrapper = new DepositWrapper(weth, 0xdC4C0661EC6BF350bB2AB63649161F8dBC4DfdC0);
-    
 
     console.log('oracle', address(mainOracle));
     console.log('oracle configurator', address(configurator));
     console.log('lp token', address(lpToken));
     console.log('bera vault', address(vault));
-    
-    vm.stopBroadcast();
 
+    vm.stopBroadcast();
   }
 }
-
 
 // devnet
 // oracle 0xE55ab85986C832CbC27C9f26054153023c199Cf4
@@ -93,25 +95,23 @@ contract DeployPreDepositVault is DeployUtils, DefaultMarketInput, Script {
 //   lp token 0x4F4457ae8858CeaBdeE17e7e046b062bdA29D0d6
 //   bera vault 0x2D39f0D5d4b19D5d8f2B3d6757CB4BB5147b7447
 
-
 // devnet 2
 // oracle 0x4BE016EF0A511466940A4F906Df1dE0cd5b4D7Be
 //   oracle configurator 0x467f9cFD695f756D26074CeAb76E8746A6262e43
 //   lp token 0x679Ef28c7d66361cF87a384b171FaB676CD0b0B7
 //   bera vault 0x678c562BeeDa3710066E8F3874352587b98BBb6F
 
-
 // polygon
 // has role true
-  // oracle 0x5817FBBF26F7Da75E68363998987099C325577E0
-  // oracle configurator 0x84571629B42ABc0464b0737860A061bF3832E6AF
-  // lp token 0x7453A195331861DAeE128F04D8daa090f682b4E3
-  // bera vault 0xdC4C0661EC6BF350bB2AB63649161F8dBC4DfdC0
-
+// oracle 0x5817FBBF26F7Da75E68363998987099C325577E0
+// oracle configurator 0x84571629B42ABc0464b0737860A061bF3832E6AF
+// lp token 0x7453A195331861DAeE128F04D8daa090f682b4E3
+// bera vault 0xdC4C0661EC6BF350bB2AB63649161F8dBC4DfdC0
 
 // mainnet
 // has role true
-  // oracle 0xAfE6AC7C392B783C2CB14256A5b05DBF77761dC6 - usdc 0xfa19C25FbCA358be42692FcbB905998FE807dCdb - weth
-  // oracle configurator 0x425DBc2dB879A9D88f259D15cAc45786ffE48c9C
-  // lp token 0x04e2f381fEE12b0930bFDE5be98a735C9b448BBB
-  // bera vault 0x29985c0adDa5fF2d5f716E428E43A460987D90A5
+// oracle 0xAfE6AC7C392B783C2CB14256A5b05DBF77761dC6 - usdc 0xfa19C25FbCA358be42692FcbB905998FE807dCdb - weth
+// oracle configurator 0x425DBc2dB879A9D88f259D15cAc45786ffE48c9C
+// lp token 0x04e2f381fEE12b0930bFDE5be98a735C9b448BBB
+// bera vault 0x56eE018B23A840cDDa31BDc8fEFCb4be3F0d396D  // old- 0x29985c0adDa5fF2d5f716E428E43A460987D90A5
+// wrapper 0xB16aC16735C1438e54B67874B36874E92F359111

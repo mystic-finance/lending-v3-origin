@@ -44,13 +44,13 @@ git-diff :
 # deploy-script-plume-devnet :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 18230 --rpc-url plume2 --broadcast --slow --legacy --gas-estimate-multiplier 150 --delay 5
 # deploy-script-test-polygon :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 137 --rpc-url polygon --broadcast --slow --verify --legacy --delay 5 --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63 -vvv
 deploy-script-strategy-plume-devnet :; forge script scripts/DeployStrategies.sol:DeployStrategies --chain 98864 --rpc-url plume3 --broadcast --slow --verifier blockscout --verifier-url https://test-explorer.plumenetwork.xyz/api? --legacy --gas-estimate-multiplier 5000 --delay 5 -vvv
-deploy-script-strategy-plume-mainnet :; forge script scripts/DeployStrategies.sol:DeployStrategies --chain 98865 --rpc-url plume_mainnet --broadcast --slow --verifier blockscout --verifier-url https://phoenix-explorer.plumenetwork.xyz/api? --legacy --gas-estimate-multiplier 5000 --delay 5 -vvv
+deploy-script-strategy-plume-mainnet :; forge script scripts/DeployStrategies.sol:DeployStrategies --chain 98866 --rpc-url plume_mainnet --broadcast --slow --verifier blockscout --verifier-url https://phoenix-explorer.plumenetwork.xyz/api? --delay 5 -vvvvv
 
 # pre-deposit
 deploy-script-predeposit-vault :; forge script scripts/DeployPreDepositVaults.sol:DeployPreDepositVault --chain 98864 --rpc-url plume3 --broadcast --slow --verifier blockscout --verifier-url https://test-explorer.plumenetwork.xyz/api? --legacy --gas-estimate-multiplier 5000 --delay 5 -vvv
 deploy-script-predeposit-vault-sepolia :; forge script scripts/DeployPreDepositVaults.sol:DeployPreDepositVault --chain 11155111 --rpc-url sepolia --broadcast --slow --verify --verifier etherscan --etherscan-api-key 53ADA6IG66V38YVY8GBXX1F8DJFVD38248 --legacy --delay 5 -vvv
 deploy-script-predeposit-vault-polygon :; forge script scripts/DeployPreDepositVaults.sol:DeployPreDepositVault --chain 137 --rpc-url polygon --broadcast --slow --verify --verifier etherscan --etherscan-api-key XTQMYH2JDHAMKD4CQW8TV3QPR2RUAP8M6M --legacy --delay 5 -vvv
-deploy-script-predeposit-vault-ethereum :; forge script scripts/DeployPreDepositVaults.sol:DeployPreDepositVault --chain 1 --rpc-url mainnet --broadcast --slow --verify --verifier etherscan --etherscan-api-key 53ADA6IG66V38YVY8GBXX1F8DJFVD38248 --legacy --delay 5 -vvv
+deploy-script-predeposit-vault-ethereum :; forge script scripts/DeployPreDepositVaults.sol:DeployPreDepositVault --chain 1 --rpc-url mainnet --broadcast --slow --verify --verifier etherscan --etherscan-api-key 53ADA6IG66V38YVY8GBXX1F8DJFVD38248 --delay 5 -vvv
 
 ## --resume to resume txn
 # Gas reports
@@ -91,6 +91,8 @@ plume3-verify-poolproxy :; forge verify-contract 0xd7ecf5312aa4FE7ddcAAFba779494
 plume3-verify-uipool :; forge verify-contract 0x9652674BFc6Be8C2508822DC979b3244AC28f04b  --chain 98864 --verifier blockscout src/periphery/contracts/misc/UiPoolDataProviderV3.sol:UiPoolDataProviderV3  --rpc-url plume3 --verifier-url 'https://test-explorer.plumenetwork.xyz/api?' --watch
 plume-verify-strategy :; forge verify-contract 0x5E71B0de6c8B71997941fbF15E399ab8dcd125AE  --chain 98865 --verifier blockscout src/core/contracts/protocol/strategies/LeverageStrategy.sol:LeveragedBorrowingVault  --rpc-url plume_mainnet --verifier-url https://explorer.plumenetwork.xyz/api? --watch  --constructor-args 0x000000000000000000000000d5b3495c5e059a23bea726166e3c46b0cb3b42ab0000000000000000000000000f8d9480ca937441c166e39e2d9f90a7a60311940000000000000000000000005fa6836e652d7d43089eac7df3a8360b5ccdcf9a
 plume-verify-strategy-2 :; forge verify-contract 0x249328B0F91A21eEcBf89862B9b181c522CEa5d5  --chain 98865 --verifier blockscout src/core/contracts/protocol/strategies/LeverageStrategy.sol:LeveragedBorrowingVault  --rpc-url plume_mainnet --verifier-url https://explorer.plumenetwork.xyz/api? --watch  --constructor-args 0x000000000000000000000000d5b3495c5e059a23bea726166e3c46b0cb3b42ab000000000000000000000000d914f98af8197cc461e9f1237d8d76e3b332d6c80000000000000000000000005fa6836e652d7d43089eac7df3a8360b5ccdcf9a
+plume-verify-points :; forge verify-contract 0xC79F50AEaeaF85B320350Dbe83773250c1329c69  --chain 98866 --verifier blockscout src/core/contracts/protocol/preDeposits/Points.sol:Points  --rpc-url plume_mainnet --verifier-url https://phoenix-explorer.plumenetwork.xyz/api? --watch  
+
 verify-oracle :; forge verify-contract 0x59AB56F7285e723CD417aFf63EEea800fD037995 --chain 137 --verifier etherscan --etherscan-api-key XTQMYH2JDHAMKD4CQW8TV3QPR2RUAP8M6M --rpc-url polygon src/EmergencyEACProxy.sol:EEACAggregatorProxy --watch --constructor-args 0x00000000000000000000000036da71ccad7a67053f0a4d9d5f55b725c9a25a3e000000000000000000000000000000000000000000000000000000000000000021c4f9a7edaefc4d28ba07193e0a7f13858fc363002378434608f3296ae1c676
 
 # plume3-verify-standard :; forge verify-contract 0xEd2D5f8F6bE71F740c89dEf37c6535f7A07B6F83  --chain 98864 --verifier blockscout src/core/instances/L2PoolInstance.sol:L2PoolInstance  --rpc-url plume3 --verifier-url 'https://test-explorer.plumenetwork.xyz/api?' --watch --constructor-args 0x00000000000000000000000036Ded1E98d43a74679eF43589c59DBE34AdDc80c --show-standard-json-input > etherscan.json
@@ -98,13 +100,18 @@ verify-oracle :; forge verify-contract 0x59AB56F7285e723CD417aFf63EEea800fD03799
 
 plume3-check-logic :; forge script scripts/CheckPoolLogic.sol:CheckPoolLogic --chain 98864 --rpc-url https://test-rpc.plumenetwork.xyz -vvvv
 simulate-txn :; cast call 0x2e4e91890fa1d183c38C55096BBCd220FaF55E32 $data --rpc-url $RPC --trace --debug
+simulate-test-uipool :; cast call  0xa576002f209C9F81DaC7A25A88Ab103335569851 0xec489c210000000000000000000000006a5f6b4f1c7b8afa16a941d52c4d706210e9ed2f --rpc-url https://phoenix-rpc.plumenetwork.xyz --trace
+simulate-liquidation :; cast call  0x1a90f585d95a2aa0dd7989686b4b45139a9f0989 0x0ddc695200000000000000000000000082af49447d8a07e3bd95bd0d56f35241523fbab1000000000000000000000000ff970a61a04b1ca14834a43f5de4533ebddb5cc80000000000000000000000001da3081c2d52795459f99ae7de40c1e339b3bbf10000000000000000000000000000000000000000000000000000003a35294400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000bb800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000320000000000000000000000004e9a5601e94beb8e8a771d233e45577fe6a430dd0000000000000000000000000000000000000000000000000000000000000000 --rpc-url https://arbitrum-one-rpc.publicnode.com --from 0x4e9a5601e94beb8e8a771d233e45577fe6a430dd --trace
 
 ## test  
+test-predeposit :; forge test --fork-url https://eth-mainnet.g.alchemy.com/v2/vBjfr1U4i_Ggbhu60Q7TV-jlx3aKXHWL --mc StoneBeraVaultTest3 --mt test_deposit_basic_b  -vvv
 test-leverage :; forge test --mc LeveragedBorrowingVaultTest  -vvv
 test-loop :; forge test --mc AdvancedLoopStrategyTest  -vvv
 test-leverage-fork :; forge test --fork-url https://phoenix-rpc.plumenetwork.xyz --mc LeveragedBorrowingVaultForkTest  -vvv
 test-leverage-devnet-fork :; forge test --fork-url https://rpc-plume-testnet-m8kfz7osif.t.conduit.xyz --mc LeveragedBorrowingVaultDevnetForkTest  -vvv
-test-open-leverage-fork :; forge test --fork-url https://phoenix-rpc.plumenetwork.xyz --mc LeveragedBorrowingVaultForkTest  -vvv
+test-leverage-devnet-fork-02 :; forge test --fork-url https://rpc-plume-testnet-m8kfz7osif.t.conduit.xyz --mc LeveragedBorrowing02VaultDevnetForkTest --fork-retries 3  --ffi --no-rpc-rate-limit -vvv
+test-open-leverage-fork :; forge test --fork-url https://phoenix-rpc.plumenetwork.xyz --mc LeveragedBorrowingVaultForkTest --mt test_addToPosition_Success  -vvv
+test-open-leverage-fork-02 :; forge test --fork-url https://phoenix-rpc.plumenetwork.xyz --mc LeveragedBorrowingVault02ForkTest --mt test_addToPosition_Success --fork-retries 3  --ffi --no-rpc-rate-limit -vvv
 test-loop-fork :; forge test --fork-url https://test-rpc.plumenetwork.xyz --mc LeveragedBorrowingVaultTest  -vvv
 test-liquidator-fork-spec :; forge test --mc FlashMintLiquidatorTest --mt test_liquidateWithFlashLoan  -vvv
 test-liquidator-fork-fls :; forge test --mc FlashMintLiquidatorTest --mt test_liquidateWithFlashLoan  -vvvv
