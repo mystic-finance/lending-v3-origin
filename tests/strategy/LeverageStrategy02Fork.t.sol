@@ -4,7 +4,8 @@ pragma solidity ^0.8.20;
 import 'forge-std/Test.sol';
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
-import {LeveragedBorrowingVault} from 'src/core/contracts/protocol/strategies/LeverageStrategy.sol';
+import {ILeveragedBorrowingVault02} from 'src/core/contracts/interfaces/ILeveragedBorrowingVault02.sol';
+import {LeveragedBorrowingVault02} from 'src/core/contracts/protocol/strategies/LeverageStrategy02.sol';
 import {ERC20Mock as MockERC20} from 'tests/mocks/ERC20Mock.sol';
 import '../../src/core/contracts/interfaces/IPool.sol';
 import {FlashLoanController} from 'src/core/contracts/protocol/strategies/FlashLoanController.sol';
@@ -18,7 +19,7 @@ import {MockAggregator} from 'src/core/contracts/mocks/oracle/CLAggregators/Mock
 import {AmbientSwap} from 'src/core/contracts/protocol/strategies/Swap/AmbientSwapper.sol';
 import {MaverickSwap} from 'src/core/contracts/protocol/strategies/Swap/MaverickSwapper.sol';
 
-contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
+contract LeveragedBorrowingVault02ForkTest is TestnetProcedures {
   // Test Addresses
   address internal deployer;
   address internal owner;
@@ -26,7 +27,7 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
   address internal anotherUser;
 
   // Contract instances
-  LeveragedBorrowingVault internal vault;
+  LeveragedBorrowingVault02 internal vault;
   IERC20 internal collateralToken;
   IERC20 internal borrowToken;
   IPool internal lendingPool;
@@ -90,18 +91,22 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
     //   0xf245948e9cf892C351361d298cc7c5b217C36D82
     // ); //factory, quoter
 
+    //   Aave V3 Batch Listing
+    //   sender 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38
+    //   ambientSwapper 0x8263AF89b721799bB59fF58f38147beeE2D15DdB
+    //   flashLoaner 0xe0dFB1C58eD32429ad74BB73187aeC2F97e6E3A4
+    //   swapController 0x9e05D90f40ABd231C7B482449de9e1872F94A3c4
+    //   flashloanController 0xDc559b3af6aB03B82753f0808cc33eB1eeb51734
+    //   loopStrategy 0x0900C8DcDDdBFE1f0357fF147459a0CAc83997cc
+    //   leverageStrategy 0xC5b1009a2C098378e7a08900e4b6e46a1bF32Da2
+
     // swapController = new SwapController(address(swap));
-    // vault = new LeveragedBorrowingVault(
-    //   0xd5b3495C5e059a23Bea726166E3C46b0Cb3b42Ab,
-    //   address(swapController),
-    //   address(flashLoanController)
-    // );
-    vault = new LeveragedBorrowingVault(
+    vault = new LeveragedBorrowingVault02(
       0xCE192A6E105cD8dd97b8Dedc5B5b263B52bb6AE0,
       0x9e05D90f40ABd231C7B482449de9e1872F94A3c4,
       0xDc559b3af6aB03B82753f0808cc33eB1eeb51734
     );
-    // vault = LeveragedBorrowingVault(0xC5b1009a2C098378e7a08900e4b6e46a1bF32Da2);
+    // vault = ILeveragedBorrowingVault02(0xB70F69F4D93EFb3fd95592feDA17aE5b61E2eb56);
 
     vault.addAllowedBorrowToken(0xdddD73F5Df1F0DC31373357beAC77545dC5A6f3F);
     vault.addAllowedBorrowToken(0xEa237441c92CAe6FC17Caaf9a7acB3f953be4bd1);
@@ -121,10 +126,10 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
 
     // Mint tokens to user
     // vm.startPrank(poolAdmin);
-    deal(address(collateralToken), user, INITIAL_BALANCE);
+    // deal(address(collateralToken), user, INITIAL_BALANCE);
     // borrowToken.mint(user, INITIAL_BALANCE);
 
-    // deal(address(collateralToken), anotherUser, INITIAL_BALANCE * 1000_000);
+    deal(address(collateralToken), user, INITIAL_BALANCE * 1000_000);
     // borrowToken.mint(anotherUser, INITIAL_BALANCE * 1000_000);
 
     // deal(address(collateralToken), address(swapController), INITIAL_BALANCE * 20000);
@@ -132,7 +137,7 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
 
     // vm.startPrank(anotherUser);
     // borrowToken.approve(address(lendingPool), UINT256_MAX);
-    address(collateralToken).call{value: INITIAL_COLLATERAL}('');
+    // address(collateralToken).call{value: INITIAL_COLLATERAL}('');
     collateralToken.approve(address(lendingPool), UINT256_MAX);
 
     // lendingPool.supply(
@@ -296,7 +301,7 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
 
     uint256[] memory positions = vault.getUserPositions(user);
 
-    vault.closeLeveragePosition(positions[0]);
+    vault.closeLeveragePosition(address(collateralToken), address(borrowToken));
 
     // Verify user received back approximately initial collateral (minus fees)
     uint256 finalBalance = collateralToken.balanceOf(user);
@@ -358,7 +363,7 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
     // emit LeveragePositionClosed(user, INITIAL_COLLATERAL);
     uint256[] memory positions = vault.getUserPositions(user);
 
-    vault.closeLeveragePosition(positions[0]);
+    vault.closeLeveragePosition(address(collateralToken), address(borrowToken));
     vm.stopPrank();
 
     // Verify position is closed
@@ -374,6 +379,7 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
   ) internal {
     uint256 actualCollateralBalance = collateralToken.balanceOf(_user);
     uint256 actualBorrowBalance = borrowToken.balanceOf(_user);
+    console.log(expectedCollateralBalance, expectedBorrowBalance);
 
     assert(actualCollateralBalance >= expectedCollateralBalance);
     assert(actualBorrowBalance >= expectedBorrowBalance);
@@ -401,7 +407,12 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
       positionId
     );
 
-    vault.updateLeveragePosition(positionId, additionalCollateral, LEVERAGE_MULTIPLIER);
+    vault.updateLeveragePosition(
+      address(collateralToken),
+      address(borrowToken),
+      additionalCollateral,
+      LEVERAGE_MULTIPLIER
+    );
 
     // Verify position is updated
     (, , , , uint256 totalCollateral, uint256 totalBorrowed, , bool isActive) = vault.positions(
@@ -416,6 +427,7 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
     assertGt(totalBorrowed, totalBorrowedOld, 'Borrowed amount not updated');
 
     // assertGt(actualCollateralBalance, userInitialCollateralBalance - INITIAL_COLLATERAL - 1 * 10 ** 15 - 1, 'Incorrect Balance');
+    console.log(userInitialCollateralBalance, INITIAL_COLLATERAL);
 
     //Verify user balances
     // _verifyUserBalances(
@@ -438,14 +450,18 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
     uint256 positionId = positions[0];
 
     // Remove collateral from the position
-    uint256 collateralToRemove = 5 * 10 ** 12;
+    uint256 collateralToRemove = 0.5e15;
     (, , , , uint256 totalCollateralOld, uint256 totalBorrowedOld, , ) = vault.positions(
       positionId
     );
 
+    console.log(vault.totalCollateral());
+    console.log(vault.totalBorrowed());
+
     vm.startPrank(user);
     vault.updateLeveragePosition(
-      positionId,
+      address(collateralToken),
+      address(borrowToken),
       INITIAL_COLLATERAL - collateralToRemove,
       LEVERAGE_MULTIPLIER
     );
@@ -456,7 +472,7 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
     );
     assertGt(totalCollateralOld, totalCollateral, 'Collateral not decreased');
     assertGt(
-      ((INITIAL_COLLATERAL + 1 * 10 ** 15) * LEVERAGE_MULTIPLIER) - 0.4e15,
+      ((INITIAL_COLLATERAL + 1 * 10 ** 15) * LEVERAGE_MULTIPLIER) - 0.5e15,
       totalCollateral,
       'Collateral not updated'
     );
@@ -497,7 +513,12 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
     );
 
     vm.startPrank(user);
-    vault.updateLeveragePosition(positionId, INITIAL_COLLATERAL, newLeverageMultiplier);
+    vault.updateLeveragePosition(
+      address(collateralToken),
+      address(borrowToken),
+      INITIAL_COLLATERAL,
+      newLeverageMultiplier
+    );
 
     // Verify position is updated
     (
@@ -540,7 +561,12 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
     );
 
     vm.startPrank(user);
-    vault.updateLeveragePosition(positionId, INITIAL_COLLATERAL, newLeverageMultiplier);
+    vault.updateLeveragePosition(
+      address(collateralToken),
+      address(borrowToken),
+      INITIAL_COLLATERAL,
+      newLeverageMultiplier
+    );
 
     // Verify position is updated
     (
@@ -574,7 +600,7 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
 
     vm.startPrank(user);
     vm.expectRevert('No active position');
-    vault.updateLeveragePosition(999, INITIAL_COLLATERAL, LEVERAGE_MULTIPLIER);
+    vault.updateLeveragePosition(address(0), address(1), INITIAL_COLLATERAL, LEVERAGE_MULTIPLIER);
     vm.stopPrank();
   }
 
@@ -589,96 +615,111 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
 
     vm.startPrank(user);
     vm.expectRevert('Invalid leverage');
-    vault.updateLeveragePosition(positionId, INITIAL_COLLATERAL, 0); // Invalid leverage
+    vault.updateLeveragePosition(
+      address(collateralToken),
+      address(borrowToken),
+      INITIAL_COLLATERAL,
+      0
+    ); // Invalid leverage
 
     vm.expectRevert('Invalid leverage');
-    vault.updateLeveragePosition(positionId, INITIAL_COLLATERAL, 21); // Exceeds max leverage
+    vault.updateLeveragePosition(
+      address(collateralToken),
+      address(borrowToken),
+      INITIAL_COLLATERAL,
+      21
+    ); // Exceeds max leverage
     vm.stopPrank();
   }
 
   // Test: Revert on updating position with low health factor
-  // function test_updateLeveragePosition_RevertOn_LowHealthFactor() public {
-  //   // First, open a position
-  //   _prepareUserTokens(user);
-  //   test_openLeveragePosition_Success();
+  function test_updateLeveragePosition_RevertOn_LowHealthFactor() public {
+    // First, open a position
+    _prepareUserTokens(user);
+    test_openLeveragePosition_Success();
 
-  //   uint256[] memory positions = vault.getUserPositions(user);
-  //   uint256 positionId = positions[0];
+    uint256[] memory positions = vault.getUserPositions(user);
+    uint256 positionId = positions[0];
 
-  //   // Simulate price drop of collateral by 50%
-  //   vm.startPrank(user);
-  //   IAaveOracle oracle = IAaveOracle(lendingPool.ADDRESSES_PROVIDER().getPriceOracle());
-  //   address[] memory assets = new address[](1);
-  //   assets[0] = address(collateralToken);
+    // Simulate price drop of collateral by 50%
+    vm.startPrank(user);
+    IAaveOracle oracle = IAaveOracle(lendingPool.ADDRESSES_PROVIDER().getPriceOracle());
+    address[] memory assets = new address[](1);
+    assets[0] = address(collateralToken);
 
-  //   address[] memory sources = new address[](1);
-  //   sources[0] = address(new MockAggregator(900e8));
+    address[] memory sources = new address[](1);
+    sources[0] = address(new MockAggregator(8e6));
 
-  //   vm.startPrank(poolAdmin);
-  //   oracle.setAssetSources(assets, sources);
+    vm.startPrank(user);
+    oracle.setAssetSources(assets, sources);
 
-  //   // Try to update position - should revert due to low health factor
-  //   vm.expectRevert('Position health is too low');
-  //   vault.updateLeveragePosition(positionId, INITIAL_COLLATERAL, LEVERAGE_MULTIPLIER);
+    // Try to update position - should revert due to low health factor
+    vm.expectRevert('Position health is too low');
+    vault.updateLeveragePosition(
+      address(collateralToken),
+      address(borrowToken),
+      INITIAL_COLLATERAL,
+      LEVERAGE_MULTIPLIER
+    );
 
-  //   vm.stopPrank();
-  // }
+    vm.stopPrank();
+  }
 
   // Test: Revert closing position with low health factor
-  // function test_closeLeveragePosition_RevertOn_LowHealthFactor() public {
-  //   _prepareUserTokens(user);
+  function test_closeLeveragePosition_RevertOn_LowHealthFactor() public {
+    _prepareUserTokens(user);
 
-  //   // Open a highly leveraged position
-  //   vm.startPrank(user);
+    // Open a highly leveraged position
+    vm.startPrank(user);
 
-  //   DataTypes.ReserveDataLegacy memory reserveData = lendingPool.getReserveData(
-  //     address(collateralToken)
-  //   );
-  //   DataTypes.ReserveDataLegacy memory reserveData2 = lendingPool.getReserveData(
-  //     address(borrowToken)
-  //   );
+    DataTypes.ReserveDataLegacy memory reserveData = lendingPool.getReserveData(
+      address(collateralToken)
+    );
+    DataTypes.ReserveDataLegacy memory reserveData2 = lendingPool.getReserveData(
+      address(borrowToken)
+    );
 
-  //   IERC20(reserveData.aTokenAddress).approve(address(vault), INITIAL_COLLATERAL * 100_000);
-  //   ICreditDelegationToken(reserveData2.variableDebtTokenAddress).approveDelegation(
-  //     address(vault),
-  //     INITIAL_COLLATERAL * 100_000
-  //   );
+    IERC20(reserveData.aTokenAddress).approve(address(vault), INITIAL_COLLATERAL * 100_000);
+    ICreditDelegationToken(reserveData2.variableDebtTokenAddress).approveDelegation(
+      address(vault),
+      INITIAL_COLLATERAL * 100_000
+    );
 
-  //   // Use maximum leverage
-  //   uint256 maxLeverage = 20;
-  //   vault.openLeveragePosition(
-  //     address(collateralToken),
-  //     address(borrowToken),
-  //     INITIAL_COLLATERAL,
-  //     5
-  //   );
+    // Use maximum leverage
+    uint256 maxLeverage = 20;
+    vault.openLeveragePosition(
+      address(collateralToken),
+      address(borrowToken),
+      INITIAL_COLLATERAL,
+      4
+    );
 
-  //   // Simulate price drop of collateral by 50%
-  //   vm.startPrank(user);
-  //   IAaveOracle oracle = IAaveOracle(lendingPool.ADDRESSES_PROVIDER().getPriceOracle());
-  //   address[] memory assets = new address[](1);
-  //   assets[0] = address(collateralToken);
+    // Simulate price drop of collateral by 50%
+    vm.startPrank(user);
+    IAaveOracle oracle = IAaveOracle(lendingPool.ADDRESSES_PROVIDER().getPriceOracle());
+    address[] memory assets = new address[](1);
+    assets[0] = address(collateralToken);
 
-  //   address[] memory sources = new address[](1);
-  //   sources[0] = address(new MockAggregator(900e8));
+    address[] memory sources = new address[](1);
+    sources[0] = address(new MockAggregator(8e6));
 
-  //   oracle.setAssetSources(assets, sources);
+    oracle.setAssetSources(assets, sources);
 
-  //   // Try to close position - should revert due to low health factor
-  //   vm.startPrank(user);
-  //   bytes4 selector = bytes4(keccak256('LowHealthFactor()'));
-  //   vm.expectRevert(selector);
-  //   vault.closeLeveragePosition(address(borrowToken));
+    // Try to close position - should revert due to low health factor
+    vm.startPrank(user);
+    bytes4 selector = bytes4(keccak256('LowHealthFactor()'));
+    vm.expectRevert(selector);
+    vault.closeLeveragePosition(address(collateralToken), address(borrowToken));
 
-  //   vm.stopPrank();
-  // }
+    vm.stopPrank();
+  }
 
   function testFailCloseNonexistentPosition() public {
     vm.startPrank(user);
     uint256[] memory positions = vault.getUserPositions(user);
     bytes4 selector = bytes4(keccak256('No active position'));
     vm.expectRevert(selector);
-    vault.closeLeveragePosition(positions[0]);
+    vault.closeLeveragePosition(address(collateralToken), address(borrowToken));
     vm.stopPrank();
   }
 

@@ -15,6 +15,7 @@ import {SwapController} from 'src/core/contracts/protocol/strategies/SwapControl
 
 import {AdvancedLoopStrategy} from 'src/core/contracts/protocol/strategies/LoopStrategy.sol';
 import {LeveragedBorrowingVault} from 'src/core/contracts/protocol/strategies/LeverageStrategy.sol';
+import {LeveragedBorrowingVault02} from 'src/core/contracts/protocol/strategies/LeverageStrategy02.sol';
 import {MaverickSwap} from 'src/core/contracts/protocol/strategies/Swap/MaverickSwapper.sol';
 
 import {DefaultMarketInput} from 'src/deployments/inputs/DefaultMarketInput.sol';
@@ -28,9 +29,9 @@ contract DeployStrategies is DeployUtils, DefaultMarketInput, Script {
 
     uint256 deployerPrivateKey = vm.envUint('PRIVATE_KEY');
     address lendingPool = vm.envAddress('LENDING_POOL');
-    address poolProvider = vm.envAddress('POOL_PROVIDER');
-    address quoter = vm.envAddress('MAVERICK_QUOTER');
-    address factory = vm.envAddress('MAVERICK_FACTORY');
+    // address poolProvider = vm.envAddress('POOL_PROVIDER');
+    // address quoter = vm.envAddress('MAVERICK_QUOTER');
+    // address factory = vm.envAddress('MAVERICK_FACTORY');
 
     vm.startBroadcast(deployerPrivateKey);
 
@@ -39,52 +40,95 @@ contract DeployStrategies is DeployUtils, DefaultMarketInput, Script {
     //   0x1E4aC9797E50bdb9706df99a45dB6afaff212239,
     //   config.providerId
     // );
-    MaverickSwap ambientSwapper = new MaverickSwap(factory, quoter);
-    AaveV3Flashloaner flashLoaner = new AaveV3Flashloaner(poolProvider);
+    // MaverickSwap ambientSwapper = new MaverickSwap(factory, quoter);
+    // AaveV3Flashloaner flashLoaner = new AaveV3Flashloaner(poolProvider);
 
-    SwapController swapController = new SwapController(address(ambientSwapper));
-    FlashLoanController flashloanController = new FlashLoanController(address(flashLoaner));
+    // SwapController swapController = new SwapController(address(ambientSwapper));
+    // FlashLoanController flashloanController = new FlashLoanController(address(flashLoaner));
 
     // SwapController swapController = SwapController(0x0f8d9480ca937441c166E39e2d9f90a7A6031194);
     // swapController.updateSwapper(address(ambientSwapper));
 
-    AdvancedLoopStrategy loopStrategy = new AdvancedLoopStrategy(
-      msg.sender,
+    // AdvancedLoopStrategy loopStrategy = new AdvancedLoopStrategy(
+    //   msg.sender,
+    //   lendingPool,
+    //   address(swapController),
+    //   500
+    // );
+    // LeveragedBorrowingVault leverageStrategy = new LeveragedBorrowingVault(
+    //   lendingPool,
+    //   0x9e05D90f40ABd231C7B482449de9e1872F94A3c4,
+    //   0xDc559b3af6aB03B82753f0808cc33eB1eeb51734
+    // );
+
+    LeveragedBorrowingVault02 leverageStrategy = new LeveragedBorrowingVault02(
       lendingPool,
-      address(swapController),
-      500
-    );
-    LeveragedBorrowingVault leverageStrategy = new LeveragedBorrowingVault(
-      lendingPool,
-      address(swapController),
-      address(flashloanController)
+      0x9e05D90f40ABd231C7B482449de9e1872F94A3c4,
+      0xDc559b3af6aB03B82753f0808cc33eB1eeb51734
     );
 
     // AdvancedLoopStrategy loopStrategy = AdvancedLoopStrategy(
     //   0x1EdF7b468731b2a15A48fcA02D6949fcb7f3D8f6
     // );
     // LeveragedBorrowingVault leverageStrategy = LeveragedBorrowingVault(
-    //   0x249328B0F91A21eEcBf89862B9b181c522CEa5d5
+    //   0xC5b1009a2C098378e7a08900e4b6e46a1bF32Da2
     // );
     // leverageStrategy.updateFlashLoanController(address(flashloanController));
 
-    console.log('ambientSwapper', address(ambientSwapper));
-    console.log('flashLoaner', address(flashLoaner));
-    console.log('swapController', address(swapController));
-    console.log('flashloanController', address(flashloanController));
-    console.log('loopStrategy', address(loopStrategy));
+    // console.log('ambientSwapper', address(ambientSwapper));
+    // console.log('flashLoaner', address(flashLoaner));
+    // console.log('swapController', address(swapController));
+    // console.log('flashloanController', address(flashloanController));
+    // console.log('loopStrategy', address(loopStrategy));
     console.log('leverageStrategy', address(leverageStrategy));
+    // console.log('leverageStrategy02', address(leverageStrategy02));
+    address[] memory borrowTokens = new address[](5);
+    address[] memory collateralTokens = new address[](7);
+
+    // Populate borrowTokens array
+    borrowTokens[0] = 0xEa237441c92CAe6FC17Caaf9a7acB3f953be4bd1; // plume
+    borrowTokens[1] = 0xdddD73F5Df1F0DC31373357beAC77545dC5A6f3F; // pusd
+    borrowTokens[2] = 0xca59cA09E5602fAe8B629DeE83FfA819741f14be; // weth
+    borrowTokens[3] = 0x78adD880A697070c1e765Ac44D65323a0DcCE913; // usdc
+    borrowTokens[4] = 0xda6087E69C51E7D31b6DBAD276a3c44703DFdCAd; // usdt
+
+    // Populate collateralTokens array
+    collateralTokens[0] = 0xEa237441c92CAe6FC17Caaf9a7acB3f953be4bd1; // plume
+    collateralTokens[1] = 0xdddD73F5Df1F0DC31373357beAC77545dC5A6f3F; // pusd
+    collateralTokens[2] = 0x593cCcA4c4bf58b7526a4C164cEEf4003C6388db; // nrwa
+    collateralTokens[3] = 0xE72Fe64840F4EF80E3Ec73a1c749491b5c938CB9; // nelixir
+    collateralTokens[4] = 0x9fbC367B9Bb966a2A537989817A088AFCaFFDC4c; // ntbill
+    collateralTokens[5] = 0xca59cA09E5602fAe8B629DeE83FfA819741f14be; // weth
+    collateralTokens[6] = 0x39d1F90eF89C52dDA276194E9a832b484ee45574; // peth
+
+    // Call batch functions
+    leverageStrategy.batchAddAllowedBorrowTokens(borrowTokens);
+    leverageStrategy.batchAddAllowedCollateralTokens(collateralTokens);
 
     // mainnet
-    // leverageStrategy.addAllowedBorrowToken(0x3938A812c54304fEffD266C7E2E70B48F9475aD6);
-    // leverageStrategy.addAllowedBorrowToken(0xdddD73F5Df1F0DC31373357beAC77545dC5A6f3F);
-    // leverageStrategy.addAllowedBorrowToken(0xD630fb6A07c9c723cf709d2DaA9B63325d0E0B73);
-    // leverageStrategy.addAllowedBorrowToken(0x81537d879ACc8a290a1846635a0cAA908f8ca3a6);
+    // leverageStrategy.addAllowedBorrowToken(0xEa237441c92CAe6FC17Caaf9a7acB3f953be4bd1); //plume
+    // leverageStrategy.addAllowedBorrowToken(0xdddD73F5Df1F0DC31373357beAC77545dC5A6f3F); //pusd
+    // // leverageStrategy.addAllowedBorrowToken(0x593cCcA4c4bf58b7526a4C164cEEf4003C6388db); // nrwa
+    // // leverageStrategy.addAllowedBorrowToken(0xE72Fe64840F4EF80E3Ec73a1c749491b5c938CB9); //nelixir
+    // // leverageStrategy.addAllowedBorrowToken(0x9fbC367B9Bb966a2A537989817A088AFCaFFDC4c); //ntbill
+    // leverageStrategy.addAllowedBorrowToken(0xca59cA09E5602fAe8B629DeE83FfA819741f14be); // weth
+    // leverageStrategy.addAllowedBorrowToken(0x78adD880A697070c1e765Ac44D65323a0DcCE913); //usdc
+    // leverageStrategy.addAllowedBorrowToken(0xda6087E69C51E7D31b6DBAD276a3c44703DFdCAd); //usdt
+    // // leverageStrategy.addAllowedBorrowToken(0x39d1F90eF89C52dDA276194E9a832b484ee45574); // peth
 
-    // leverageStrategy.addAllowedCollateralToken(0x3938A812c54304fEffD266C7E2E70B48F9475aD6);
+    // leverageStrategy.addAllowedCollateralToken(0xEa237441c92CAe6FC17Caaf9a7acB3f953be4bd1);
     // leverageStrategy.addAllowedCollateralToken(0xdddD73F5Df1F0DC31373357beAC77545dC5A6f3F);
-    // leverageStrategy.addAllowedCollateralToken(0xD630fb6A07c9c723cf709d2DaA9B63325d0E0B73);
-    // leverageStrategy.addAllowedCollateralToken(0x81537d879ACc8a290a1846635a0cAA908f8ca3a6);
+    // leverageStrategy.addAllowedCollateralToken(0x593cCcA4c4bf58b7526a4C164cEEf4003C6388db);
+    // leverageStrategy.addAllowedCollateralToken(0xE72Fe64840F4EF80E3Ec73a1c749491b5c938CB9);
+    // leverageStrategy.addAllowedCollateralToken(0x9fbC367B9Bb966a2A537989817A088AFCaFFDC4c);
+    // leverageStrategy.addAllowedCollateralToken(0xca59cA09E5602fAe8B629DeE83FfA819741f14be);
+    // // leverageStrategy.addAllowedCollateralToken(0x78adD880A697070c1e765Ac44D65323a0DcCE913);
+    // // leverageStrategy.addAllowedCollateralToken(0xda6087E69C51E7D31b6DBAD276a3c44703DFdCAd);
+    // leverageStrategy.addAllowedCollateralToken(0x39d1F90eF89C52dDA276194E9a832b484ee45574);
+
+    // 02
+    // leverageStrategy.addAllowedBorrowToken(0xdddD73F5Df1F0DC31373357beAC77545dC5A6f3F);
+    // leverageStrategy.addAllowedCollateralToken(0x9fbC367B9Bb966a2A537989817A088AFCaFFDC4c);
 
     // devnet
     // leverageStrategy.addAllowedBorrowToken(0xe644F07B1316f28a7F134998e021eA9f7135F351);
@@ -189,3 +233,26 @@ contract DeployStrategies is DeployUtils, DefaultMarketInput, Script {
 //   flashloanController 0xB8e5A61D8518761F271409A236a1F1706CCEe69D
 //   loopStrategy 0x9Bd7e6b833BF7c2B1Db2703EFA68B1e38d594848
 //   leverageStrategy 0x8088DD0042641195E0F35f250Eb0A2D3892456a0
+
+// mainnet 1-1
+// == Logs ==
+//   Aave V3 Batch Listing
+//   sender 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38
+//   ambientSwapper 0x8263AF89b721799bB59fF58f38147beeE2D15DdB
+//   flashLoaner 0xe0dFB1C58eD32429ad74BB73187aeC2F97e6E3A4
+//   swapController 0x9e05D90f40ABd231C7B482449de9e1872F94A3c4
+//   flashloanController 0xDc559b3af6aB03B82753f0808cc33eB1eeb51734
+//   loopStrategy 0x0900C8DcDDdBFE1f0357fF147459a0CAc83997cc
+//   leverageStrategy 0xC5b1009a2C098378e7a08900e4b6e46a1bF32Da2
+
+// mainnet 1-2
+// == Logs ==
+//   Aave V3 Batch Listing
+//   sender 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38
+//   ambientSwapper 0x8263AF89b721799bB59fF58f38147beeE2D15DdB
+//   flashLoaner 0xe0dFB1C58eD32429ad74BB73187aeC2F97e6E3A4
+//   swapController 0x9e05D90f40ABd231C7B482449de9e1872F94A3c4
+//   flashloanController 0xDc559b3af6aB03B82753f0808cc33eB1eeb51734
+//   loopStrategy 0x0900C8DcDDdBFE1f0357fF147459a0CAc83997cc
+//   leverageStrategy 0xBAb83b11e15c111A580Ce593c783Fe41B4CCd7f0
+//   leverageStrategy02 0x5443e4937ACA73d16f051075bB6aA28ABBcc2fE6

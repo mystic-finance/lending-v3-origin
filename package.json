@@ -27,6 +27,6 @@
     "@bgd-labs/aave-cli": "^0.7.2",
     "@typechain/ethers-v5": "^11.1.2",
     "catapulta-verify": "^1.0.6-b4e4af767ca0ef6644d50aeca57aae1a560fe40d.0",
-    "hardhat": "^2.22.4"
+    "hardhat": "^2.23.0"
   }
 }
