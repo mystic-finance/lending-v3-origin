@@ -714,7 +714,7 @@ contract LeveragedBorrowingVault02ForkTest is TestnetProcedures {
     vm.stopPrank();
   }
 
-  function testFailCloseNonexistentPosition() public {
+  function test_CloseNonexistentPosition() public {
     vm.startPrank(user);
     uint256[] memory positions = vault.getUserPositions(user);
     bytes4 selector = bytes4(keccak256('No active position'));
