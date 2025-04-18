@@ -4,10 +4,10 @@
 
 Foundry consists of:
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+- **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
+- **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
+- **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
+- **Chisel**: Fast, utilitarian, and verbose solidity REPL.
 
 ## Documentation
 
@@ -64,3 +64,16 @@ $ forge --help
 $ anvil --help
 $ cast --help
 ```
+
+## Scope
+
+- src/core/contracts/protocol/strategies/Swap/MaverickSwapper.sol
+- src/core/contracts/protocol/strategies/FlashLoanController.sol
+- src/core/contracts/protocol/strategies/LeverageStrategy.sol
+- src/core/contracts/protocol/strategies/LeverageStrategy02.sol
+- src/core/contracts/protocol/strategies/SwapController.sol
+- src/core/contracts/protocol/preDeposits/oracle/MainOracleV2.sol
+- src/core/contracts/protocol/preDeposits/BeraPreDepositVault.sol
+- src/core/contracts/protocol/preDeposits/ETHDepositWrapper.sol
+- All files in src/core/contracts/protocol/preDeposits
+- All files in src/core/contracts/protocol/strategies/Flashloan
