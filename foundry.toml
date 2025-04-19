@@ -9,6 +9,7 @@ evm_version = 'shanghai'
 bytecode_hash = 'none'
 out = 'out'
 libs = ['lib']
+gas_limit=1000000000
 remappings = [
 ]
 fs_permissions = [
@@ -17,6 +18,7 @@ fs_permissions = [
   { access = "read", path = "./config" },
 ]
 ffi = true
+gas_reports = ["LeveragedBorrowingVault02","LeveragedBorrowingVault"]
 
 [fuzz]
 runs = 1000

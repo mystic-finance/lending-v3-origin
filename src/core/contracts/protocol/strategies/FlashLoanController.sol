@@ -92,8 +92,8 @@ contract FlashLoanController is Ownable, ReentrancyGuard {
     IStrategy(strategy).executeOperation(assets, amounts, premiums, initiator, params);
 
     uint256 amountOwed = amounts[0] + premiums[0];
-    IERC20(borrowToken).transferFrom(strategy, address(this), amountOwed);
-    IERC20(borrowToken).approve(address(currentProvider), amountOwed);
+    IERC20(borrowToken).transferFrom(strategy, address(currentProvider), amountOwed);
+    // IERC20(borrowToken).approve(address(currentProvider), amountOwed);
 
     return true;
   }

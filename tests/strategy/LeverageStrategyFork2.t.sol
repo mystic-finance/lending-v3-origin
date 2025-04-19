@@ -18,7 +18,7 @@ import {MockAggregator} from 'src/core/contracts/mocks/oracle/CLAggregators/Mock
 import {AmbientSwap} from 'src/core/contracts/protocol/strategies/Swap/AmbientSwapper.sol';
 import {MaverickSwap} from 'src/core/contracts/protocol/strategies/Swap/MaverickSwapper.sol';
 
-contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
+contract LeveragedBorrowingVaultForkTest2 is TestnetProcedures {
   // Test Addresses
   address internal deployer;
   address internal owner;
@@ -46,7 +46,7 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
 
   // Constants for testing
   uint256 internal constant INITIAL_BALANCE = 100_000 * 10 ** 18;
-  uint256 internal constant INITIAL_COLLATERAL = 1 * 10 ** 4;
+  uint256 internal constant INITIAL_COLLATERAL = 1 * 10 ** 15;
   uint256 internal constant LEVERAGE_MULTIPLIER = 3;
 
   function setUp() public {
@@ -284,7 +284,7 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
     uint256 actualCollateral = collateral2 - collateral1;
     uint256 actualBorrowed = borrow2 - borrow1;
 
-    assertGt(actualCollateral, expectedTotalCollateral - 0.1e4, 'Incorrect collateral amount');
+    assertGt(actualCollateral, expectedTotalCollateral - 0.1e15, 'Incorrect collateral amount');
     assertGt(actualBorrowed, 0, 'Incorrect borrowed amount');
 
     vm.stopPrank();
@@ -306,20 +306,20 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
     uint256 finalBalance = collateralToken.balanceOf(user);
     assertGt(
       finalBalance,
-      userMainCollateralBalance - 0.1e4,
+      userMainCollateralBalance - 0.1e15,
       'User should receive collateral back'
     );
 
     // Allow for some slippage/fees
     assertGt(
       collateralToken.balanceOf(user),
-      userInitialCollateralBalance + INITIAL_COLLATERAL - 0.1e4,
+      userInitialCollateralBalance + INITIAL_COLLATERAL - 0.1e15,
       'Incorrect final balance after closing'
     );
 
     assertGt(
       finalBalance - userInitialCollateralBalance,
-      INITIAL_COLLATERAL - 0.1e4,
+      INITIAL_COLLATERAL - 0.1e15,
       'Incorrect final collateral balance after closing'
     );
 
@@ -394,7 +394,7 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
     uint256 positionId = positions[0];
 
     // Add collateral to the position
-    uint256 additionalCollateral = 1 * 10 ** 4 + INITIAL_COLLATERAL;
+    uint256 additionalCollateral = 1 * 10 ** 15 + INITIAL_COLLATERAL;
     deal(address(collateralToken), user, additionalCollateral);
     uint256 initialCollateralBalance = collateralToken.balanceOf(user);
 
@@ -414,17 +414,17 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
     assertGt(totalCollateral, totalCollateralOld, 'Collateral not increased');
     assertGt(
       totalCollateral,
-      ((INITIAL_COLLATERAL + 1 * 10 ** 4) * LEVERAGE_MULTIPLIER) - 0.4e4,
+      ((INITIAL_COLLATERAL + 1 * 10 ** 15) * LEVERAGE_MULTIPLIER) - 0.4e15,
       'Collateral not updated'
     );
     assertGt(totalBorrowed, totalBorrowedOld, 'Borrowed amount not updated');
 
-    // assertGt(actualCollateralBalance, userInitialCollateralBalance - INITIAL_COLLATERAL - 1 * 10 ** 4 - 1, 'Incorrect Balance');
+    // assertGt(actualCollateralBalance, userInitialCollateralBalance - INITIAL_COLLATERAL - 1 * 10 ** 15 - 1, 'Incorrect Balance');
 
     //Verify user balances
     // _verifyUserBalances(
     //   user,
-    //   userInitialCollateralBalance - INITIAL_COLLATERAL - 1 * 10 ** 4, // Expected collateral balance
+    //   userInitialCollateralBalance - INITIAL_COLLATERAL - 1 * 10 ** 15, // Expected collateral balance
     //   0 // Expected borrow balance
     // );
 
@@ -442,7 +442,7 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
     uint256 positionId = positions[0];
 
     // Remove collateral from the position
-    uint256 collateralToRemove = 5 * 10 ** 3;
+    uint256 collateralToRemove = 5 * 10 ** 14;
     (, , , , uint256 totalCollateralOld, uint256 totalBorrowedOld, , ) = vault.positions(
       positionId
     );
@@ -460,7 +460,7 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
     );
     assertGt(totalCollateralOld, totalCollateral, 'Collateral not decreased');
     assertGt(
-      ((INITIAL_COLLATERAL + 1 * 10 ** 4) * LEVERAGE_MULTIPLIER) - 0.4e4,
+      ((INITIAL_COLLATERAL + 1 * 10 ** 15) * LEVERAGE_MULTIPLIER) - 0.4e15,
       totalCollateral,
       'Collateral not updated'
     );
@@ -469,7 +469,7 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
     uint256 actualCollateralBalance = collateralToken.balanceOf(user);
     assertGt(
       actualCollateralBalance,
-      userInitialCollateralBalance - INITIAL_COLLATERAL + collateralToRemove - 0.1e4,
+      userInitialCollateralBalance - INITIAL_COLLATERAL + collateralToRemove - 0.1e15,
       'Incorrect Balance'
     );
 
@@ -494,7 +494,7 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
     uint256 positionId = positions[0];
 
     // Update leverage multiplier
-    uint256 newLeverageMultiplier = 4;
+    uint256 newLeverageMultiplier = 15;
 
     (, , , , uint256 totalCollateralOld, uint256 totalBorrowedOld, , ) = vault.positions(
       positionId
@@ -515,7 +515,7 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
       bool isActive
     ) = vault.positions(positionId);
     assertGt(totalCollateral, totalCollateralOld, 'Collateral not increased');
-    assertGt(totalCollateral, ((INITIAL_COLLATERAL) * 4) - 0.1e4, 'Collateral not updated');
+    assertGt(totalCollateral, ((INITIAL_COLLATERAL) * 15) - 0.1e15, 'Collateral not updated');
     assertGt(totalBorrowed, totalBorrowedOld, 'Borrowed amount not updated');
 
     // Verify user balances
@@ -557,9 +557,9 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
       uint256 leverageMultiplier,
       bool isActive
     ) = vault.positions(positionId);
-    assertGt(totalCollateralOld, totalCollateral - 0.01e4, 'Collateral not decreased');
+    assertGt(totalCollateralOld, totalCollateral - 0.01e15, 'Collateral not decreased');
 
-    assertGt(((INITIAL_COLLATERAL) * 2), totalCollateral - 0.01e4, 'Collateral not updated');
+    assertGt(((INITIAL_COLLATERAL) * 2), totalCollateral - 0.01e15, 'Collateral not updated');
     assertGt(totalBorrowedOld, totalBorrowed - 1, 'Borrowed amount not updated');
 
     // Verify user balances

@@ -41,13 +41,19 @@ contract DeployStrategies is DeployUtils, DefaultMarketInput, Script {
     //   config.providerId
     // );
     // MaverickSwap ambientSwapper = new MaverickSwap(factory, quoter);
+    // AmbientSwap swap = new AmbientSwap(0xAaAaAAAA81a99d2a05eE428eC7a1d8A3C2237D85, lendingPool);
+    // MaverickSwap swap = new MaverickSwap(
+    //   0x056A588AfdC0cdaa4Cab50d8a4D2940C5D04172E,
+    //   0xf245948e9cf892C351361d298cc7c5b217C36D82
+    // ); //factory, quoter
+
     // AaveV3Flashloaner flashLoaner = new AaveV3Flashloaner(poolProvider);
 
     // SwapController swapController = new SwapController(address(ambientSwapper));
     // FlashLoanController flashloanController = new FlashLoanController(address(flashLoaner));
 
-    // SwapController swapController = SwapController(0x0f8d9480ca937441c166E39e2d9f90a7A6031194);
-    // swapController.updateSwapper(address(ambientSwapper));
+    // SwapController swapController = SwapController(0x9e05D90f40ABd231C7B482449de9e1872F94A3c4);
+    // swapController.updateSwapper(address(swap));
 
     // AdvancedLoopStrategy loopStrategy = new AdvancedLoopStrategy(
     //   msg.sender,
@@ -75,7 +81,7 @@ contract DeployStrategies is DeployUtils, DefaultMarketInput, Script {
     // );
     // leverageStrategy.updateFlashLoanController(address(flashloanController));
 
-    // console.log('ambientSwapper', address(ambientSwapper));
+    // console.log('swapper', address(swap));
     // console.log('flashLoaner', address(flashLoaner));
     // console.log('swapController', address(swapController));
     // console.log('flashloanController', address(flashloanController));
@@ -256,3 +262,8 @@ contract DeployStrategies is DeployUtils, DefaultMarketInput, Script {
 //   loopStrategy 0x0900C8DcDDdBFE1f0357fF147459a0CAc83997cc
 //   leverageStrategy 0xBAb83b11e15c111A580Ce593c783Fe41B4CCd7f0
 //   leverageStrategy02 0x5443e4937ACA73d16f051075bB6aA28ABBcc2fE6
+
+// == Logs ==
+//   swapper 0x544132816A358D457Db256e6C0334Ebdaa687970
+//   leverageStrategy 0x96dD2B982b02EA452dFEE8C97Fe4C389E8Ff972E
+//   leverageStrategy02 0x269871d6a01d61A67340A3c3Ed5D3c50d69577e0

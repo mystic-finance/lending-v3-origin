@@ -44,7 +44,7 @@ git-diff :
 # deploy-script-plume-devnet :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 18230 --rpc-url plume2 --broadcast --slow --legacy --gas-estimate-multiplier 150 --delay 5
 # deploy-script-test-polygon :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --chain 137 --rpc-url polygon --broadcast --slow --verify --legacy --delay 5 --sender 0x0fbAecF514Ab7145e514ad4c448f417BE9292D63 -vvv
 deploy-script-strategy-plume-devnet :; forge script scripts/DeployStrategies.sol:DeployStrategies --chain 98864 --rpc-url plume3 --broadcast --slow --verifier blockscout --verifier-url https://test-explorer.plumenetwork.xyz/api? --legacy --gas-estimate-multiplier 5000 --delay 5 -vvv
-deploy-script-strategy-plume-mainnet :; forge script scripts/DeployStrategies.sol:DeployStrategies --chain 98866 --rpc-url plume_mainnet --broadcast --verify --slow --verifier blockscout --verifier-url https://phoenix-explorer.plumenetwork.xyz/api? --delay 5 --gas-estimate-multiplier 100 -vvvvv 
+deploy-script-strategy-plume-mainnet :; forge script scripts/DeployStrategies.sol:DeployStrategies --chain 98866 --rpc-url plume_mainnet --broadcast --verify --slow --verifier blockscout --verifier-url https://phoenix-explorer.plumenetwork.xyz/api? --delay 5 --gas-estimate-multiplier 150 -vvv
 
 # pre-deposit
 deploy-script-predeposit-vault :; forge script scripts/DeployPreDepositVaults.sol:DeployPreDepositVault --chain 98864 --rpc-url plume3 --broadcast --slow --verifier blockscout --verifier-url https://test-explorer.plumenetwork.xyz/api? --legacy --gas-estimate-multiplier 5000 --delay 5 -vvv

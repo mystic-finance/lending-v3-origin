@@ -108,8 +108,8 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
   // Constants
   uint256 public constant MAX_LEVERAGE = 20;
   uint16 public constant REFERRAL_CODE = 0;
-  uint256 public SLIPPAGE_TOLERANCE = 500; // 5%
-  uint24 public DEFAULT_POOL_FEE = 10; // 0.5% pool fee
+  uint256 public SLIPPAGE_TOLERANCE = 100; // 0.5%
+  uint24 public DEFAULT_POOL_FEE = 50; // 0.1% pool fee
   uint256 public nextPositionId = 1;
   uint256 public totalSupplied = 0;
   uint256 public totalCollateral = 0;
@@ -213,20 +213,6 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     uint256 positionId = nextPositionId++;
 
     // Encode additional params for flash loan operation
-    // bytes memory params = abi.encode(
-    //   OperationParams({
-    //     positionId: positionId,
-    //     user: msg.sender,
-    //     collateralToken: collateralToken,
-    //     borrowToken: borrowToken,
-    //     initialCollateral: initialCollateral,
-    //     leverageMultiplier: leverageMultiplier,
-    //     flashLoanController: address(flashLoanController),
-    //     strategy: address(this),
-    //     openPosition: 0
-    //   })
-    // );
-
     // Initiate flash loan
     uint256 expectedAmountIn = swapController.getQuote(
       collateralToken,
@@ -267,21 +253,6 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     require(healthFactor > 1.05e18, 'Position health is too low');
     uint repayAmount = position.totalBorrowed; //_calculateRepayAmount(position.borrowToken, position.totalBorrowed);
 
-    // Encode params for flash loan operation
-    // bytes memory params = abi.encode(
-    //   OperationParams({
-    //     positionId: positionId,
-    //     user: msg.sender,
-    //     collateralToken: position.collateralToken,
-    //     borrowToken: position.borrowToken,
-    //     initialCollateral: repayAmount,
-    //     leverageMultiplier: 1,
-    //     flashLoanController: address(flashLoanController),
-    //     strategy: address(this),
-    //     openPosition: 1
-    //   })
-    // );
-
     // Execute flash loan
     flashLoanController.executeFlashLoan(
       position.borrowToken,
@@ -292,7 +263,7 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
           user: msg.sender,
           collateralToken: position.collateralToken,
           borrowToken: position.borrowToken,
-          initialCollateral: repayAmount,
+          initialCollateral: position.initialCollateral,
           leverageMultiplier: 1,
           flashLoanController: address(flashLoanController),
           strategy: address(this),
@@ -307,7 +278,7 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     uint256 newInitialCollateral,
     uint256 newLeverageMultiplier
   ) external nonReentrant {
-    UserPosition storage position = positions[positionId];
+    UserPosition memory position = positions[positionId];
     require(position.isActive, 'No active position');
     require(position.user == msg.sender, 'Unauthorized to update position');
     require(newLeverageMultiplier > 1 && newLeverageMultiplier <= MAX_LEVERAGE, 'Invalid leverage');
@@ -324,7 +295,7 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     }
 
     // Update the initial collateral value
-    position.initialCollateral = newInitialCollateral;
+    positions[positionId].initialCollateral = newInitialCollateral;
 
     // Handle leverage update
     if (newLeverageMultiplier != position.leverageMultiplier) {
@@ -411,7 +382,7 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
       borrowToken: params.borrowToken,
       initialCollateral: params.initialCollateral,
       totalCollateral: _totalCollateral,
-      totalBorrowed: amountOwed,
+      totalBorrowed: amount,
       leverageMultiplier: params.leverageMultiplier,
       isActive: true
     });
@@ -421,7 +392,7 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
 
     unchecked {
       totalSupplied += params.initialCollateral;
-      totalBorrowed += amountOwed;
+      totalBorrowed += amount;
       totalCollateral += _totalCollateral;
     }
 
@@ -455,9 +426,6 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     DataTypes.ReserveDataLegacy memory reserveData = lendingPool.getReserveData(
       position.collateralToken
     );
-    // address aTokenAddress = lendingPool.getReserveATokenAddress(position.collateralToken);
-    // uint256 aTokenBalance = IERC20(reserveData.aTokenAddress).balanceOf(params.user);
-    // require(aTokenBalance >= position.totalCollateral, 'Insufficient aToken balance');
 
     IERC20(reserveData.aTokenAddress).transferFrom(
       params.user,
@@ -472,42 +440,6 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
 
     // Swap collateral to repay flash loan
     uint256 amountOwed = amount + premium;
-    // uint256 expectedAmountIn = swapController.getQuote(
-    //   position.borrowToken,
-    //   position.collateralToken,
-    //   amountOwed,
-    //   DEFAULT_POOL_FEE
-    // );
-    // require(expectedAmountIn > 0, 'Invalid swap quote');
-    // uint256 maxAmountIn = (expectedAmountIn * (10000 + DEFAULT_POOL_FEE + SLIPPAGE_TOLERANCE)) /
-    //   10000;
-    // require(withdrawnAmount > maxAmountIn, 'invalid position');
-
-    // IERC20(position.collateralToken).approve(address(swapController), withdrawnAmount);
-    // uint256 swappedAmount = swapController.swap(
-    //   position.collateralToken,
-    //   position.borrowToken,
-    //   withdrawnAmount,
-    //   amountOwed,
-    //   DEFAULT_POOL_FEE
-    // );
-
-    // // Repay flash loan
-    // IERC20(position.borrowToken).approve(address(params.flashLoanController), amountOwed);
-
-    // // Return remaining collateral to user
-    // uint256 excessBorrowed = swappedAmount - amountOwed;
-    // if (excessBorrowed > 0) {
-    //   IERC20(position.borrowToken).approve(address(swapController), excessBorrowed);
-    //   uint256 swappedAmount = swapController.swap(
-    //     position.borrowToken,
-    //     position.collateralToken,
-    //     excessBorrowed,
-    //     0,
-    //     DEFAULT_POOL_FEE
-    //   );
-    //   IERC20(position.collateralToken).transfer(params.user, swappedAmount);
-    // }
 
     uint256 expectedOutput = swapController.getQuote(
       position.collateralToken,
@@ -541,7 +473,7 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     emit LeveragePositionClosed(params.positionId, params.user, withdrawnAmount);
 
     totalSupplied -= params.initialCollateral;
-    totalBorrowed -= amountOwed;
+    totalBorrowed -= amount;
     totalCollateral -= position.totalCollateral;
 
     delete positions[params.positionId];
@@ -562,24 +494,13 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     delete userPositionIndex[user][positionId];
   }
 
-  // function _removeUserPosition(address user, uint256 positionId) internal {
-  //   uint256[] storage userPos = userPositions[user];
-  //   for (uint256 i = 0; i < userPos.length; i++) {
-  //     if (userPos[i] == positionId) {
-  //       userPos[i] = userPos[userPos.length - 1];
-  //       userPos.pop();
-  //       break;
-  //     }
-  //   }
-  // }
-
   // Calculate Minimum Amount Out with Slippage
   function _calculateMinAmountOut(uint256 amountIn) internal view returns (uint256) {
     return (amountIn * (10000 - SLIPPAGE_TOLERANCE)) / 10000;
   }
 
   function _calculateMaxAmountOut(uint256 amountIn) internal view returns (uint256) {
-    return (amountIn * (10000 + DEFAULT_POOL_FEE + SLIPPAGE_TOLERANCE)) / 10000;
+    return (amountIn * (10000 + SLIPPAGE_TOLERANCE)) / 10000;
   }
 
   // Calculate Max Borrow Amount Based on Current LTV, outputs value of borrow token
@@ -651,20 +572,18 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
 
   function _addToPosition(
     uint256 positionId,
-    UserPosition storage position,
+    UserPosition memory position,
     uint256 additionalCollateral
   ) internal {
     // Transfer additional collateral from the user
     IERC20(position.collateralToken).transferFrom(msg.sender, address(this), additionalCollateral);
 
     // Use a flash loan to borrow the additional amount
-    // bytes memory params = ;
-
     uint256 expectedAmountIn = swapController.getQuote(
       position.collateralToken,
       position.borrowToken,
       additionalCollateral * (position.leverageMultiplier - 1),
-      DEFAULT_POOL_FEE // 0% buffer cause of flashloan
+      DEFAULT_POOL_FEE
     );
     require(expectedAmountIn > 0, 'Invalid swap quote');
 
@@ -689,26 +608,11 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
 
   function _repayPartOfPosition(
     uint256 positionId,
-    UserPosition storage position,
+    UserPosition memory position,
     uint256 collateralToWithdraw
   ) internal {
     // Calculate the amount of borrowed tokens to repay based on the leverage multiplier
     // uint256 borrowToRepay = (collateralToWithdraw * (position.leverageMultiplier - 1));
-
-    // Use a flash loan to repay the borrowed amount
-    // bytes memory params = abi.encode(
-    //   OperationParams({
-    //     positionId: positionId,
-    //     user: msg.sender,
-    //     collateralToken: position.collateralToken,
-    //     borrowToken: position.borrowToken,
-    //     initialCollateral: collateralToWithdraw,
-    //     leverageMultiplier: position.leverageMultiplier,
-    //     flashLoanController: address(flashLoanController),
-    //     strategy: address(this),
-    //     openPosition: 3 // Indicates this is an update, not a new position
-    //   })
-    // );
 
     uint256 expectedAmountIn = swapController.getQuote(
       position.collateralToken,
@@ -739,7 +643,7 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
 
   function _updateLeverage(
     uint256 positionId,
-    UserPosition storage position,
+    UserPosition memory position,
     uint256 newLeverageMultiplier
   ) internal {
     // Calculate the new borrowed amount based on the new leverage multiplier
@@ -748,7 +652,7 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
       position.collateralToken,
       position.borrowToken,
       position.initialCollateral * (newLeverageMultiplier - 1),
-      0 // 0% buffer cause of flashloan
+      DEFAULT_POOL_FEE // 0% buffer cause of flashloan
     );
     require(newBorrowedAmount > 0, 'Invalid swap quote');
 
@@ -760,19 +664,6 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
       uint256 additionalBorrow = uint256(borrowDelta);
 
       // Use a flash loan to facilitate the additional borrowing
-      // bytes memory params = abi.encode(
-      //   OperationParams({
-      //     positionId: positionId,
-      //     user: position.user,
-      //     collateralToken: position.collateralToken,
-      //     borrowToken: position.borrowToken,
-      //     initialCollateral: position.initialCollateral,
-      //     leverageMultiplier: newLeverageMultiplier,
-      //     flashLoanController: address(flashLoanController),
-      //     strategy: address(this),
-      //     openPosition: 4 // Indicates this is a leverage update
-      //   })
-      // );
 
       flashLoanController.executeFlashLoan(
         position.borrowToken,
@@ -798,8 +689,6 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
       require(repayAmount <= position.totalBorrowed, 'Cannot repay more than current borrowed');
 
       // Use a flash loan to repay the excess borrowed amount
-      // bytes memory params = ;
-
       flashLoanController.executeFlashLoan(
         position.borrowToken,
         repayAmount,
@@ -835,12 +724,7 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
 
     // Swap borrowed tokens to collateral tokens
     IERC20(params.borrowToken).approve(address(swapController), amount);
-    uint256 expectedAmountOut = swapController.getQuote(
-      params.borrowToken,
-      params.collateralToken,
-      amount,
-      DEFAULT_POOL_FEE
-    );
+    uint256 expectedAmountOut = params.initialCollateral * (params.leverageMultiplier - 1);
     uint256 minAmountOut = _calculateMinAmountOut(expectedAmountOut);
 
     uint256 swappedAmount = swapController.swap(
@@ -865,9 +749,10 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
 
     // Update the position's total collateral and borrowed amount
     position.totalCollateral += totalCollateral;
-    position.totalBorrowed += amountOwed;
+    position.totalBorrowed += amount;
 
-    totalBorrowed += amountOwed;
+    totalBorrowed += amount;
+    totalSupplied += params.initialCollateral;
     totalCollateral += totalCollateral;
 
     emit LeveragePositionAdded(
@@ -950,9 +835,10 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
 
     // Update the position's total collateral and borrowed amount
     position.totalCollateral -= collateralToWithdraw;
-    position.totalBorrowed -= amountOwed;
+    position.totalBorrowed -= amount;
 
-    totalBorrowed -= amountOwed;
+    totalBorrowed -= amount;
+    totalSupplied -= params.initialCollateral;
     totalCollateral -= collateralToWithdraw;
 
     emit LeveragePositionRemoved(
@@ -980,12 +866,8 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
     if (params.leverageMultiplier > position.leverageMultiplier) {
       // Increasing leverage: borrow more and swap into collateral
       IERC20(params.borrowToken).approve(address(swapController), amount);
-      uint256 expectedAmountOut = swapController.getQuote(
-        params.borrowToken,
-        params.collateralToken,
-        amount,
-        DEFAULT_POOL_FEE
-      );
+      uint256 expectedAmountOut = params.initialCollateral *
+        (params.leverageMultiplier - position.leverageMultiplier);
       uint256 minAmountOut = _calculateMinAmountOut(expectedAmountOut);
 
       uint256 swappedAmount = swapController.swap(
@@ -1009,9 +891,9 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
 
       // Update the position's total collateral and borrowed amount
       position.totalCollateral += swappedAmount;
-      position.totalBorrowed += amountOwed;
+      position.totalBorrowed += amount;
 
-      totalBorrowed += amountOwed;
+      totalBorrowed += amount;
       totalCollateral += swappedAmount;
     } else {
       // Decreasing leverage: repay part of the borrowed amount
@@ -1029,6 +911,7 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
       // Withdraw collateral and swap part of it to repay the flash loan
       uint256 collateralToWithdraw = params.initialCollateral *
         (position.leverageMultiplier - params.leverageMultiplier);
+      collateralToWithdraw = _calculateMaxAmountOut(collateralToWithdraw);
       IERC20(reserveData.aTokenAddress).transferFrom(
         params.user,
         address(this),
@@ -1043,31 +926,33 @@ contract LeveragedBorrowingVault is Ownable, ReentrancyGuard, IFlashLoanReceiver
 
       // Swap part of the collateral to repay the flash loan
       uint256 amountOwed = amount + premium;
-      IERC20(position.collateralToken).approve(address(swapController), withdrawnAmount);
-
-      uint256 swappedAmount = swapController.swap(
+      uint256 expectedOutput = swapController.getQuote(
         position.collateralToken,
         position.borrowToken,
         withdrawnAmount,
-        amountOwed,
+        DEFAULT_POOL_FEE
+      );
+
+      // Calculate proportion of collateral needed for flash loan repayment
+      uint256 collateralForRepayment = (withdrawnAmount * amountOwed) / expectedOutput;
+      uint256 remainingCollateral = withdrawnAmount - collateralForRepayment;
+
+      // Swap only the necessary amount for flash loan repayment
+      IERC20(position.collateralToken).approve(address(swapController), collateralForRepayment);
+      swapController.swap(
+        position.collateralToken,
+        position.borrowToken,
+        collateralForRepayment,
+        amountOwed, // exact amount needed for flash loan
         DEFAULT_POOL_FEE
       );
 
       // Repay flash loan
       IERC20(position.borrowToken).approve(address(params.flashLoanController), amountOwed);
 
-      // Return remaining collateral to user
-      uint256 excessBorrowed = swappedAmount - amountOwed;
-      if (excessBorrowed > 0) {
-        IERC20(position.borrowToken).approve(address(swapController), excessBorrowed);
-        uint256 swappedAmount = swapController.swap(
-          position.borrowToken,
-          position.collateralToken,
-          excessBorrowed,
-          0,
-          DEFAULT_POOL_FEE
-        );
-        IERC20(position.collateralToken).transfer(params.user, swappedAmount);
+      // Return remaining collateral directly to user
+      if (remainingCollateral > 0) {
+        IERC20(position.collateralToken).transfer(params.user, remainingCollateral);
       }
 
       // Update the position's total collateral and borrowed amount
