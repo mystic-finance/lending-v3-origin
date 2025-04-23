@@ -69,7 +69,7 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
     // peth-pusd. peth-usdc, pusd-usdc, - 0xD630fb6A07c9c723cf709d2DaA9B63325d0E0B73 - peth, 0xdddD73F5Df1F0DC31373357beAC77545dC5A6f3F - pusd, 0x3938A812c54304fEffD266C7E2E70B48F9475aD6 - usdc
 
     // Deploy mock tokens
-    collateralToken = IERC20(0xEa237441c92CAe6FC17Caaf9a7acB3f953be4bd1); //new MockERC20('CollateralToken', 'CLT', 18);
+    collateralToken = IERC20(0x593cCcA4c4bf58b7526a4C164cEEf4003C6388db); //new MockERC20('CollateralToken', 'CLT', 18);
     borrowToken = IERC20(0xdddD73F5Df1F0DC31373357beAC77545dC5A6f3F); //new MockERC20('BorrowToken', 'BRT', 18);
 
     // Deploy mock controllers
