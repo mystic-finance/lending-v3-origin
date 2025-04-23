@@ -110,7 +110,7 @@ test-loop :; forge test --mc AdvancedLoopStrategyTest  -vvv
 test-leverage-fork :; forge test --fork-url https://phoenix-rpc.plumenetwork.xyz --mc LeveragedBorrowingVaultForkTest  -vvv
 test-leverage-devnet-fork :; forge test --fork-url https://rpc-plume-testnet-m8kfz7osif.t.conduit.xyz --mc LeveragedBorrowingVaultDevnetForkTest  -vvv
 test-leverage-devnet-fork-02 :; forge test --fork-url https://rpc-plume-testnet-m8kfz7osif.t.conduit.xyz --mc LeveragedBorrowing02VaultDevnetForkTest --fork-retries 3  --ffi --no-rpc-rate-limit -vvv
-test-open-leverage-fork :; forge test --fork-url https://phoenix-rpc.plumenetwork.xyz --mc LeveragedBorrowingVaultForkTest  -vvv
+test-open-leverage-fork :; forge test --fork-url https://phoenix-rpc.plumenetwork.xyz --mc LeveragedBorrowingVaultForkTest --mt test_openLeveragePosition_Success  -vvv
 test-open-leverage-fork-02 :; forge test --fork-url https://phoenix-rpc.plumenetwork.xyz --mc LeveragedBorrowingVault02ForkTest --no-rpc-rate-limit -vvv
 test-loop-fork :; forge test --fork-url https://test-rpc.plumenetwork.xyz --mc LeveragedBorrowingVaultTest  -vvv
 test-liquidator-fork-spec :; forge test --mc FlashMintLiquidatorTest --mt test_liquidateWithFlashLoan  -vvv
