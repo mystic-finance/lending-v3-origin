@@ -86,27 +86,27 @@ contract LeveragedBorrowingVault02ForkTest is TestnetProcedures {
     // FlashLoanController flashLoanController = new FlashLoanController(address(flashLoanWrapper));
 
     // Deploy the vault
-    AmbientSwap swap = new AmbientSwap(
-      0xAaAaAAAA81a99d2a05eE428eC7a1d8A3C2237D85,
-      address(lendingPool)
-    );
+    // AmbientSwap swap = new AmbientSwap(
+    //   0xAaAaAAAA81a99d2a05eE428eC7a1d8A3C2237D85,
+    //   address(lendingPool)
+    // );
     // MaverickSwap swap = new MaverickSwap(
     //   0x056A588AfdC0cdaa4Cab50d8a4D2940C5D04172E,
     //   0xf245948e9cf892C351361d298cc7c5b217C36D82
     // ); //factory, quoter
 
-    swapController = new SwapController(address(swap));
+    // swapController = new SwapController(address(swap));
     // vault = new LeveragedBorrowingVault(
     //   0xd5b3495C5e059a23Bea726166E3C46b0Cb3b42Ab,
     //   address(swapController),
     //   address(flashLoanController)
     // );
-    vault = new LeveragedBorrowingVault02(
-      0xCE192A6E105cD8dd97b8Dedc5B5b263B52bb6AE0,
-      address(swapController), //0x9e05D90f40ABd231C7B482449de9e1872F94A3c4,
-      0xDc559b3af6aB03B82753f0808cc33eB1eeb51734
-    );
-    // vault = LeveragedBorrowingVault(0xC5b1009a2C098378e7a08900e4b6e46a1bF32Da2);
+    // vault = new LeveragedBorrowingVault02(
+    //   0xCE192A6E105cD8dd97b8Dedc5B5b263B52bb6AE0,
+    //   address(swapController), //0x9e05D90f40ABd231C7B482449de9e1872F94A3c4,
+    //   0xDc559b3af6aB03B82753f0808cc33eB1eeb51734
+    // );
+    vault = LeveragedBorrowingVault02(0x269871d6a01d61A67340A3c3Ed5D3c50d69577e0);
 
     vault.addAllowedBorrowToken(address(borrowToken));
     vault.addAllowedBorrowToken(address(collateralToken));

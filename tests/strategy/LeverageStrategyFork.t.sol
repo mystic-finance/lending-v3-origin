@@ -46,7 +46,7 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
 
   // Constants for testing
   uint256 internal constant INITIAL_BALANCE = 100_000 * 10 ** 18;
-  uint256 internal constant INITIAL_COLLATERAL = 1 * 10 ** 4;
+  uint256 internal constant INITIAL_COLLATERAL = 1 * 10 ** 5;
   uint256 internal constant LEVERAGE_MULTIPLIER = 3;
 
   function setUp() public {
@@ -69,7 +69,7 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
     // peth-pusd. peth-usdc, pusd-usdc, - 0xD630fb6A07c9c723cf709d2DaA9B63325d0E0B73 - peth, 0xdddD73F5Df1F0DC31373357beAC77545dC5A6f3F - pusd, 0x3938A812c54304fEffD266C7E2E70B48F9475aD6 - usdc
 
     // Deploy mock tokens
-    collateralToken = IERC20(0x593cCcA4c4bf58b7526a4C164cEEf4003C6388db); //new MockERC20('CollateralToken', 'CLT', 18);
+    collateralToken = IERC20(0x9fbC367B9Bb966a2A537989817A088AFCaFFDC4c); //new MockERC20('CollateralToken', 'CLT', 18);
     borrowToken = IERC20(0xdddD73F5Df1F0DC31373357beAC77545dC5A6f3F); //new MockERC20('BorrowToken', 'BRT', 18);
 
     // Deploy mock controllers
@@ -93,8 +93,56 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
       0x056A588AfdC0cdaa4Cab50d8a4D2940C5D04172E,
       0xf245948e9cf892C351361d298cc7c5b217C36D82
     ); //factory, quoter
+    // swap.addSavedPool(
+    //   0x593cCcA4c4bf58b7526a4C164cEEf4003C6388db,
+    //   0xdddD73F5Df1F0DC31373357beAC77545dC5A6f3F,
+    //   0x536B44e75bDEC83d428706930915c109ACdFE588
+    // );
+    // swap.addSavedPool(
+    //   0x9fbC367B9Bb966a2A537989817A088AFCaFFDC4c,
+    //   0xdddD73F5Df1F0DC31373357beAC77545dC5A6f3F,
+    //   0x8696Fd163c619d4323B257F8CAc51Fe92eF769D2
+    // );
+    // swap.addSavedPool(
+    //   0x39d1F90eF89C52dDA276194E9a832b484ee45574,
+    //   0xdddD73F5Df1F0DC31373357beAC77545dC5A6f3F,
+    //   0xa5f15944fBD511182789C8F5f25fE191c59597ad
+    // );
+    // swap.addSavedPool(
+    //   0x39d1F90eF89C52dDA276194E9a832b484ee45574,
+    //   0xca59cA09E5602fAe8B629DeE83FfA819741f14be,
+    //   0xf3Dfd9D551672Bd1ACdF25895Bf6cb0319b6a511
+    // );
+    // swap.addSavedPool(
+    //   0xdddD73F5Df1F0DC31373357beAC77545dC5A6f3F,
+    //   0xE72Fe64840F4EF80E3Ec73a1c749491b5c938CB9,
+    //   0xB1Ac405847eaA909a67a7e5d67D61115303F6Fa0
+    // );
 
     swapController = new SwapController(address(swap));
+
+    // ntbill - pusd - 0xE72Fe64840F4EF80E3Ec73a1c749491b5c938CB9-0xdddD73F5Df1F0DC31373357beAC77545dC5A6f3F - 0xB1Ac405847eaA909a67a7e5d67D61115303F6Fa0  0x4b127c92456C76dB6089274312988eCB00104641
+    // nrwa - pusd - 0x593cCcA4c4bf58b7526a4C164cEEf4003C6388db-0xdddD73F5Df1F0DC31373357beAC77545dC5A6f3F - 0x536B44e75bDEC83d428706930915c109ACdFE588
+    // nelixir - pusd - 0x9fbC367B9Bb966a2A537989817A088AFCaFFDC4c-0xdddD73F5Df1F0DC31373357beAC77545dC5A6f3F -0x8696Fd163c619d4323B257F8CAc51Fe92eF769D2
+    // peth - pusd - 0x39d1F90eF89C52dDA276194E9a832b484ee45574-0xdddD73F5Df1F0DC31373357beAC77545dC5A6f3F - 0xa5f15944fBD511182789C8F5f25fE191c59597ad
+    // peth - weth - 0x39d1F90eF89C52dDA276194E9a832b484ee45574-0xca59cA09E5602fAe8B629DeE83FfA819741f14be - 0xf3Dfd9D551672Bd1ACdF25895Bf6cb0319b6a511
+
+    // 0x1A7aB8FF5db00811D0D60706877cd2f2092e2d98 - weth,wplume
+    // 0x4A14398C5c5B4B7913954cB82521fB7afA676314 - wplume, pusd
+    // 0x098Dbf700286109e3BcD1465F00A6554488Ec148 - ntbill, wplume
+    // 0x95CD298a03bd1e060992297025A7FDA5912DFc13 - wplume, nrwa
+    // 0x10B02Da17F82F263252C6Ac9E2f785Cb9fE4d544 - wplume, nelixir
+    // 0xB1Ac405847eaA909a67a7e5d67D61115303F6Fa0 - ntbill, pusd - *
+    // 0xb4C54Dde7CA3f475Fd687E28111EcdBB7d9fA92f - nrwa, pusd - *
+    // 0x8872127381209fd106E48666B2EcAD4A151C9EA9 - nelixir, pusd - *
+    // 0xE0B6661cA32DBc33f1A00dEc913b79646493308a - weth, pusd - *
+    // 0x4F8075F4ff9dFEA2965a4C7709C5452e5Ed56709 - weth, usdc - *
+    // 0x3Bbf2dCE95250f0A2b1e83fF47BbD708579754a9 - pusdc, usdc - *
+    // 0xADB1Ba2465Cb379c17E88384c221bfB9eF17EB2B - nbasis, pusd - *
+    // 0x2fB3f735f685a9d8c0Ffc35912E4aCb1796752AD - nrwa, pusd - *
+    // 0x4b127c92456C76dB6089274312988eCB00104641 - ntbill, pusd - *
+    // 0x8696Fd163c619d4323B257F8CAc51Fe92eF769D2 - nelixir, pusd - *
+
     // vault = new LeveragedBorrowingVault(
     //   0xd5b3495C5e059a23Bea726166E3C46b0Cb3b42Ab,
     //   address(swapController),
@@ -105,7 +153,7 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
       address(swapController), //0x9e05D90f40ABd231C7B482449de9e1872F94A3c4,
       0xDc559b3af6aB03B82753f0808cc33eB1eeb51734
     );
-    // vault = LeveragedBorrowingVault(0xC5b1009a2C098378e7a08900e4b6e46a1bF32Da2);
+    // vault = LeveragedBorrowingVault(0xF03Fb0ff2daFC83e6556AF8ac4d1Da583f09B357);
 
     vault.addAllowedBorrowToken(address(borrowToken));
     vault.addAllowedBorrowToken(address(collateralToken));
@@ -151,6 +199,7 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
     //   anotherUser,
     //   0
     // );
+    // swap.logPools();
 
     vm.stopPrank();
   }
@@ -515,7 +564,7 @@ contract LeveragedBorrowingVaultForkTest is TestnetProcedures {
       bool isActive
     ) = vault.positions(positionId);
     assertGt(totalCollateral, totalCollateralOld, 'Collateral not increased');
-    assertGt(totalCollateral, ((INITIAL_COLLATERAL) * 4) - 0.1e4, 'Collateral not updated');
+    assertGt(totalCollateral, ((INITIAL_COLLATERAL) * 4) - 0.4e4, 'Collateral not updated');
     assertGt(totalBorrowed, totalBorrowedOld, 'Borrowed amount not updated');
 
     // Verify user balances
