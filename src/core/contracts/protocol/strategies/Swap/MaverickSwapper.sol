@@ -10,14 +10,11 @@ import '@openzeppelin/contracts/access/Ownable.sol';
 import {IPool} from 'src/core/contracts/interfaces/IPool.sol';
 import {IERC20Metadata} from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 
-// interface IAaveOracle {
-//   function getAssetPrice(address asset) external view returns (uint256);
-// }
-
 contract MaverickSwap is Ownable {
   // Uniswap V3 Swap Router
   IMaverickV2Quoter public immutable quoter;
   IMaverickV2Factory public immutable factory;
+  mapping(address => mapping(address => address)) savedPools;
 
   // Minimum swap amount to prevent dust transactions
   uint256 public constant MIN_SWAP_AMOUNT = 1;
@@ -58,6 +55,7 @@ contract MaverickSwap is Ownable {
     uint24 poolFee
   ) external returns (uint256) {
     IMaverickV2Pool pool = _getPool(tokenIn, tokenOut);
+
     // Validate inputs
     require(amountIn >= MIN_SWAP_AMOUNT, 'Swap amount too low');
     require(tokenIn != address(0) && tokenOut != address(0), 'Invalid token address');
@@ -69,11 +67,13 @@ contract MaverickSwap is Ownable {
 
     // swapping weth in and weth is tokenA() in the pool
     bool tokenAIn = pool.tokenA() == IERC20(tokenIn);
+    int32 tickLimit = tokenAIn ? pool.getState().activeTick + 50 : pool.getState().activeTick - 50;
+
     IMaverickV2Pool.SwapParams memory swapParams = IMaverickV2Pool.SwapParams({
       amount: amountIn,
       tokenAIn: tokenAIn,
       exactOutput: false,
-      tickLimit: tokenAIn ? type(int32).max : type(int32).min
+      tickLimit: tickLimit
     });
 
     // swaps without a callback as the assets are already on the pool
@@ -108,22 +108,38 @@ contract MaverickSwap is Ownable {
     require(tokenIn != address(0) && tokenOut != address(0), 'Invalid token address');
 
     bool tokenAIn = pool.tokenA() == IERC20(tokenIn);
+    int32 tickLimit = tokenAIn ? pool.getState().activeTick + 50 : pool.getState().activeTick - 50;
+
     (, uint256 expectedAmountOut, ) = quoter.calculateSwap(
       pool,
       uint128(amountIn),
       tokenAIn,
       false,
-      tokenAIn ? type(int32).max : type(int32).min
+      tickLimit
     );
 
     return expectedAmountOut;
   }
 
   function _getPool(address tokenIn, address tokenOut) internal view returns (IMaverickV2Pool) {
-    IMaverickV2Pool[] memory pools = factory.lookup(IERC20(tokenIn), IERC20(tokenOut), 0, 1);
+    if (savedPools[tokenIn][tokenOut] != address(0)) {
+      return IMaverickV2Pool(savedPools[tokenIn][tokenOut]);
+    }
+
+    IMaverickV2Pool[] memory pools = factory.lookup(IERC20(tokenIn), IERC20(tokenOut), 0, 50);
+    IMaverickV2Pool bestPool;
+    uint256 reserveA;
 
     if (pools.length > 0) {
-      return pools[0];
+      bestPool = pools[0];
+      for (uint64 i = 0; i < pools.length; i++) {
+        IMaverickV2Pool pool = pools[i];
+        if (pool.getState().reserveA > reserveA) {
+          reserveA = pool.getState().reserveA;
+          bestPool = pool;
+        }
+      }
+      return bestPool;
     }
 
     revert();
@@ -135,6 +151,18 @@ contract MaverickSwap is Ownable {
   function rescueTokens(address tokenAddress, uint256 amount) external onlyOwner {
     IERC20 token = IERC20(tokenAddress);
     token.transfer(owner(), amount);
+  }
+
+  /**
+   * @dev Add cached pools
+   */
+  function addSavedPool(address tokenIn, address tokenOut, address pool) external onlyOwner {
+    require(
+      IMaverickV2Pool(pool).tokenA() == IERC20(tokenIn) &&
+        IMaverickV2Pool(pool).tokenB() == IERC20(tokenOut),
+      'Pool Tokens mismatch'
+    );
+    savedPools[tokenIn][tokenOut] = pool;
   }
 
   /**
