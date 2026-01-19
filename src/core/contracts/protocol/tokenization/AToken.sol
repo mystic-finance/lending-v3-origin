@@ -96,6 +96,7 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
       return;
     }
     // send to custody
+    IERC20(_underlyingAsset).approve(_custodyController, amount);
     ICustodyController(_custodyController).depositAsset(_underlyingAsset, amount);
   }
 
@@ -238,5 +239,13 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
   function rescueTokens(address token, address to, uint256 amount) external override onlyPoolAdmin {
     require(token != _underlyingAsset, Errors.UNDERLYING_CANNOT_BE_RESCUED);
     IERC20(token).safeTransfer(to, amount);
+  }
+
+  /**
+   * @dev Updates the custody controller address
+   * @param custodyController New custody controller address
+   */
+  function updateCustodyController(address custodyController) external onlyPoolAdmin {
+    _custodyController = custodyController;
   }
 }

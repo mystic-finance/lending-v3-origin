@@ -49,7 +49,7 @@ contract CustodyController is AccessControl, ReentrancyGuard, Pausable {
   mapping(address => uint256) public pendingWithdrawals;
   mapping(address => AssetInfo) public supportedAssets;
   mapping(address => uint256) public assetWithdrawalLimits;
-  mapping(bytes32=> mapping(address => uint256)) public assetWithdrawalRequests;
+  mapping(bytes32 => mapping(address => uint256)) public assetWithdrawalRequests;
   mapping(address => bool) public approvedTargets;
 
   // State variables
@@ -109,6 +109,7 @@ contract CustodyController is AccessControl, ReentrancyGuard, Pausable {
       require(_withdrawalOperators[i] != address(0), 'Invalid withdrawal operator');
       _setupRole(WITHDRAWAL_OPERATOR_ROLE, _withdrawalOperators[i]);
     }
+    _setupRole(WITHDRAWAL_OPERATOR_ROLE, repoLocker);
 
     // Initialize approved targets
     for (uint256 i = 0; i < _approvedTargets.length; i++) {
@@ -127,7 +128,6 @@ contract CustodyController is AccessControl, ReentrancyGuard, Pausable {
   ) external onlyRole(WITHDRAWAL_OPERATOR_ROLE) nonReentrant {
     require(supportedAssets[token].isActive, 'Asset not supported');
     require(amount > 0, 'Invalid deposit amount');
-
 
     // Update total deposited
     supportedAssets[token].totalDeposited += amount;
